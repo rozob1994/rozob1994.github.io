@@ -239,7 +239,7 @@
     .work-burger-wrap:hover .work-burger-icon span:nth-child(2),
     .work-burger-wrap.burger-open .work-burger-icon span:nth-child(2){width:100%}
     /* filter-btn styles defined below in improvements block */
-    #carouselOuter{overflow:hidden;width:calc(100% + 56px);margin-left:-56px;position:relative}
+    #carouselOuter{overflow:hidden;width:calc(100% + 56px);margin-left:-56px;position:relative;min-height:460px}
     #carouselTrack{display:flex;gap:12px;width:max-content;will-change:transform}
     .work-item{position:relative;overflow:hidden;background:var(--surface);cursor:none;width:360px;height:460px;flex-shrink:0;transition:opacity .4s}
     .work-item.faded{opacity:0.1}
@@ -360,6 +360,7 @@
       #work{padding-left:28px;padding-right:0}
       .work-header{padding:0 28px 0 0;margin-bottom:36px}
       .work-item{width:260px;height:340px}
+      #carouselOuter{min-height:340px}
 
       /* About */
       .about-center{padding:60px 28px}
@@ -405,6 +406,7 @@
       #work{padding-left:20px;padding-right:0}
       .work-header{padding:0 20px 0 0;margin-bottom:28px}
       .work-item{width:240px;height:310px}
+      #carouselOuter{min-height:310px}
 
       /* About */
       .about-center{padding:48px 20px}
@@ -443,6 +445,7 @@
     @media(max-width:400px){
       .hero-title{font-size:clamp(36px,12vw,72px)}
       .work-item{width:200px;height:270px}
+      #carouselOuter{min-height:270px}
       .about-stats{display:grid;grid-template-columns:1fr}
       .po-hero{height:60vw;min-height:220px}
       .po-meta{padding:22px 16px 0}
