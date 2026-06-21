@@ -915,22 +915,51 @@
     .mofid-tile{aspect-ratio:16/9;background:#0d1020;overflow:hidden;cursor:none;position:relative;transition:opacity 0.3s}
     .mofid-tile.mofid-tile--dim{opacity:0.25}
     .mofid-tile video{width:100%;height:100%;object-fit:cover;display:block}
-    .mofid-expand-panel{
-      grid-column:1/-1;position:relative;
-      background:#0d1020;border-top:2px solid rgba(245,217,78,0.3);
-      overflow:hidden;max-height:0;transition:max-height 0.55s cubic-bezier(0.16,1,0.3,1);
+    /* ── Mofid expand: fixed centered modal ── */
+    .mofid-expand-backdrop{
+      position:fixed;inset:0;z-index:10100;
+      background:rgba(0,0,0,0.78);
+      opacity:0;pointer-events:none;
+      transition:opacity 0.3s ease;
     }
-    .mofid-expand-panel.open{max-height:1400px}
-    .mofid-expand-inner{display:flex;gap:32px;padding:48px 56px;flex-wrap:wrap;align-items:flex-start}
-    .mofid-expand-video-wrap{flex:1 1 600px;min-width:0;position:relative;background:#000;border-radius:4px;overflow:hidden}
-    .mofid-expand-video-wrap video{width:100%;display:block;max-height:min(68vh,640px);object-fit:contain;background:#000}
-    .mofid-expand-info{flex:0 1 300px;display:flex;flex-direction:column;gap:10px;padding-top:4px}
-    .mofid-expand-name{font-family:var(--font-display);font-size:24px;font-weight:700;color:#fff}
-    .mofid-expand-cat-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow)}
-    .mofid-expand-desc{font-family:var(--font-display);font-size:15px;color:rgba(255,255,255,0.5);line-height:1.7;margin-top:4px}
-    .mofid-expand-stills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .mofid-expand-x{position:absolute;top:18px;right:22px;z-index:6;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:none;padding:0;transition:background 0.2s,border-color 0.2s,transform 0.2s}
+    .mofid-expand-backdrop.open{opacity:1;pointer-events:auto}
+    .mofid-expand-panel{
+      position:fixed;top:50%;left:50%;z-index:10200;
+      width:min(1100px,92vw);max-height:90vh;
+      transform:translate(-50%,-50%) scale(0.96);
+      background:#0d1020;border-radius:10px;
+      border:1.5px solid rgba(245,217,78,0.18);
+      overflow:hidden;
+      opacity:0;pointer-events:none;
+      transition:opacity 0.32s cubic-bezier(0.16,1,0.3,1),transform 0.32s cubic-bezier(0.16,1,0.3,1);
+      display:flex;flex-direction:column;
+    }
+    .mofid-expand-panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+    .mofid-expand-inner{display:flex;gap:0;flex-direction:column;height:100%;overflow:hidden}
+    .mofid-expand-video-wrap{flex:1 1 auto;min-height:0;position:relative;background:#000}
+    .mofid-expand-video-wrap video{width:100%;height:100%;max-height:calc(90vh - 100px);display:block;object-fit:contain;background:#000}
+    .mofid-expand-info{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:16px 70px 16px 24px;background:#0d1020;border-top:1px solid rgba(255,255,255,0.07)}
+    .mofid-expand-name{font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mofid-expand-cat-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);flex:0 0 auto}
+    .mofid-expand-desc{display:none}
+    .mofid-expand-stills{display:none}
+    .mofid-expand-x{position:absolute;top:14px;right:16px;z-index:6;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:none;padding:0;transition:background 0.2s,border-color 0.2s,transform 0.2s}
     .mofid-expand-x:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:scale(1.1)}
+    /* prev / next nav arrows */
+    .mofid-expand-prev,.mofid-expand-next{
+      position:fixed;top:50%;z-index:10300;
+      width:48px;height:48px;border-radius:50%;
+      background:rgba(13,16,32,0.82);border:1.5px solid rgba(255,255,255,0.25);
+      color:#fff;font-size:22px;line-height:1;
+      display:none;align-items:center;justify-content:center;
+      cursor:none;padding:0;
+      transform:translateY(-50%);
+      transition:background 0.2s,border-color 0.2s,transform 0.2s;
+    }
+    .mofid-expand-prev{left:calc(50% - min(550px,46vw) - 60px)}
+    .mofid-expand-next{right:calc(50% - min(550px,46vw) - 60px)}
+    .mofid-expand-prev.visible,.mofid-expand-next.visible{display:flex}
+    .mofid-expand-prev:hover,.mofid-expand-next:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:translateY(-50%) scale(1.1)}
     .mofid-play-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;cursor:none}
     .mofid-play-btn{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;transition:background 0.2s,transform 0.2s}
     .mofid-play-btn svg{width:18px;height:18px;fill:#fff;margin-left:3px}
@@ -939,12 +968,15 @@
       .mofid-ov-header{padding:36px 40px 0}
       .mofid-ov-cat{padding:0 40px 36px}
       .mofid-cat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+      .mofid-expand-prev{left:8px}
+      .mofid-expand-next{right:8px}
     }
     @media(max-width:600px){
       .mofid-ov-header{padding:24px 20px 0}
       .mofid-ov-cat{padding:0 20px 28px}
       .mofid-cat-grid{grid-template-columns:1fr 1fr;gap:6px}
-      .mofid-expand-inner{flex-direction:column;padding:36px 20px;gap:20px}
+      .mofid-expand-prev{left:4px}
+      .mofid-expand-next{right:4px}
     }
 
     /* ── ALIVE: letter-stagger heading reveals ── */
@@ -1611,13 +1643,46 @@
   // WORK FILTERS — rebuild carousel with only matching discipline
   let activeFilter = 'all';
   let rebuildCarousel = null; // set by initWorkCarousel
-  document.querySelectorAll('.filter-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilter = btn.dataset.filter;
-      if (rebuildCarousel) rebuildCarousel(activeFilter);
+  let mofidRebuild = null;    // set by initMofidCarousel
+  let currentWorkTab = 'personal';
+
+  const PERSONAL_FILTERS = [
+    { filter: 'all',       label: 'All' },
+    { filter: '3d-design', label: '3D Design' },
+    { filter: '3d-motion', label: '3D Motion' },
+    { filter: '2d-motion', label: '2D Motion' }
+  ];
+
+  function buildFilterButtons(tab) {
+    const panel = document.getElementById('workFilterPanel');
+    if (!panel) return;
+    panel.innerHTML = '';
+    const defs = tab === 'mofid'
+      ? [{ filter: 'all', label: 'All' }].concat(
+          MOFID_SECTIONS_DATA.map(function(s) { return { filter: s.key, label: s.label }; })
+        )
+      : PERSONAL_FILTERS;
+    defs.forEach(function(d) {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (d.filter === 'all' ? ' active' : '');
+      btn.dataset.filter = d.filter;
+      btn.textContent = d.label;
+      panel.appendChild(btn);
     });
+  }
+
+  // Event delegation on panel — works after button rebuild
+  document.getElementById('workFilterPanel').addEventListener('click', function(e) {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('#workFilterPanel .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    if (currentWorkTab === 'mofid') {
+      if (mofidRebuild) mofidRebuild(activeFilter);
+    } else {
+      if (rebuildCarousel) rebuildCarousel(activeFilter);
+    }
   });
 
   // ── WORK TABS: Personal Work / Mofid Securities ───────────────────────────
@@ -1628,30 +1693,33 @@
     const burgerWrap = document.getElementById('workBurgerWrap');
     if (!tabs.length || !personalOuter || !mofidOuter) return;
 
-    let currentTab = 'personal';
-
     function switchTab(tab) {
-      currentTab = tab;
-      tabs.forEach(t => {
+      currentWorkTab = tab;
+      tabs.forEach(function(t) {
         const active = t.dataset.tab === tab;
         t.classList.toggle('work-tab--active', active);
         t.setAttribute('aria-selected', active ? 'true' : 'false');
       });
+      // always keep burger visible
+      if (burgerWrap) burgerWrap.style.display = '';
+      activeFilter = 'all';
       if (tab === 'personal') {
         personalOuter.style.display = '';
         mofidOuter.style.display = 'none';
-        if (burgerWrap) burgerWrap.style.display = '';
+        buildFilterButtons('personal');
+        if (rebuildCarousel) rebuildCarousel('all');
       } else {
         personalOuter.style.display = 'none';
         mofidOuter.style.display = 'block';
-        if (burgerWrap) burgerWrap.style.display = 'none';
+        buildFilterButtons('mofid');
         if (typeof initMofidCarousel === 'function') initMofidCarousel();
+        if (mofidRebuild) mofidRebuild('all');
       }
     }
 
-    tabs.forEach(t => {
-      t.addEventListener('click', () => switchTab(t.dataset.tab));
-      t.addEventListener('keydown', e => {
+    tabs.forEach(function(t) {
+      t.addEventListener('click', function() { switchTab(t.dataset.tab); });
+      t.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchTab(t.dataset.tab); }
       });
     });
@@ -1775,7 +1843,7 @@
           v.pause();
         }
       });
-    }, { threshold: 0.4 });
+    }, { threshold: 0, rootMargin: '400px' }); // big head-start so videos are decoding/playing before the card swipes in (no idle->snap)
     root.querySelectorAll('video.work-img').forEach(function(v) { io.observe(v); });
     return io;
   }
@@ -1968,19 +2036,30 @@
       return item;
     });
 
-    // clone for seamless loop
-    origItems.forEach(function(item) {
-      const clone = item.cloneNode(true);
-      clone.setAttribute('aria-hidden', 'true');
-      track.appendChild(clone);
-    });
-
     const carousel = makeCarousel(outer, track, ffArrow, function(item) {
       // clicked a Mofid card — open the grouped overlay
       openMofidOverlay(item.dataset.mofidKey, item.dataset.mofidSlug);
     });
-    carousel.setTotalW();
-    wireThumbVideos(outer);
+
+    function buildMofidTrack(filter) {
+      track.innerHTML = '';
+      track.style.transform = 'translateX(0)';
+      const visible = filter === 'all' ? origItems : origItems.filter(function(item) { return item.dataset.mofidKey === filter; });
+      if (!visible.length) { carousel.setTotalW(); return; }
+      visible.forEach(function(item) { track.appendChild(item); });
+      visible.forEach(function(item) {
+        const clone = item.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+      });
+      carousel.setTotalW();
+      wireThumbVideos(outer);
+    }
+
+    // seed initial track
+    buildMofidTrack('all');
+    // expose for filter routing
+    mofidRebuild = buildMofidTrack;
   }
 
   // ── Mofid Securities grouped overlay ─────────────────────────────────────
@@ -1990,31 +2069,139 @@
     const inner = document.getElementById('mofidOvInner');
     if (!overlay || !closeBtn || !inner) return;
 
-    let expandedPanel = null; // currently open expand panel
-    let expandedSlug = null;
+    // flat list of all works in section order for prev/next
+    var allWorks = [];
+    MOFID_SECTIONS_DATA.forEach(function(sec) {
+      sec.slugs.forEach(function(slug) {
+        allWorks.push({ slug: slug, catKey: sec.key, catLabel: sec.label });
+      });
+    });
 
     function slugToTitle(s) {
       return s.replace(/[-_]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
     }
+
+    // ── fixed modal elements (created once, appended to overlay) ──────────
+    var backdrop = document.createElement('div');
+    backdrop.className = 'mofid-expand-backdrop';
+
+    var panel = document.createElement('div');
+    panel.className = 'mofid-expand-panel';
+
+    var xBtn = document.createElement('button');
+    xBtn.className = 'mofid-expand-x';
+    xBtn.innerHTML = '&times;';
+    xBtn.setAttribute('aria-label', 'Close');
+
+    var vidWrap = document.createElement('div');
+    vidWrap.className = 'mofid-expand-video-wrap';
+
+    var fullVid = document.createElement('video');
+    fullVid.muted = false;
+    fullVid.controls = true;
+    fullVid.setAttribute('playsinline', '');
+    fullVid.preload = 'metadata';
+    vidWrap.appendChild(fullVid);
+
+    var panelInner = document.createElement('div');
+    panelInner.className = 'mofid-expand-inner';
+
+    var infoBar = document.createElement('div');
+    infoBar.className = 'mofid-expand-info';
+
+    var nameEl = document.createElement('div');
+    nameEl.className = 'mofid-expand-name';
+
+    var catLabelEl = document.createElement('div');
+    catLabelEl.className = 'mofid-expand-cat-label';
+
+    infoBar.appendChild(nameEl);
+    infoBar.appendChild(catLabelEl);
+    panelInner.appendChild(vidWrap);
+    panelInner.appendChild(infoBar);
+    panel.appendChild(xBtn);
+    panel.appendChild(panelInner);
+
+    var prevBtn = document.createElement('button');
+    prevBtn.className = 'mofid-expand-prev';
+    prevBtn.setAttribute('aria-label', 'Previous');
+    prevBtn.innerHTML = '&#8592;';
+
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'mofid-expand-next';
+    nextBtn.setAttribute('aria-label', 'Next');
+    nextBtn.innerHTML = '&#8594;';
+
+    overlay.appendChild(backdrop);
+    overlay.appendChild(panel);
+    overlay.appendChild(prevBtn);
+    overlay.appendChild(nextBtn);
+
+    var currentWorkIdx = -1;
+    var modalOpen = false;
+
+    function populateModal(idx) {
+      var work = allWorks[idx];
+      if (!work) return;
+      currentWorkIdx = idx;
+      fullVid.pause();
+      fullVid.removeAttribute('src');
+      fullVid.load();
+      fullVid.src = 'media/mofid/' + work.catKey + '/' + work.slug + '.mp4';
+      fullVid.poster = 'media/mofid/' + work.catKey + '/' + work.slug + '.jpg';
+      nameEl.textContent = slugToTitle(work.slug);
+      catLabelEl.textContent = work.catLabel;
+      fullVid.play().catch(function(){});
+    }
+
+    function openModal(idx) {
+      populateModal(idx);
+      backdrop.classList.add('open');
+      panel.classList.add('open');
+      prevBtn.classList.add('visible');
+      nextBtn.classList.add('visible');
+      modalOpen = true;
+    }
+
+    function closeModal() {
+      fullVid.pause();
+      panel.classList.remove('open');
+      backdrop.classList.remove('open');
+      prevBtn.classList.remove('visible');
+      nextBtn.classList.remove('visible');
+      modalOpen = false;
+    }
+
+    xBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+
+    prevBtn.addEventListener('click', function() {
+      var idx = (currentWorkIdx - 1 + allWorks.length) % allWorks.length;
+      populateModal(idx);
+    });
+    nextBtn.addEventListener('click', function() {
+      var idx = (currentWorkIdx + 1) % allWorks.length;
+      populateModal(idx);
+    });
 
     function buildOverlayDOM() {
       // Remove all category sections (keep header)
       inner.querySelectorAll('.mofid-ov-cat').forEach(function(el) { el.remove(); });
 
       MOFID_SECTIONS_DATA.forEach(function(sec) {
-        const catDiv = document.createElement('div');
+        var catDiv = document.createElement('div');
         catDiv.className = 'mofid-ov-cat';
-        const label = document.createElement('div');
+        var label = document.createElement('div');
         label.className = 'mofid-cat-label';
         label.textContent = sec.label;
         catDiv.appendChild(label);
 
-        const grid = document.createElement('div');
+        var grid = document.createElement('div');
         grid.className = 'mofid-cat-grid';
         grid.dataset.catKey = sec.key;
 
         sec.slugs.forEach(function(slug) {
-          const tile = document.createElement('div');
+          var tile = document.createElement('div');
           tile.className = 'mofid-tile';
           tile.dataset.slug = slug;
           tile.dataset.catKey = sec.key;
@@ -2023,7 +2210,7 @@
           tile.setAttribute('tabindex', '0');
           tile.setAttribute('aria-label', slugToTitle(slug));
 
-          const vid = document.createElement('video');
+          var vid = document.createElement('video');
           vid.muted = true;
           vid.loop = true;
           vid.setAttribute('playsinline', '');
@@ -2042,9 +2229,9 @@
 
       // IntersectionObserver for lazy hover-play in overlay
       if (canMotion) {
-        const mio = new IntersectionObserver(function(entries) {
+        var mio = new IntersectionObserver(function(entries) {
           entries.forEach(function(e) {
-            const v = e.target;
+            var v = e.target;
             if (e.isIntersecting) {
               if (!v.src && v.dataset.src) v.src = v.dataset.src;
               v.play().catch(function(){});
@@ -2055,130 +2242,43 @@
       }
     }
 
-    function collapseExpand() {
-      if (!expandedPanel) return;
-      // pause the expanded video
-      expandedPanel.querySelectorAll('video').forEach(function(v) { v.pause(); });
-      expandedPanel.classList.remove('open');
-      // un-dim all tiles in the grid
-      const grid = expandedPanel.parentElement;
-      if (grid) grid.querySelectorAll('.mofid-tile').forEach(function(t) { t.classList.remove('mofid-tile--dim'); });
-      expandedPanel = null;
-      expandedSlug = null;
-    }
-
-    function expandTile(tileEl) {
-      const slug = tileEl.dataset.slug;
-      const catKey = tileEl.dataset.catKey;
-      const catLabel = tileEl.dataset.catLabel;
-      const grid = tileEl.closest('.mofid-cat-grid');
-      if (!grid) return;
-
-      // toggling same tile => collapse
-      if (expandedSlug === slug && expandedPanel && expandedPanel.parentElement === grid) {
-        collapseExpand();
-        return;
-      }
-
-      // collapse any existing
-      collapseExpand();
-
-      expandedSlug = slug;
-
-      // dim sibling tiles
-      grid.querySelectorAll('.mofid-tile').forEach(function(t) {
-        t.classList.toggle('mofid-tile--dim', t !== tileEl);
-      });
-
-      // find or create expand panel in this grid (after the last tile in the row containing tileEl)
-      let panel = grid.querySelector('.mofid-expand-panel');
-      if (!panel) {
-        panel = document.createElement('div');
-        panel.className = 'mofid-expand-panel';
-        grid.appendChild(panel);
-      }
-      expandedPanel = panel;
-
-      // Build panel content
-      panel.innerHTML = '';
-      const panelInner = document.createElement('div');
-      panelInner.className = 'mofid-expand-inner';
-
-      // close button (× top-right of panel, absolute)
-      const xBtn = document.createElement('button');
-      xBtn.className = 'mofid-expand-x';
-      xBtn.innerHTML = '&times;';
-      xBtn.setAttribute('aria-label', 'Close');
-      xBtn.addEventListener('click', collapseExpand);
-      panel.appendChild(xBtn);
-
-      // video
-      const vidWrap = document.createElement('div');
-      vidWrap.className = 'mofid-expand-video-wrap';
-      const fullVid = document.createElement('video');
-      fullVid.src = 'media/mofid/' + catKey + '/' + slug + '.mp4';
-      fullVid.muted = false;
-      fullVid.controls = true;
-      fullVid.setAttribute('playsinline', '');
-      fullVid.preload = 'metadata';
-      fullVid.poster = 'media/mofid/' + catKey + '/' + slug + '.jpg';
-      vidWrap.appendChild(fullVid);
-      panelInner.appendChild(vidWrap);
-
-      // info column
-      const info = document.createElement('div');
-      info.className = 'mofid-expand-info';
-      const nameEl = document.createElement('div');
-      nameEl.className = 'mofid-expand-name';
-      nameEl.textContent = slugToTitle(slug);
-      const catLabelEl = document.createElement('div');
-      catLabelEl.className = 'mofid-expand-cat-label';
-      catLabelEl.textContent = catLabel;
-      const descEl = document.createElement('div');
-      descEl.className = 'mofid-expand-desc';
-      descEl.textContent = ''; // owner adds description later
-      const stillsEl = document.createElement('div');
-      stillsEl.className = 'mofid-expand-stills';
-      // stills: graceful empty — owner adds images later
-      info.appendChild(nameEl);
-      info.appendChild(catLabelEl);
-      info.appendChild(descEl);
-      info.appendChild(stillsEl);
-      panelInner.appendChild(info);
-
-      panel.appendChild(panelInner);
-
-      // open with animation
-      requestAnimationFrame(function() {
-        panel.classList.add('open');
-        // scroll panel into view
-        setTimeout(function() { panel.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 80);
-      });
-
-      // autoplay expanded video
-      fullVid.play().catch(function(){});
-    }
-
     // Tile click delegation
     inner.addEventListener('click', function(e) {
-      const tile = e.target.closest('.mofid-tile');
-      if (tile) { e.stopPropagation(); expandTile(tile); }
+      var tile = e.target.closest('.mofid-tile');
+      if (!tile) return;
+      e.stopPropagation();
+      var idx = allWorks.findIndex(function(w) { return w.slug === tile.dataset.slug && w.catKey === tile.dataset.catKey; });
+      if (idx >= 0) openModal(idx);
     });
     inner.addEventListener('keydown', function(e) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const tile = e.target.closest('.mofid-tile');
-      if (tile) { e.preventDefault(); expandTile(tile); }
+      var tile = e.target.closest('.mofid-tile');
+      if (!tile) return;
+      e.preventDefault();
+      var idx = allWorks.findIndex(function(w) { return w.slug === tile.dataset.slug && w.catKey === tile.dataset.catKey; });
+      if (idx >= 0) openModal(idx);
     });
 
-    // Escape closes overlay
+    // Escape: close modal first, then overlay
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && overlay.classList.contains('mofid-open')) closeMofidOverlay();
+      if (e.key === 'Escape') {
+        if (modalOpen) { closeModal(); return; }
+        if (overlay.classList.contains('mofid-open')) closeMofidOverlay();
+      }
+      if (!modalOpen) return;
+      if (e.key === 'ArrowLeft') {
+        var idx = (currentWorkIdx - 1 + allWorks.length) % allWorks.length;
+        populateModal(idx);
+      } else if (e.key === 'ArrowRight') {
+        var idx = (currentWorkIdx + 1) % allWorks.length;
+        populateModal(idx);
+      }
     });
 
     closeBtn.addEventListener('click', closeMofidOverlay);
 
     window.openMofidOverlay = function(catKey, slug) {
-      collapseExpand();
+      if (modalOpen) closeModal();
       buildOverlayDOM();
       overlay.classList.add('mofid-open');
       closeBtn.classList.add('visible');
@@ -2186,20 +2286,21 @@
       overlay.scrollTop = 0;
       closeBtn.focus({ preventScroll: true });
 
-      // scroll to and expand the clicked tile
+      // scroll to tile then open modal
       if (catKey && slug) {
         requestAnimationFrame(function() {
-          const tileEl = inner.querySelector('.mofid-tile[data-cat-key="' + catKey + '"][data-slug="' + slug + '"]');
+          var tileEl = inner.querySelector('.mofid-tile[data-cat-key="' + catKey + '"][data-slug="' + slug + '"]');
           if (tileEl) {
-            tileEl.scrollIntoView({ behavior:'smooth', block:'center' });
-            setTimeout(function() { expandTile(tileEl); }, 200);
+            tileEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var idx = allWorks.findIndex(function(w) { return w.slug === slug && w.catKey === catKey; });
+            if (idx >= 0) setTimeout(function() { openModal(idx); }, 200);
           }
         });
       }
     };
 
     function closeMofidOverlay() {
-      collapseExpand();
+      closeModal();
       overlay.classList.remove('mofid-open');
       closeBtn.classList.remove('visible');
       document.body.style.overflow = '';
