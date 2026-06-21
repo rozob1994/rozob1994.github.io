@@ -2477,10 +2477,10 @@
 
     // One image per card (placeholder posters; owner swaps finals later)
     const SVC_IMGS = [
-      'media/kerosene/poster.jpg',
-      'media/amirkabir-hotel/poster.jpg',
-      'media/arya/poster.jpg',
-      'media/rotbeyar/poster.jpg'
+      'media/mofid/poster.jpg',           // 01 Product Visualization
+      'media/kerosene/poster.jpg',        // 02 3D Motion Design
+      'media/amirkabir-hotel/poster.jpg', // 03 2D Motion Design
+      'media/spad-foolad/poster.jpg'      // 04 Logo Animation
     ];
     // Assign data-svc-img to each card
     cards.forEach(function(card, i) {
@@ -3101,11 +3101,13 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     };
   });
 
-  // Entrance: park each sphere off-screen to the LEFT; when the section first
-  // scrolls into view they slide in, then hand off to the normal drift physics.
-  bodies.forEach(b => { b.home = b.mesh.position.clone(); b.startX = b.home.x - (2 * halfW + 6) - Math.random() * 5; b.mesh.position.x = b.startX; });
-  let entering = false, enteredOnce = false, enterStart = 0;
-  let speedCap = 0.02;   // raised briefly on click so spheres scatter, then eases back
+  // Entrance: park each sphere off-screen to the LEFT. When the section first
+  // scrolls into view we kick them rightward and let the SAME drift physics
+  // (walls + collisions) carry them in — one continuous simulation, so there is
+  // no phase change and therefore no snap when they settle.
+  bodies.forEach(b => { b.mesh.position.x -= (2 * halfW + 7) + Math.random() * 6; });
+  let enteredOnce = false;
+  let speedCap = 0.02;   // raised on entrance/click, then eases slowly back to calm
 
   // Mouse → world position on the z=0 plane (objects gently flee from it)
   const mouse = new THREE.Vector3(999, 999, 0);
@@ -3144,26 +3146,18 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   let visible = false;
   new IntersectionObserver(es => {
     visible = es[0].isIntersecting;
-    if (visible && !enteredOnce) { enteredOnce = true; entering = true; enterStart = performance.now(); }
+    if (visible && !enteredOnce) {
+      enteredOnce = true;
+      speedCap = 0.13;                      // brief burst so they sweep in from the left
+      for (const b of bodies) b.vel.set(0.085 + Math.random() * 0.06, (Math.random() - 0.5) * 0.05, 0);
+    }
   }, {rootMargin: '100px'}).observe(section);
 
   const tmp = new THREE.Vector3();
   function tick() {
     requestAnimationFrame(tick);
     if (!visible) return;
-    // entrance: slide spheres in from the left, then hand off to normal physics
-    if (entering) {
-      const t = Math.min((performance.now() - enterStart) / 950, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      for (const b of bodies) {
-        b.mesh.position.x = b.startX + (b.home.x - b.startX) * ease;
-        b.mesh.rotation.x += b.spin.x; b.mesh.rotation.y += b.spin.y; b.mesh.rotation.z += b.spin.z;
-      }
-      if (t >= 1) entering = false;
-      renderer.render(scene, camera);
-      return;
-    }
-    speedCap += (0.02 - speedCap) * 0.03;   // click energy eases back to calm
+    speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm — long, smooth tail
     for (const b of bodies) {
       // gentle mouse repulsion
       tmp.subVectors(b.mesh.position, mouse); tmp.z = 0;
