@@ -254,23 +254,40 @@
 
     #about{background:#0d1fd4;position:relative;overflow:visible;padding:0}
 
-    .about-center{position:relative;z-index:1;max-width:620px;margin:0 auto;text-align:center;padding:80px 24px}
-    .about-heading{font-family:var(--font-display);font-size:clamp(52px,6vw,88px);font-weight:800;line-height:.92;letter-spacing:-.02em;margin-bottom:32px;color:#fff}
+    /* Two-column about layout */
+    .about-center{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,80px);align-items:start;padding:80px clamp(28px,5vw,80px);max-width:1400px;margin:0 auto}
+    .about-col-left{display:flex;align-items:flex-start}
+    .about-col-right{display:flex;flex-direction:column;gap:0}
+    .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff}
     .about-heading em{font-style:normal;color:var(--yellow)}
-    .about-stats{display:flex;gap:2px;margin-top:48px}
-    .stat{flex:1}
-    .stat{background:rgba(255,255,255,0.07);padding:24px 20px;border:1px solid rgba(255,255,255,0.12);transition:background 0.5s cubic-bezier(0.16,1,0.3,1),border-color 0.5s cubic-bezier(0.16,1,0.3,1),color 0.5s ease,transform 0.5s cubic-bezier(0.16,1,0.3,1);cursor:default}
-    .stat:hover{background:#f5d94e;border-color:#f5d94e;transform:translateY(-4px)}
-    .stat:hover .stat-num,.stat:hover .stat-label{color:#0d1fd4}
-    .stat:hover .stat-num{transform:scale(1.06)}
-    .stat-num{font-family:var(--font-display);font-size:44px;font-weight:800;color:var(--yellow);line-height:1;margin-bottom:6px;transition:color 0.5s ease,transform 0.5s cubic-bezier(0.16,1,0.3,1);display:block}
-    .stat-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,0.5);transition:color 0.5s ease}
-    .about-intro{font-size:18px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:20px;font-family:var(--font-display);font-weight:500}
-    .about-body{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.9;margin-bottom:20px}
-    .about-body strong{color:#fff;font-weight:500}
-    .about-disciplines,.about-tools{margin-bottom:10px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+    /* word-by-word swipe animation */
+    @keyframes aboutWordIn{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:translateX(0)}}
+    .about-heading .aw{display:inline-block;opacity:1}
+    .about-heading.aw-animate .aw{animation:aboutWordIn 0.55s cubic-bezier(0.16,1,0.3,1) both}
+    .about-heading.aw-animate .aw:nth-child(1){animation-delay:0s}
+    .about-heading.aw-animate .aw:nth-child(2){animation-delay:0.15s}
+    .about-heading.aw-animate .aw:nth-child(3){animation-delay:0.30s}
+    /* right-column staggered fade-rise */
+    @keyframes aboutFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .about-intro,.about-body,.about-meta-row{opacity:1}
+    .about-col-right.ac-animate .about-intro{animation:aboutFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.5s both}
+    .about-col-right.ac-animate .about-body{animation:aboutFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.65s both}
+    .about-col-right.ac-animate .about-meta-row{animation:aboutFadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.80s both}
+    @media(prefers-reduced-motion:reduce){
+      .about-heading .aw,.about-intro,.about-body,.about-meta-row{animation:none!important;opacity:1!important;transform:none!important}
+    }
+    .about-intro{font-size:clamp(15px,1.6vw,19px);color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:16px;font-family:var(--font-display);font-weight:500}
+    .about-body{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.85;margin-bottom:20px}
+    .about-meta-row{display:flex;flex-direction:column;gap:8px}
+    .about-disciplines,.about-tools{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
     .about-disc-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);flex-shrink:0}
-    .about-disc-list{font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,0.65);letter-spacing:0.05em}
+    .about-disc-list{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.04em}
+    /* Inline stat strip */
+    .about-stats-inline{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;color:rgba(255,255,255,0.38);margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.12)}
+    .about-stats-inline span.asi-val{color:rgba(255,255,255,0.7);font-weight:400}
+    /* hide old big stat cards — not used anymore */
+    .about-stats{display:none}
+    .stat{display:none}
 
     #services{padding:120px 56px;background:#0d1fd4;position:relative}
     .services-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
@@ -363,8 +380,7 @@
       #carouselOuter{min-height:340px}
 
       /* About */
-      .about-center{padding:60px 28px}
-      .about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+      .about-center{grid-template-columns:1fr;padding:60px 28px;gap:32px}
 
       /* Services */
       #services{padding-left:28px;padding-right:28px}
@@ -409,9 +425,7 @@
       #carouselOuter{min-height:310px}
 
       /* About */
-      .about-center{padding:48px 20px}
-      .about-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px}
-      .stat-num{font-size:clamp(32px,8vw,44px)}
+      .about-center{padding:48px 20px;gap:24px}
       .am-inner{font-size:clamp(20px,6vw,32px)}
 
       /* Services */
@@ -446,7 +460,6 @@
       .hero-title{font-size:clamp(36px,12vw,72px)}
       .work-item{width:200px;height:270px}
       #carouselOuter{min-height:270px}
-      .about-stats{display:grid;grid-template-columns:1fr}
       .po-hero{height:60vw;min-height:220px}
       .po-meta{padding:22px 16px 0}
       .po-desc{padding:20px 16px}
@@ -721,6 +734,7 @@
     .po-inner.po-animate .po-tag-row:nth-child(1){animation:poRevealUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.35s both}
     .po-inner.po-animate .po-tag-row:nth-child(2){animation:poRevealUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.44s both}
     .po-inner.po-animate .po-tag-row:nth-child(3){animation:poRevealUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.53s both}
+    .po-inner.po-animate .po-tag-row:nth-child(4){animation:poRevealUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.62s both}
 
     /* description */
     .po-desc{opacity:0}
@@ -1113,22 +1127,24 @@
   <div class="about-marquee-wrap" style="margin-bottom:48px">
     <div class="about-marquee about-marquee-left"><span class="am-inner"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span><span class="am-inner" aria-hidden="true"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span></div>
   </div>
-  <div class="about-center">
-    <h2 class="about-heading">GOOD DESIGN <em>ECHOES</em></h2>
-    <p class="about-intro">3D artist and motion designer turning brands into bold, moving visuals — based in Iran, working worldwide.</p>
-    <p class="about-body">I’m Roozbeh Ghanbarzadeh, a 3D artist and motion designer. I studied architecture at the Iran University of Science and Technology, where I built an eye for space, form and light — then taught myself 3D and motion design to bring that sensibility to screens and stories. Today I create work that helps brands establish a strong, lasting presence, from in-house work at Mofid Industries to independent client and concept projects.</p>
-    <div class="about-disciplines">
-      <span class="about-disc-label">What I do</span>
-      <span class="about-disc-list">3D Design &middot; 3D Motion &middot; 2D Motion &middot; Branding</span>
+  <div class="about-center" id="aboutCenter">
+    <div class="about-col-left">
+      <h2 class="about-heading" id="aboutHeading"><span class="aw">GOOD</span> <span class="aw">DESIGN</span> <span class="aw"><em>ECHOES</em></span></h2>
     </div>
-    <div class="about-tools">
-      <span class="about-disc-label">Tools</span>
-      <span class="about-disc-list">Cinema 4D &middot; Redshift &middot; After Effects &middot; Illustrator &middot; Photoshop</span>
-    </div>
-    <div class="about-stats">
-        <div class="stat reveal"><div class="stat-num">5+</div><div class="stat-label">Years active</div></div>
-        <div class="stat reveal"><div class="stat-num">3</div><div class="stat-label">Disciplines</div></div>
-        <div class="stat reveal"><div class="stat-num">∞</div><div class="stat-label">Iterations</div></div>
+    <div class="about-col-right" id="aboutColRight">
+      <p class="about-intro">3D artist and motion designer turning brands into bold, moving visuals — based in Iran, working worldwide.</p>
+      <p class="about-body">I studied architecture at the Iran University of Science and Technology, where I built an eye for space, form and light — then taught myself 3D and motion design to bring that sensibility to screens and stories. I create work that helps brands establish a strong, lasting presence.</p>
+      <div class="about-meta-row">
+        <div class="about-disciplines">
+          <span class="about-disc-label">What I do</span>
+          <span class="about-disc-list">3D Design &middot; 3D Motion &middot; 2D Motion &middot; Branding</span>
+        </div>
+        <div class="about-tools">
+          <span class="about-disc-label">Tools</span>
+          <span class="about-disc-list">Cinema 4D &middot; Redshift &middot; After Effects &middot; Illustrator &middot; Photoshop</span>
+        </div>
+        <div class="about-stats-inline"><span class="asi-val">5+</span> Years Active &nbsp;&middot;&nbsp; <span class="asi-val">3</span> Disciplines &nbsp;&middot;&nbsp; <span class="asi-val">&#8734;</span> Iterations</div>
+      </div>
     </div>
   </div><!-- end about-center -->
   <div class="about-marquee-wrap" style="margin-top:48px">
@@ -1210,7 +1226,7 @@
       <div class="po-tags">
         <div class="po-tag-row"><span class="po-tag-label">Category</span><span class="po-tag-value" id="poCatValue"></span></div>
         <div class="po-tag-row"><span class="po-tag-label">Year</span><span class="po-tag-value" data-field="year"></span></div>
-        <div class="po-tag-row"><span class="po-tag-label">Role</span><span class="po-tag-value" data-field="role"></span></div>
+        <div class="po-tag-row" id="poCreditsRow"><span class="po-tag-label">Credits</span><div id="poCreditsLines" style="margin-top:4px;display:flex;flex-direction:column;gap:3px"></div></div>
         <div class="po-tag-row" id="poTagsRow" style="display:none"><span class="po-tag-label">Tags</span><span class="po-tag-value" id="poTagsPills"></span></div>
       </div>
     </div>
@@ -1263,6 +1279,10 @@
       desc:'Identity and motion work for Rotbeyar, an Iranian institution preparing students for the Konkoor university-entrance exam. The aim: make a high-pressure academic brand feel supportive, modern and trustworthy.' },
     { id:'carnaval',        title:'Carnaval',           type:'2d-motion', tags:['Branding','Logo Animation','Concept'],gallery:5,
       desc:'A self-initiated project for Carnaval, a concept travel agency: an identity plus a short, celebratory logo animation built to capture the movement and energy of travel.' },
+    { id:'daal-campaign',  title:'Daal — Campaign',    type:'3d-design', tags:['Product/Campaign','Client'],           gallery:3, noMotion:true,
+      desc:'3D campaign visuals for Daal, an insurance company — a set of high-finish 3D designs created for their marketing campaigns.' },
+    { id:'daal-sales-report', title:'Daal — Sales Report', type:'2d-motion', tags:['Infographics','Explainer','Client'], gallery:2, hasFull:true,
+      desc:'A 2D motion piece for Daal, an insurance company, built from their annual sales report — turning dry figures into clear, animated storytelling.' },
   ];
 
   // LOCK SCROLL AND HIDE EVERYTHING IMMEDIATELY
@@ -1585,6 +1605,7 @@
       initAboutDot();
       initWorkBgCanvas();
       initServiceCardHover();
+      initAboutReveal();
       initHeroDotScroll(targetLeft, targetTop);
     }, 700);
   }
@@ -2424,69 +2445,109 @@
 
   function onScroll() {}
 
+  // ── About section reveal animations ─────────────────────────────────────
+  function initAboutReveal() {
+    var heading = document.getElementById('aboutHeading');
+    var colRight = document.getElementById('aboutColRight');
+    if (!heading || !colRight) return;
+    if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    var fired = false;
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!fired && entry.isIntersecting) {
+          fired = true;
+          heading.classList.add('aw-animate');
+          colRight.classList.add('ac-animate');
+          io.disconnect();
+        }
+      });
+    }, { threshold: 0.18 });
+    io.observe(document.getElementById('aboutCenter') || heading);
+  }
+
   // ── Service full-page image overlay ──────────────────────────────────────
   function initServiceCardHover() {
+    // Skip on touch — hover not reliable
+    if (window.matchMedia('(pointer:coarse)').matches) return;
     const cards = Array.from(document.querySelectorAll('.service-card'));
     const overlay = document.getElementById('serviceImageOverlay');
     const overlayImg = document.getElementById('serviceOverlayImg');
     const servicesEl = document.getElementById('services');
     if (!overlay || !overlayImg) return;
 
+    // One image per card (placeholder posters; owner swaps finals later)
+    const SVC_IMGS = [
+      'media/kerosene/poster.jpg',
+      'media/amirkabir-hotel/poster.jpg',
+      'media/arya/poster.jpg',
+      'media/rotbeyar/poster.jpg'
+    ];
+    // Assign data-svc-img to each card
+    cards.forEach(function(card, i) {
+      card.dataset.svcImg = SVC_IMGS[i % SVC_IMGS.length];
+    });
+
     // Clip fixed overlay to section bounds so image only shows within services area
     function updateClip() {
-      const r = servicesEl.getBoundingClientRect();
-      const t = Math.max(0, r.top), b = Math.max(0, window.innerHeight - r.bottom);
-      const l = Math.max(0, r.left), ri = Math.max(0, window.innerWidth - r.right);
-      overlay.style.clipPath = `inset(${t}px ${ri}px ${b}px ${l}px)`;
+      var r = servicesEl.getBoundingClientRect();
+      var t = Math.max(0, r.top), b = Math.max(0, window.innerHeight - r.bottom);
+      var l = Math.max(0, r.left), ri = Math.max(0, window.innerWidth - r.right);
+      overlay.style.clipPath = 'inset(' + t + 'px ' + ri + 'px ' + b + 'px ' + l + 'px)';
     }
     updateClip();
     window.addEventListener('scroll', updateClip, {passive:true});
     window.addEventListener('resize', updateClip, {passive:true});
 
-    const workImgs = Array.from(
-      document.querySelectorAll('.work-item:not([aria-hidden]) .work-img')
-    );
-    cards.forEach((card, i) => {
-      const src = workImgs[i % workImgs.length]?.src;
-      if (src) card.dataset.svcImg = src;
+    // Preload and measure brightness for each card image
+    var brightness = SVC_IMGS.map(function() { return 128; });
+    SVC_IMGS.forEach(function(src, i) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        try {
+          var c = document.createElement('canvas');
+          c.width = c.height = 16;
+          c.getContext('2d').drawImage(img, 0, 0, 16, 16);
+          var d = c.getContext('2d').getImageData(0, 0, 16, 16).data;
+          var s = 0;
+          for (var j = 0; j < d.length; j += 4) s += d[j]*0.299 + d[j+1]*0.587 + d[j+2]*0.114;
+          brightness[i] = s / (16 * 16);
+        } catch(e) {}
+      };
+      img.src = src;
     });
 
-    // Pre-compute image brightness for each card
-    function imgBrightness(imgEl) {
-      try {
-        const c = document.createElement('canvas');
-        c.width = c.height = 16;
-        c.getContext('2d').drawImage(imgEl, 0, 0, 16, 16);
-        const d = c.getContext('2d').getImageData(0, 0, 16, 16).data;
-        let s = 0;
-        for (let i = 0; i < d.length; i += 4) s += d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
-        return s / (16 * 16);
-      } catch(e) { return 128; }
+    // Also add a dim overlay so card text stays readable
+    overlay.style.setProperty('--svc-dim', '0.45');
+    if (!overlay.querySelector('.svc-dim-layer')) {
+      var dimEl = document.createElement('div');
+      dimEl.className = 'svc-dim-layer';
+      dimEl.style.cssText = 'position:absolute;inset:0;background:rgba(13,31,212,0.45);pointer-events:none;z-index:1';
+      overlay.appendChild(dimEl);
     }
-    const brightness = cards.map((_, i) => imgBrightness(workImgs[i % workImgs.length]));
 
     function hideOverlay() {
       overlay.classList.remove('active');
       document.body.classList.remove('svc-img-active');
-      servicesEl?.classList.remove('svc-active', 'svc-img-dark');
-      cards.forEach(c => c.classList.remove('svc-hovered'));
+      servicesEl.classList.remove('svc-active', 'svc-img-dark');
+      cards.forEach(function(c) { c.classList.remove('svc-hovered'); });
     }
 
-    cards.forEach((card, i) => {
-      card.addEventListener('mouseenter', () => {
-        const src = card.dataset.svcImg;
+    cards.forEach(function(card, i) {
+      card.addEventListener('mouseenter', function() {
+        var src = card.dataset.svcImg;
         if (src) { overlayImg.src = src; overlay.classList.add('active'); document.body.classList.add('svc-img-active'); }
-        servicesEl?.classList.add('svc-active');
-        servicesEl?.classList.toggle('svc-img-dark', brightness[i] < 100);
-        cards.forEach(c => c.classList.remove('svc-hovered'));
+        servicesEl.classList.add('svc-active');
+        servicesEl.classList.toggle('svc-img-dark', brightness[i] < 100);
+        cards.forEach(function(c) { c.classList.remove('svc-hovered'); });
         card.classList.add('svc-hovered');
       });
-      card.addEventListener('mouseleave', (e) => {
-        if (!e.relatedTarget?.closest?.('.service-card')) hideOverlay();
+      card.addEventListener('mouseleave', function(e) {
+        if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('.service-card')) hideOverlay();
       });
     });
 
-    servicesEl?.addEventListener('mouseleave', hideOverlay);
+    servicesEl.addEventListener('mouseleave', hideOverlay);
   }
 
   // ── Project overlay ──────────────────────────────────────────────────────
@@ -2545,6 +2606,14 @@
       observeGallery();
     }
 
+    var poCreditsRow  = document.getElementById('poCreditsRow');
+    var poCreditsLines= document.getElementById('poCreditsLines');
+    var DEFAULT_CREDITS = [
+      {name:'Roozbeh Ghanbarzadeh', title:'Art Director'},
+      {name:'Roozbeh Ghanbarzadeh', title:'3D Designer'},
+      {name:'Roozbeh Ghanbarzadeh', title:'Motion Designer'}
+    ];
+
     function populate(idx) {
       const p = projects[idx];
 
@@ -2565,19 +2634,32 @@
         poTagsRow.style.display = 'none';
       }
 
+      // Credits block (data-driven; falls back to 3-line placeholder)
+      if (poCreditsRow && poCreditsLines) {
+        var creds = (p.credits && p.credits.length) ? p.credits : DEFAULT_CREDITS;
+        poCreditsLines.innerHTML = creds.map(function(c) {
+          return '<span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.75)">'
+            + c.name
+            + ' <span style="color:rgba(255,255,255,0.35)">— ' + c.title + '</span></span>';
+        }).join('');
+      }
+
       // Hero — poster image + centered play button.
+      // p.noMotion = true means a 3D-design stills-only project: show big poster, no play button.
       // Click play -> plays WITH SOUND: full.mp4 if hasFull, else motion.mp4 unmuted.
-      // Vertical/square videos: object-fit:contain + blurred backdrop. No motion -> big poster only.
+      // Vertical/square videos: object-fit:contain + blurred backdrop.
       (function buildHero() {
         heroEl.querySelectorAll('img, video, .po-hero-placeholder, .po-full-btn, .po-hero-play-wrap, .po-hero-blur-bg').forEach(function(el) { el.remove(); });
 
-        const hasVideo = !!(p.hasFull || true); // motion.mp4 always present if not a pure-still project
         // poster image
         const posterImg = new Image();
         posterImg.src = 'media/' + p.id + '/poster.jpg';
         posterImg.onload = function() { posterImg.classList.add('loaded'); };
         posterImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
         heroEl.appendChild(posterImg);
+
+        // no motion for this project — show poster only, no play button
+        if (p.noMotion) return;
 
         // blurred backdrop (shown when video goes contain)
         const blurBg = document.createElement('div');
@@ -3019,6 +3101,12 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     };
   });
 
+  // Entrance: park each sphere off-screen to the LEFT; when the section first
+  // scrolls into view they slide in, then hand off to the normal drift physics.
+  bodies.forEach(b => { b.home = b.mesh.position.clone(); b.startX = b.home.x - (2 * halfW + 6) - Math.random() * 5; b.mesh.position.x = b.startX; });
+  let entering = false, enteredOnce = false, enterStart = 0;
+  let speedCap = 0.02;   // raised briefly on click so spheres scatter, then eases back
+
   // Mouse → world position on the z=0 plane (objects gently flee from it)
   const mouse = new THREE.Vector3(999, 999, 0);
   window.addEventListener('mousemove', e => {
@@ -3026,6 +3114,20 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     if (e.clientY < rect.top || e.clientY > rect.bottom) { mouse.set(999, 999, 0); return; }
     mouse.set(((e.clientX - rect.left) / rect.width * 2 - 1) * halfW,
               -((e.clientY - rect.top) / rect.height * 2 - 1) * halfH, 0);
+  }, {passive: true});
+
+  // Click anywhere in the section → spheres scatter away from the click point
+  window.addEventListener('click', e => {
+    const rect = canvas.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+    const cx = ((e.clientX - rect.left) / rect.width * 2 - 1) * halfW;
+    const cy = -((e.clientY - rect.top) / rect.height * 2 - 1) * halfH;
+    speedCap = 0.09;
+    for (const b of bodies) {
+      const dx = b.mesh.position.x - cx, dy = b.mesh.position.y - cy, d = Math.hypot(dx, dy) || 0.001;
+      const f = Math.min(0.12, 0.9 / (d * d + 0.4));
+      b.vel.x += dx / d * f; b.vel.y += dy / d * f;
+    }
   }, {passive: true});
 
   function resize() {
@@ -3040,19 +3142,35 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   new ResizeObserver(resize).observe(section);
 
   let visible = false;
-  new IntersectionObserver(es => { visible = es[0].isIntersecting; }, {rootMargin: '100px'}).observe(section);
+  new IntersectionObserver(es => {
+    visible = es[0].isIntersecting;
+    if (visible && !enteredOnce) { enteredOnce = true; entering = true; enterStart = performance.now(); }
+  }, {rootMargin: '100px'}).observe(section);
 
   const tmp = new THREE.Vector3();
   function tick() {
     requestAnimationFrame(tick);
     if (!visible) return;
+    // entrance: slide spheres in from the left, then hand off to normal physics
+    if (entering) {
+      const t = Math.min((performance.now() - enterStart) / 950, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      for (const b of bodies) {
+        b.mesh.position.x = b.startX + (b.home.x - b.startX) * ease;
+        b.mesh.rotation.x += b.spin.x; b.mesh.rotation.y += b.spin.y; b.mesh.rotation.z += b.spin.z;
+      }
+      if (t >= 1) entering = false;
+      renderer.render(scene, camera);
+      return;
+    }
+    speedCap += (0.02 - speedCap) * 0.03;   // click energy eases back to calm
     for (const b of bodies) {
       // gentle mouse repulsion
       tmp.subVectors(b.mesh.position, mouse); tmp.z = 0;
       const md = tmp.length();
       if (md < 4 && md > 0.001) b.vel.addScaledVector(tmp.normalize(), (4 - md) * 0.0011);
       // drift + spin (capped slow speed)
-      b.vel.clampLength(0, 0.02);
+      b.vel.clampLength(0, speedCap);
       b.mesh.position.add(b.vel);
       b.mesh.rotation.x += b.spin.x; b.mesh.rotation.y += b.spin.y; b.mesh.rotation.z += b.spin.z;
       // soft invisible walls: drift partly off the left/right edge, then get
