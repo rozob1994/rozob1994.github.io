@@ -408,7 +408,7 @@
       /* Project overlay */
       .po-meta{flex-direction:column;padding:40px 40px 0;gap:24px}
       .po-title{font-size:clamp(28px,5vw,56px)}
-      .po-desc{padding:36px 40px}
+      .po-desc{padding:0;margin-top:18px}
       .po-gallery{padding:40px 40px 60px;column-count:2}
       .po-scrollbar{right:12px}
     }
@@ -458,7 +458,7 @@
       .po-meta{padding:28px 20px 0;gap:20px}
       .po-title{font-size:clamp(24px,6vw,44px)}
       .po-tags{min-width:0;flex-direction:row;flex-wrap:wrap;gap:16px 28px}
-      .po-desc{padding:24px 20px;font-size:clamp(14px,3.5vw,18px)}
+      .po-desc{padding:0;margin-top:16px;font-size:clamp(16px,4vw,19px)}
       .po-gallery{padding:32px 20px 48px;column-count:2;column-gap:6px}
       .po-arrow{width:32px;height:32px;left:12px}
       .po-arrow-right{left:auto;right:12px}
@@ -473,7 +473,7 @@
       #carouselOuter{min-height:270px}
       .po-hero{aspect-ratio:16/9;height:auto;min-height:0;max-height:none}
       .po-meta{padding:22px 16px 0}
-      .po-desc{padding:20px 16px}
+      .po-desc{padding:0;margin-top:14px}
       .po-gallery{padding:28px 16px 40px;column-count:2}
     }
 
@@ -682,9 +682,10 @@
       display:flex;justify-content:space-between;align-items:flex-start;
       padding:56px 80px 0;gap:40px;
     }
+    .po-meta-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
     .po-title{
       font-family:var(--font-display);font-size:clamp(36px,5vw,72px);
-      font-weight:800;color:#fff;line-height:1;flex:1;
+      font-weight:800;color:#fff;line-height:1;
     }
     .po-tags{
       display:flex;flex-direction:column;gap:16px;
@@ -702,11 +703,11 @@
       color:rgba(255,255,255,0.8);
     }
 
-    /* description — sits right under the title/meta block, not glued to the gallery */
+    /* description — sits directly under the title in the left column */
     .po-desc{
-      padding:18px 80px 0;max-width:760px;
+      margin:22px 0 0;padding:0;max-width:600px;
       font-family:var(--font-display);font-size:clamp(18px,1.7vw,23px);
-      font-weight:400;color:rgba(255,255,255,0.62);line-height:1.65;
+      font-weight:400;color:rgba(255,255,255,0.62);line-height:1.6;
     }
 
     /* ── project overlay entrance animations ─────────────────────────── */
@@ -964,7 +965,6 @@
     .mofid-expand-name{font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .mofid-expand-desc{font-family:var(--font-body);font-size:13px;line-height:1.5;color:rgba(255,255,255,0.6);margin:0;max-width:760px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .mofid-expand-cat-label{font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);flex:0 0 auto;align-self:flex-start;padding-top:3px}
-    .mofid-expand-desc{display:none}
     .mofid-expand-stills{display:none}
     .mofid-expand-x{position:absolute;top:14px;right:16px;z-index:6;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:none;padding:0;transition:background 0.2s,border-color 0.2s,transform 0.2s}
     .mofid-expand-x:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:scale(1.1)}
@@ -1232,7 +1232,10 @@
       </button>
     </div>
     <div class="po-meta">
-      <h2 class="po-title"></h2>
+      <div class="po-meta-main">
+        <h2 class="po-title"></h2>
+        <p class="po-desc"></p>
+      </div>
       <div class="po-tags">
         <div class="po-tag-row"><span class="po-tag-label">Category</span><span class="po-tag-value" id="poCatValue"></span></div>
         <div class="po-tag-row"><span class="po-tag-label">Year</span><span class="po-tag-value" data-field="year"></span></div>
@@ -1240,7 +1243,6 @@
         <div class="po-tag-row" id="poTagsRow" style="display:none"><span class="po-tag-label">Tags</span><span class="po-tag-value" id="poTagsPills"></span></div>
       </div>
     </div>
-    <p class="po-desc"></p>
     <div class="po-gallery"><!-- gallery items built by JS from project data --></div>
   </div>
 </div>
@@ -1639,7 +1641,7 @@
     // Everything starts moving at t=0
     fCanvas.style.opacity          = '0';         // canvas dissolves
     canvasBg.style.opacity         = '0';         // blue cover fades — hero animation now visible
-    heroEl.style.height            = '50vh';       // blue collapses to final height
+    heroEl.style.height            = '40vh';       // blue collapses to final height (matches the settled min-height so there's no snap)
     heroContent.style.transform    = 'translateY(0)'; // text rises from below into position
     heroContent.style.pointerEvents = 'all';
 
