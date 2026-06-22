@@ -40,6 +40,12 @@
     nav.on-blue .nav-links a:hover{color:#fff}
     nav.on-blue .nav-logo img{filter:brightness(0) invert(1)}
     nav.on-blue.scrolled{background:rgba(13,31,212,0.88);border-color:rgba(255,255,255,0.1)}
+    /* When the project overlay is open, the nav goes solid dark (not blue) so it
+       reads as part of the overlay chrome instead of a distracting blue ribbon. */
+    body.po-active #navbar{background:#07080f;border-bottom-color:rgba(255,255,255,0.08);backdrop-filter:none}
+    body.po-active #navbar .nav-links a{color:rgba(255,255,255,0.6)}
+    body.po-active #navbar .nav-links a:hover{color:#fff}
+    body.po-active #navbar .nav-logo img{filter:brightness(0) invert(1)}
     .nav-logo{display:none}
     .nav-logo img{height:32px;width:auto;filter:brightness(0) invert(1)}
     .nav-links{list-style:none;display:flex;gap:44px}
@@ -443,7 +449,7 @@
       footer{padding:16px 20px;flex-direction:column;gap:12px;align-items:flex-start}
 
       /* Project overlay */
-      .po-hero{height:52vw;min-height:260px}
+      .po-hero{aspect-ratio:16/9;height:auto;min-height:0;max-height:none}
       .po-meta{padding:28px 20px 0;gap:20px}
       .po-title{font-size:clamp(24px,6vw,44px)}
       .po-tags{min-width:0;flex-direction:row;flex-wrap:wrap;gap:16px 28px}
@@ -461,7 +467,7 @@
       .hero-title{font-size:clamp(36px,12vw,72px)}
       .work-item{width:200px;height:270px}
       #carouselOuter{min-height:270px}
-      .po-hero{height:60vw;min-height:220px}
+      .po-hero{aspect-ratio:16/9;height:auto;min-height:0;max-height:none}
       .po-meta{padding:22px 16px 0}
       .po-desc{padding:20px 16px}
       .po-gallery{padding:0 16px 40px}
@@ -651,12 +657,12 @@
 
     /* hero */
     .po-hero{
-      width:100%;height:70vh;min-height:420px;
+      width:100%;aspect-ratio:16/9;max-height:calc(100vh - 96px);
       background:#0d1020;
       overflow:hidden;position:relative;
     }
     .po-hero img,.po-hero video{
-      width:100%;height:100%;object-fit:cover;display:block;
+      width:100%;height:100%;object-fit:contain;display:block;
       opacity:0;transition:opacity 0.6s ease;
     }
     .po-hero img.loaded,.po-hero video.loaded{opacity:1}
@@ -2727,22 +2733,22 @@
       (function buildHero() {
         heroEl.querySelectorAll('img, video, .po-hero-placeholder, .po-full-btn, .po-hero-play-wrap, .po-hero-blur-bg').forEach(function(el) { el.remove(); });
 
-        // poster image
+        // Blurred backdrop fills the fixed 16:9 frame behind the media, so a
+        // vertical or off-ratio source is letterboxed over a soft fill rather
+        // than hard black bars. Always present (poster + video are contained).
+        const blurBg = document.createElement('div');
+        blurBg.className = 'po-hero-blur-bg';
+        blurBg.style.backgroundImage = 'url("media/' + p.id + '/poster.jpg")';
+        heroEl.appendChild(blurBg);
+
+        // poster image — contained inside the 16:9 frame (CSS object-fit:contain)
         const posterImg = new Image();
         posterImg.src = 'media/' + p.id + '/poster.jpg';
         posterImg.onload = function() { posterImg.classList.add('loaded'); };
-        posterImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
         heroEl.appendChild(posterImg);
 
         // no motion for this project — show poster only, no play button
         if (p.noMotion) return;
-
-        // blurred backdrop (shown when video goes contain)
-        const blurBg = document.createElement('div');
-        blurBg.className = 'po-hero-blur-bg';
-        blurBg.style.backgroundImage = 'url("media/' + p.id + '/poster.jpg")';
-        blurBg.style.display = 'none';
-        heroEl.insertBefore(blurBg, posterImg);
 
         // play button overlay
         const playWrap = document.createElement('div');
@@ -2756,9 +2762,8 @@
         heroEl.appendChild(playWrap);
 
         playWrap.addEventListener('click', function() {
-          // remove poster and play button
+          // remove poster and play button (blur backdrop stays for letterboxing)
           posterImg.remove();
-          blurBg.style.display = '';
           playWrap.remove();
 
           const src = p.hasFull ? 'media/' + p.id + '/full.mp4' : 'media/' + p.id + '/motion.mp4';
@@ -2774,17 +2779,8 @@
           // a dynamically-added play video must get .loaded too or it stays
           // invisible while the audio plays. Reveal it once the first frame is ready.
           vid.addEventListener('loadeddata', function() { vid.classList.add('loaded'); }, { once: true });
-          // detect orientation after metadata loads -> contain for vertical/square
-          vid.addEventListener('loadedmetadata', function() {
-            if (vid.videoWidth <= vid.videoHeight) {
-              vid.classList.add('po-vid-contain');
-              blurBg.style.display = '';
-            } else {
-              vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-              blurBg.style.display = 'none';
-            }
-          }, { once: true });
-          vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+          // object-fit:contain (CSS) keeps the 16:9 frame: 16:9 fills it, vertical
+          // is letterboxed over the blur backdrop.
           heroEl.appendChild(vid);
           vid.play().catch(function(){});
         });
@@ -2907,6 +2903,7 @@
       lastFocused = document.activeElement;
       populate(idx);
       overlay.classList.add('po-open');
+      document.body.classList.add('po-active');
       closeBtn.classList.add('visible');
       scrollbar.classList.add('visible');
       overlay.scrollTop = 0;
@@ -2919,6 +2916,7 @@
 
     function closeVisuals() {
       overlay.classList.remove('po-open');
+      document.body.classList.remove('po-active');
       closeBtn.classList.remove('visible');
       scrollbar.classList.remove('visible');
       if (galleryObserver) galleryObserver.disconnect();
