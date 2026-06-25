@@ -336,10 +336,8 @@
     #contactContent{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 56px;pointer-events:none}
 
     .contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto}
-    .contact-photo{aspect-ratio:3/4;background:rgba(0,0,0,0.15);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:500px;position:relative}
+    .contact-photo{aspect-ratio:3/4;background:rgba(0,0,0,0.15);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:500px}
     .contact-photo img{width:100%;height:100%;object-fit:cover;display:block}
-    .contact-photo .cp-hover{position:absolute;inset:0;opacity:0;transition:opacity 0.45s cubic-bezier(0.16,1,0.3,1)}
-    .contact-photo:hover .cp-hover{opacity:1}
     .contact-photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:16px}
     .contact-photo-initials{font-family:var(--font-display);font-size:80px;font-weight:800;color:rgba(0,0,0,0.2)}
     .contact-photo-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,0.3)}
@@ -1189,8 +1187,7 @@
       <div id="contactContent">
       <div class="contact-inner">
         <div class="contact-photo">
-          <img src="media/contact-photo.jpg" alt="Roozbeh Ghanbarzadeh" class="cp-base" />
-          <img src="media/contact-photo-hover.jpg" alt="" aria-hidden="true" class="cp-hover" />
+          <img src="media/contact-photo.jpg" alt="Roozbeh Ghanbarzadeh" />
         </div>
         <div class="contact-info">
           <div class="contact-pre">Let's work together</div>
