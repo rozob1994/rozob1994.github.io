@@ -1187,20 +1187,18 @@
       <div id="contactContent">
       <div class="contact-inner">
         <div class="contact-photo">
-          <div class="contact-photo-placeholder">
-            <div class="contact-photo-initials">RG</div>
-            <div class="contact-photo-label">Photo coming soon</div>
-          </div>
+          <img src="media/contact-photo.jpg" alt="Roozbeh Ghanbarzadeh" />
         </div>
         <div class="contact-info">
           <div class="contact-pre">Let's work together</div>
           <h2 class="contact-heading">SAY<br>HELLO.</h2>
-          <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-email">Roozbeh.ghanbarzadeh1994@gmail.com</a>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-email">Roozbeh.ghanbarzadeh1994@gmail.com</a>
+            <a href="tel:+989021869510" class="contact-email">+98 902 186 9510</a>
+          </div>
           <ul class="contact-socials">
-            <li><a href="https://instagram.com/eccho.motions" target="_blank">Instagram</a></li>
-            <li><a href="#" target="_blank">Behance</a></li>
-            <li><a href="#" target="_blank">LinkedIn</a></li>
-            <li><a href="#" target="_blank">Vimeo</a></li>
+            <li><a href="https://www.instagram.com/eccho.motions/" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="https://www.linkedin.com/in/roozbeh-ghanbarzadeh-ba41ab104/" target="_blank" rel="noopener">LinkedIn</a></li>
           </ul>
           <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-cta">Start a project</a>
         </div>
@@ -1275,11 +1273,13 @@
   const ECCHO_CATS = { '3d-design': '3D Design', '3d-motion': '3D Motion', '2d-motion': '2D Motion' };
   // Personal projects only (Mofid is a separate tab, not a personal card)
   const ECCHO_PROJECTS = [
-    { id:'amirkabir-hotel', title:'Amirkabir Hotel',   type:'2d-motion', tags:['Branding','Logo Animation','Client'], gallery:3, hasFull:true,
+    { id:'amirkabir-hotel', title:'Amirkabir Hotel',   type:'2d-motion', tags:['Branding','Logo Animation','Client'], gallery:7, hasFull:true,
+      credits:[{name:'Ehsan Abbasi', title:'Art Director & Graphic Designer', url:'https://www.behance.net/ehsanabbbbasi'},{name:'Roozbeh Ghanbarzadeh', title:'Motion Designer'}],
       desc:'A 2D motion piece launching the rebrand of Amirkabir Hotel in Arak, Iran. The animation walks through the new identity — logo, type and motion language — and is among my strongest work to date: polished, rhythm-driven, and confident.' },
     { id:'kerosene',        title:'Kerosene',           type:'3d-motion', tags:['Editorial','Client'],                 gallery:3, hasFull:true,
       desc:'3D motion design for Kerosene, a podcast on oil and its grip on the economy and culture of Iran and the wider Middle East. Some of my strongest 3D motion work — turning a heavy, abstract subject into striking, oil-slicked visuals that give the show its on-screen identity.' },
-    { id:'spad-foolad',     title:'Spad Foolad',        type:'2d-motion', tags:['Logo Animation','Branding','Client'], gallery:0, hasFull:true,
+    { id:'spad-foolad',     title:'Spad Foolad',        type:'2d-motion', tags:['Logo Animation','Branding','Client'], gallery:6, hasFull:true,
+      credits:[{name:'Hossein Razaqnejad', title:'Art Director & Graphic Designer', url:'https://www.behance.net/hosseinrazaqne'},{name:'Roozbeh Ghanbarzadeh', title:'Motion Designer'}],
       desc:'A 2D motion piece for Spad Foolad, a steel company. Working from a brand designed by a friend, I animated the story of the logo — how the mark is built and what it stands for — giving a heavy-industry identity a precise sense of movement.' },
     { id:'arya',            title:'Arya',               type:'2d-motion', tags:['Logo Animation','Concept'],           gallery:5,
       desc:'A self-initiated brand concept for Arya, a maker of children\'s toys and art supplies — modelling clay, gouache, and creative kits made mostly for kids, and for the kid in every adult. The identity leans into colour, texture and play, built to feel as hands-on and joyful as the products themselves.' },
@@ -2495,6 +2495,7 @@
       if (modalOpen) closeModal();
       buildOverlayDOM();
       overlay.classList.add('mofid-open');
+      document.body.classList.add('po-active');   // darken the nav so it isn't a jarring blue bar over the overlay
       closeBtn.classList.add('visible');
       document.body.style.overflow = 'hidden';
       overlay.scrollTop = 0;
@@ -2516,6 +2517,7 @@
     function closeMofidOverlay() {
       closeModal();
       overlay.classList.remove('mofid-open');
+      document.body.classList.remove('po-active');
       closeBtn.classList.remove('visible');
       document.body.style.overflow = '';
     }
@@ -2831,8 +2833,11 @@
       if (poCreditsRow && poCreditsLines) {
         var creds = (p.credits && p.credits.length) ? p.credits : DEFAULT_CREDITS;
         poCreditsLines.innerHTML = creds.map(function(c) {
+          var nameHtml = c.url
+            ? '<a href="' + c.url + '" target="_blank" rel="noopener" style="color:var(--yellow);text-decoration:none;border-bottom:1px solid rgba(245,217,78,0.45);cursor:pointer">' + c.name + '</a>'
+            : c.name;
           return '<span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.75)">'
-            + c.name
+            + nameHtml
             + ' <span style="color:rgba(255,255,255,0.35)">— ' + c.title + '</span></span>';
         }).join('');
       }
