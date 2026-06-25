@@ -336,8 +336,10 @@
     #contactContent{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 56px;pointer-events:none}
 
     .contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto}
-    .contact-photo{aspect-ratio:3/4;background:rgba(0,0,0,0.15);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:500px}
+    .contact-photo{aspect-ratio:3/4;background:rgba(0,0,0,0.15);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:500px;position:relative}
     .contact-photo img{width:100%;height:100%;object-fit:cover;display:block}
+    .contact-photo .cp-hover{position:absolute;inset:0;opacity:0;transition:opacity 0.45s cubic-bezier(0.16,1,0.3,1)}
+    .contact-photo:hover .cp-hover{opacity:1}
     .contact-photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:16px}
     .contact-photo-initials{font-family:var(--font-display);font-size:80px;font-weight:800;color:rgba(0,0,0,0.2)}
     .contact-photo-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,0.3)}
@@ -1187,7 +1189,8 @@
       <div id="contactContent">
       <div class="contact-inner">
         <div class="contact-photo">
-          <img src="media/contact-photo.jpg" alt="Roozbeh Ghanbarzadeh" />
+          <img src="media/contact-photo.jpg" alt="Roozbeh Ghanbarzadeh" class="cp-base" />
+          <img src="media/contact-photo-hover.jpg" alt="" aria-hidden="true" class="cp-hover" />
         </div>
         <div class="contact-info">
           <div class="contact-pre">Let's work together</div>
@@ -2255,6 +2258,45 @@
       'exhibition-explainer-motion': 'An explainer piece turning a complex offering into a clear, watchable sequence — the struggle was pacing dense information so it stays effortless to follow.',
       'mofid-card-concept-motion': 'A concept animation exploring the Mofid card — testing how product, motion and brand can move as a single idea.'
     };
+    // Per-video descriptions (written from the actual frames). Falls back to the
+    // category copy above, then a generic line, for anything not listed here.
+    var MOFID_DESC_BY_SLUG = {
+      'aram-pre-roll': 'A pre-roll for the Aram fixed-income fund — a glass arrow climbing out of a market grid, built to read as steady and upward in a couple of seconds.',
+      'atlas-pre-roll-edited-2': 'Brand pre-roll for the Atlas fund — a glowing safe-dial cube rising from a field of red and green market blocks, framing it as a profitable, sure-footed symbol.',
+      'ayar-new-campaign-test-3-with-sound': 'Campaign pre-roll for Ayar, the gold fund — a crescent vault heaped with gold coins, warm and weighty, made to feel as solid as the asset itself.',
+      'ayar-pre-roll-edited-2': 'A pre-roll built around a spiralling stack of gold coins and a glass vault dial, selling the fixed-income story with shine and slow, deliberate motion.',
+      'ayar-pre-roll-red-cloth-7': 'A pre-roll for the Ayar gold fund staged on deep red velvet with stacked bullion and coins — luxurious, high-contrast, and unmistakably about gold.',
+      'bakhshi-pre-roll-edited': 'Pre-roll for the Mofid sector funds — a translucent glass safe-dial on a pedestal, positioning the fund as a symbol as wide as an industry.',
+      'cemano-pre-roll-edited-2': 'Pre-roll for the cement-sector fund — a concrete 3D skyline with the Mofid dial planted on top, built around the idea of a solid foundation for investment.',
+      'daroono-pre-roll-with-sound': 'Pre-roll for Daroono, the pharmaceutical-sector ETF — teal and gold capsules in soft studio light, turning a dry sector into a clean, premium frame.',
+      'khodran-pre-roll-edited-2': 'Pre-roll for the auto-sector fund — ranks of pale 3D cars led by a single red safe-dial block, all about overtaking the growth of automotive stocks.',
+      'main-version-2-fixed-loop': 'A looping hero pre-roll — a gold vault wheel turning through warm bokeh and glass, the seamless brand bumper the other cuts build from.',
+      'octane-kv-test-6': 'A key-visual pre-roll — a gold safe-dial suspended in a glass cube over a teal base, the cleanest and most product-like cut of the Mofid identity.',
+      'sahami-motion-design-edited-1': 'Pre-roll for the equity fund — soft-focus teal blocks drifting through depth of field, a calmer and more abstract take on the brand world.',
+      'tavan-motion-edited-pre-roll-with-sound': 'Pre-roll for Tavan, the leveraged fund — a single coin multiplying into an endless stack toward an infinity sign, a one-line visual for amplified returns.',
+      'intro-motion-version-2': 'Identity test for Goftogu, a talk sub-brand — a chat-bubble mark with a small broadcast dish, explored in clean, friendly motion.',
+      'mofid-4-9-glass-motion': 'A material study for Mofid 4.0 — light refracting through a glass cube edge into crisp chromatic fringes, testing how far the identity can lean on real glass.',
+      'safes-ident-loop-2-edited': 'An identity loop — a transparent glass safe holding gold dots, probing the idea of a vault that is secure but open.',
+      'safes-ident-loop-variety-concept': 'A variety pass on the safe identity — scattered translucent cubes and hexagons flecked with gold, hunting for the right balance of order and drift.',
+      'safes-ident-loop': 'An identity loop — an angled wall of tiny play-button tiles in teal with glass cubes along the edge, testing pattern and rhythm for the system.',
+      'test-1': 'Identity R&D — the Mofid card and dial inside a warm bokeh field of teal and gold lights, feeling out a richer, more cinematic brand mood.',
+      'test-2': 'A grid study — an array of teal cubes drilled with gold-filled holes, shot with shallow depth of field to explore texture and repetition.',
+      'test-3': 'Identity R&D — a rising stack of gold coins beside the Mofid dial on a teal stage, a compact test of the brand growth beat.',
+      'atieh-motion-edited': 'Logo animation for Atieh, the supplementary pension fund — a calm sunrise mark resolving on white, warmth and reassurance for a long-horizon product.',
+      'hakemiat-serkati-motion-graphics-test-8-with-sound': 'Title motion for Corporate Governance — bold Persian lettering interlocking with teal and tan geometric shapes, editorial and confident.',
+      'logo-shapes-precomp': 'A minimal logo build — the MCE mark assembling from clean geometric strokes on cream, a precomp testing pacing and weight.',
+      'negah-1403-branded': 'Logomotion for Negah 1403 — the mark blooming out of concentric teal ripples, an outlook brand with quiet authority.',
+      'negah-logomotion-final': 'The final Negah 1404 logomotion — a lighter, refined build of the mark on warm cream, the locked version of the annual identity.',
+      'test-1-with-sound': 'A logo reveal test — a glowing gold coin settling on deep red with drifting particles, dark and premium.',
+      'aix-3d-loop-4k': 'A loop for the AIX exhibition — a dark cube packed with glowing magenta crystal shards, a moody hero made for the show floor.',
+      'aix-3d-loop-pollished-glitched-edited-2-4k': 'A polished, lightly glitched AIX loop — macro magenta and violet glass prisms catching light, built to read big and bold from a distance.',
+      'aix-motion-graphics-with-sound': 'The AIX title animation — the logo resolving over a magenta gradient and a faint chevron pattern, the on-screen signature for the show.',
+      'jahat-1403-teaser': 'Teaser for the annual Jahat festival, 1403 — a quiet field of teal cubes rippling across a white surface, an understated and premium open.',
+      'jahat-logomotion-final': 'The Jahat festival logomotion — a bold teal arrow sweeping up over rolling hills, a clean mark for growth and momentum.',
+      'safe-motion-expo-ready': 'An expo-ready explainer beat — the Mofid dial framed by glowing orbs over a grid floor, introducing the Aram fund in a calm, legible way.',
+      'safes-promo-on-logo-edited-2': 'A promo logo reveal — the Mofid bird mark glowing teal out of a soft haze, a clean stinger built for exhibition screens.',
+      'main': 'A concept animation for the Mofid Card — the teal card fanning open inside an orbiting gold ring, testing how the product and the brand move as one.'
+    };
     // flat list of all works in section order for prev/next
     var allWorks = [];
     MOFID_SECTIONS_DATA.forEach(function(sec) {
@@ -2342,7 +2384,7 @@
       fullVid.src = 'media/mofid/' + work.catKey + '/' + work.slug + '.mp4';
       fullVid.poster = 'media/mofid/' + work.catKey + '/' + work.slug + '.jpg';
       nameEl.textContent = slugToTitle(work.slug);
-      descEl.textContent = MOFID_DESC[work.catKey] || 'In-house motion design for Mofid Securities — built to give the brand a confident, consistent voice on screen.';
+      descEl.textContent = MOFID_DESC_BY_SLUG[work.slug] || MOFID_DESC[work.catKey] || 'In-house motion design for Mofid Securities — built to give the brand a confident, consistent voice on screen.';
       catLabelEl.textContent = work.catLabel;
       fullVid.play().catch(function(){});
     }
