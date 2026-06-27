@@ -182,13 +182,34 @@
     /* SECTIONS */
     .section-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--yellow);margin-bottom:56px;display:flex;align-items:center;gap:18px}
 
-    #work{padding:64px 56px 110px 56px;background:#07080f;position:relative;overflow:visible;z-index:22}
+    #work{padding:64px 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
+    #work .work-intro{color:#15161d}
+    #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
+    #work .work-tab{color:rgba(21,22,29,0.28)}
+    #work .work-tab--active{color:#15161d;border-bottom-color:#15161d}
+    #work .work-tab:hover:not(.work-tab--active){color:rgba(21,22,29,0.58)}
+    #work .rest-label{color:rgba(21,22,29,0.5);border-top-color:rgba(0,0,0,0.14)}
+    #work .filter-btn{color:rgba(21,22,29,0.5);border-color:rgba(0,0,0,0.14)}
+    #work .filter-btn:hover{color:#15161d;border-color:rgba(0,0,0,0.4);background:rgba(0,0,0,0.03);box-shadow:none}
+    #work .filter-btn.active{color:#e9e9ec;background:#15161d;border-color:#15161d}
+    #work .work-burger{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.18)}
+    #work .work-burger-label{color:#15161d}
+    #work .work-burger-icon span{background:#15161d}
+    #work .work-burger-wrap:hover .work-burger,#work .work-burger-wrap.burger-open .work-burger,#work .work-burger:hover{border-color:#15161d;background:rgba(0,0,0,0.07);box-shadow:none}
+    /* Nav over the light work section */
+    nav.on-light{color:#15161d}
+    nav.on-light .nav-logo-word{color:#15161d}
+    nav.on-light .nav-links a{color:rgba(21,22,29,0.55)}
+    nav.on-light .nav-links a:hover{color:#15161d}
+    nav.on-light .nav-toggle span{background:#15161d}
+    nav.on-light.scrolled{background:rgba(233,233,236,0.92);border-color:rgba(0,0,0,0.08)}
     /* Bold studio statement above the work tabs */
     .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.5vw,56px);line-height:1.06;letter-spacing:-.015em;color:#fff;max-width:20ch;margin:0 0 clamp(36px,4.5vw,64px)}
     .work-intro .wi-soft{color:rgba(255,255,255,0.42)}
     .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
     @media(max-width:600px){.work-intro{max-width:none}}
-    #workBgCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;opacity:0;transition:opacity 1.4s var(--ease)}
+    #workBgCanvas{display:none}
     .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
     #work .work-header{position:relative;z-index:6}
     #work #carouselOuter{position:relative;z-index:1}
@@ -966,7 +987,7 @@
     .mofid-expand-backdrop.open{opacity:1;pointer-events:auto}
     .mofid-expand-panel{
       position:fixed;top:0;bottom:0;left:50%;z-index:10200;
-      width:min(1080px,94vw);
+      width:min(1404px,96vw);
       transform:translateX(-50%) translateY(26px);
       background:#0b0d18;
       border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);
@@ -988,12 +1009,12 @@
     .me-rel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
     .me-rel:hover img{transform:scale(1.08)}
     .me-rel-cap{position:absolute;left:0;right:0;bottom:0;padding:16px 12px 11px;z-index:2;background:linear-gradient(to top,rgba(7,8,15,0.9),rgba(7,8,15,0));font-family:var(--font-display);font-weight:600;font-size:13px;line-height:1.15;color:#fff}
-    .mofid-expand-x{position:fixed;top:16px;right:max(16px,calc(50% - min(540px,47vw) + 14px));z-index:10300;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.6);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transition:background .2s,border-color .2s,transform .2s}
+    .mofid-expand-x{position:fixed;top:16px;right:max(16px,calc(50% - min(702px,48vw) + 14px));z-index:10300;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.6);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transition:background .2s,border-color .2s,transform .2s}
     .mofid-expand-x.visible{display:flex}
     .mofid-expand-x:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:scale(1.1)}
     .mofid-expand-prev,.mofid-expand-next{position:fixed;top:50%;z-index:10300;width:48px;height:48px;border-radius:50%;background:rgba(13,16,32,0.82);border:1.5px solid rgba(255,255,255,0.25);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transform:translateY(-50%);transition:background .2s,border-color .2s,transform .2s}
-    .mofid-expand-prev{left:max(8px,calc(50% - min(540px,47vw) - 60px))}
-    .mofid-expand-next{right:max(8px,calc(50% - min(540px,47vw) - 60px))}
+    .mofid-expand-prev{left:max(8px,calc(50% - min(702px,48vw) - 60px))}
+    .mofid-expand-next{right:max(8px,calc(50% - min(702px,48vw) - 60px))}
     .mofid-expand-prev.visible,.mofid-expand-next.visible{display:flex}
     .mofid-expand-prev:hover,.mofid-expand-next:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:translateY(-50%) scale(1.1)}
     @media(max-width:900px){.me-related-grid{grid-template-columns:repeat(2,1fr)}}
@@ -1750,7 +1771,7 @@
       initContactIcons();
       initNavSection();
       initAboutDot();
-      initWorkBgCanvas();
+      initHeroReelScroll();
       initServiceCardHover();
       initAboutReveal();
     }, 700);
@@ -2058,7 +2079,7 @@
       entries.forEach(function(e) {
         if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
       });
-    }, { threshold: 0.6, rootMargin: '0px' }); // reveal once ~60% of a card is in view → one at a time
+    }, { threshold: 0.35, rootMargin: '0px 0px -8% 0px' }); // reveal a bit sooner so cards don't feel late
   }
   // Build one work card (16:9, title overlaid inside). Used by featured + grid.
   function makeWCard(posterSrc, motionSrc, title, cat, data) {
@@ -2706,7 +2727,26 @@
     new IntersectionObserver(function (es) { inView = es[0].isIntersecting; if (inView) schedule(); else clearTimeout(timer); }, { threshold: 0.05 }).observe(wrap);
   }
 
-  // ── Work section canvas blob background ───────────────────────────────────
+  // ── Hero reel: fade out on scroll + pause when off-screen ─────────────────
+  // A full-screen looping video that keeps decoding while scrolled away is a
+  // major perf drain, so pause it off-screen and fade it as you leave the hero.
+  function initHeroReelScroll() {
+    var reel = document.getElementById('heroReel');
+    var hero = document.getElementById('hero');
+    if (!reel || !hero) return;
+    new IntersectionObserver(function (es) {
+      if (es[0].isIntersecting) { if (reel.play) reel.play().catch(function(){}); }
+      else if (reel.pause) reel.pause();
+    }, { threshold: 0.02 }).observe(hero);
+    function fade() {
+      var h = hero.offsetHeight || window.innerHeight;
+      reel.style.opacity = Math.max(0, 1 - window.scrollY / (h * 0.85)).toFixed(2);
+    }
+    window.addEventListener('scroll', fade, { passive: true });
+    fade();
+  }
+
+  // ── Work section canvas blob background (disabled — section is now light) ──
   function initWorkBgCanvas() {
     const canvas = document.getElementById('workBgCanvas');
     const work = document.getElementById('work');
@@ -2763,16 +2803,24 @@
   // ── Nav section detection (white on blue) ─────────────────────────────────
   function initNavSection() {
     const blueSections = ['hero','about','services'];
+    const lightSections = ['work'];
     function updateNav() {
       const navH = navbar.offsetHeight;
       const midY = navH / 2;
-      let onBlue = false;
+      let onBlue = false, onLight = false;
       blueSections.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const r = el.getBoundingClientRect();
         if (r.top <= midY && r.bottom >= midY) onBlue = true;
       });
+      lightSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (r.top <= midY && r.bottom >= midY) onLight = true;
+      });
+      navbar.classList.toggle('on-light', onLight);
       navbar.classList.toggle('on-blue', onBlue);
       navbar.classList.toggle('scrolled', scrollY > 60);
       navbar.classList.toggle('hidden', cw.getBoundingClientRect().top < window.innerHeight * 0.5);
