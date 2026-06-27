@@ -21,6 +21,8 @@
       --text:#f0ede8;--muted:#9da2bb;--yellow:#f5d94e;--yellow-soft:rgba(245,217,78,0.1);
       --blue:#1a3bbd;
       --font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'DM Mono',monospace;
+      /* One easing curve for the whole site — every reveal, hover, pulse uses this */
+      --ease:cubic-bezier(0.16,1,0.3,1);
     }
     html{scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-weight:300;line-height:1.6;cursor:none;overflow-x:hidden}
@@ -1037,88 +1039,52 @@
     }
 
     /* ══════════════════════════════════════════════════════════════════════
-       WORK PANELS — featured editorial cards + grid of the rest
-       (replaces the old infinite carousels)
+       WORK PANELS — FutureDeluxe-style cards: 16:9, title inside, no subtext
        ════════════════════════════════════════════════════════════════════ */
     .work-panel{position:relative;z-index:1}
-    /* ── Featured stack: big cards that reveal as you scroll ── */
-    .feat-stack{display:flex;flex-direction:column;gap:clamp(80px,11vw,160px);padding:8px 0 96px}
-    /* Single big row (Mofid): card on one side, title+subtext on the other */
-    .feat-row{display:grid;grid-template-columns:1.35fr 1fr;align-items:center;gap:clamp(28px,5vw,72px)}
-    .feat-row--right{grid-template-columns:1fr 1.35fr}
-    .feat-row--right .feat-media{order:2}
-    .feat-row--right .feat-text{order:1;text-align:right}
-    .feat-media{position:relative;overflow:hidden;background:var(--surface);aspect-ratio:16/10;cursor:none;border-radius:3px}
-    .feat-media::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .45s cubic-bezier(.16,1,.3,1);pointer-events:none;z-index:2}
-    .feat-media:hover::after{border-color:rgba(245,217,78,0.32)}
-    .feat-media .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)}
-    .feat-media:hover .work-img{transform:scale(1.05)}
-    .feat-index{font-family:var(--font-mono);font-size:12px;letter-spacing:.25em;color:var(--yellow);margin-bottom:14px;display:block}
-    .feat-title{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4.6vw,64px);line-height:1.02;color:#fff;margin:0 0 16px;letter-spacing:-.01em}
-    .feat-sub{font-family:var(--font-body);font-size:clamp(13px,1.15vw,16px);line-height:1.6;color:rgba(255,255,255,0.62);margin:0 0 18px;max-width:46ch;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .feat-row--right .feat-sub{margin-left:auto}
-    .feat-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.4)}
-    .feat-cta{display:inline-flex;align-items:center;gap:9px;margin-top:22px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#fff;cursor:none}
-    .feat-cta .feat-cta-dot{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;transition:background .25s,border-color .25s,transform .25s}
-    .feat-cta .feat-cta-dot svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;transition:stroke .25s}
-    .feat-row:hover .feat-cta-dot{background:var(--yellow);border-color:var(--yellow);transform:scale(1.08)}
-    .feat-row:hover .feat-cta-dot svg{stroke:#07080f}
-    .feat-row--right .feat-cta{flex-direction:row-reverse}
 
-    /* ── Personal pairs: two cards per band, vertically offset ── */
-    .feat-stack--pairs{gap:clamp(72px,9vw,128px)}
-    .feat-pair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,56px);align-items:start}
-    .feat-pair .feat-pair-item:nth-child(2){margin-top:clamp(48px,7vw,120px)}
-    .feat-pair-item .feat-media{aspect-ratio:4/5}
-    .feat-pair-item .feat-title{font-size:clamp(24px,3vw,40px);margin:18px 0 10px}
-    .feat-pair-item .feat-index{margin-bottom:10px}
-    .feat-pair-item .feat-sub{font-size:clamp(12px,1vw,14px);-webkit-line-clamp:2;margin-bottom:0}
+    /* One card component, used by featured + grid */
+    .wcard{position:relative;display:block;width:100%;aspect-ratio:16/9;overflow:hidden;background:var(--surface);border-radius:4px;cursor:none}
+    .wcard .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.001);transition:transform 1.3s var(--ease)}
+    .wcard:hover .work-img{transform:scale(1.3)}                 /* slow zoom ~30%, clipped */
+    .wcard-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.30) 32%,rgba(7,8,15,0) 58%)}
+    .wcard-cap{position:absolute;left:0;bottom:0;z-index:2;padding:clamp(18px,2.1vw,32px);pointer-events:none}
+    .wcard-title{font-family:var(--font-display);font-weight:700;font-size:clamp(20px,2.05vw,32px);line-height:1.04;color:#fff;letter-spacing:-.01em}
+    .wcard-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:9px}
+    .wcard::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .55s var(--ease);pointer-events:none;z-index:3}
+    .wcard:hover::after{border-color:rgba(245,217,78,0.34)}
 
-    /* ── Reveal-on-scroll: gentle pop in from the side ── */
-    .feat-reveal{opacity:0;transform:translateY(54px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
-    .feat-row--left  .feat-media.feat-reveal{transform:translate(-46px,54px)}
-    .feat-row--right .feat-media.feat-reveal{transform:translate(46px,54px)}
-    .feat-row--left  .feat-text.feat-reveal{transform:translate(28px,54px)}
-    .feat-row--right .feat-text.feat-reveal{transform:translate(-28px,54px)}
-    .feat-reveal.in{opacity:1;transform:translate(0,0)}
-    .feat-text.feat-reveal{transition-delay:.12s}
+    /* Scroll reveal: very subtle swipe-up + fade */
+    .wreveal{opacity:0;transform:translateY(46px);transition:opacity 1.15s var(--ease),transform 1.15s var(--ease)}
+    .wreveal.in{opacity:1;transform:translateY(0)}
 
-    /* ── Grid of the rest ── */
-    .rest-block{padding:0 0 40px}
-    .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 26px;padding-top:34px;border-top:1px solid rgba(255,255,255,0.08)}
-    .rest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-    .rest-card{position:relative;overflow:hidden;background:var(--surface);aspect-ratio:4/3;cursor:none;border-radius:3px;opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
-    .rest-card.in{opacity:1;transform:translateY(0)}
-    .rest-card::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .4s;pointer-events:none;z-index:3}
-    .rest-card:hover::after{border-color:rgba(245,217,78,0.28)}
-    .rest-card .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s cubic-bezier(.16,1,.3,1)}
-    .rest-card:hover .work-img{transform:scale(1.06)}
-    .rest-card-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(7,8,15,0.92) 0%,rgba(7,8,15,0.25) 55%,transparent 100%);opacity:0;transition:opacity .4s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;justify-content:flex-end;padding:18px;z-index:2}
-    .rest-card:hover .rest-card-ov{opacity:1}
-    .rest-card-title{font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff;transform:translateY(8px);transition:transform .4s cubic-bezier(.16,1,.3,1)}
-    .rest-card-cat{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--yellow);margin-top:5px;transform:translateY(8px);opacity:0;transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .45s}
-    .rest-card:hover .rest-card-title,.rest-card:hover .rest-card-cat{transform:translateY(0)}
-    .rest-card:hover .rest-card-cat{opacity:1}
+    /* Featured: large cards, asymmetric two columns (right column dropped, FD-style) */
+    .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,3.6vw,72px);padding:4px 0 clamp(64px,7vw,120px)}
+    .feat-grid > *:nth-child(even){margin-top:clamp(60px,8vw,150px)}
 
-    @media(max-width:860px){
-      .feat-row,.feat-row--right{grid-template-columns:1fr;gap:20px}
-      .feat-row--right .feat-media{order:0}
-      .feat-row--right .feat-text{order:0;text-align:left}
-      .feat-row--right .feat-sub{margin-left:0}
-      .feat-row--right .feat-cta{flex-direction:row}
-      .feat-media,.feat-pair-item .feat-media{aspect-ratio:16/10}
-      .feat-stack{gap:64px;padding-bottom:64px}
-      .feat-pair{grid-template-columns:1fr;gap:48px}
-      .feat-pair .feat-pair-item:nth-child(2){margin-top:0}
-      .feat-row--left .feat-media.feat-reveal,.feat-row--right .feat-media.feat-reveal,
-      .feat-row--left .feat-text.feat-reveal,.feat-row--right .feat-text.feat-reveal{transform:translateY(40px)}
-      .rest-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-    }
-    @media(max-width:560px){
-      .rest-grid{grid-template-columns:1fr 1fr;gap:8px}
+    /* Grid of the rest: even two-up rows with breathing space */
+    .work-grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,3.6vw,64px)}
+    .rest-block{padding:0 0 48px}
+    .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 clamp(26px,3vw,44px);padding-top:clamp(36px,4.4vw,60px);border-top:1px solid rgba(255,255,255,0.08)}
+
+    /* 3D Designs: scroll-driven overlapping collage (alternating sides, stacking) */
+    .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
+    .still{position:relative;width:60%;max-width:780px;border-radius:4px;overflow:hidden;margin-top:clamp(-92px,-7vw,-40px);box-shadow:0 36px 90px -34px rgba(0,0,0,0.72)}
+    .still:first-child{margin-top:0}
+    .still--l{align-self:flex-start}
+    .still--r{align-self:flex-end}
+    .still--gap{margin-top:clamp(52px,7vw,116px)}
+    .still img{width:100%;height:auto;display:block}
+    @media(max-width:760px){.still{width:84%;margin-top:clamp(-60px,-9vw,-30px)}}
+
+    @media(max-width:760px){
+      .feat-grid,.work-grid2{grid-template-columns:1fr;gap:34px}
+      .feat-grid > *:nth-child(even){margin-top:0}
+      .wcard-title{font-size:clamp(22px,6vw,30px)}
     }
     @media (prefers-reduced-motion: reduce){
-      .feat-reveal,.rest-card{opacity:1!important;transform:none!important;transition:none}
+      .wreveal{opacity:1!important;transform:none!important;transition:none}
+      .wcard:hover .work-img{transform:none}
     }
   </style>
 </head>
@@ -1189,22 +1155,22 @@
   </div>
   <!-- ═══ MOFID PANEL (default) ═══ -->
   <div id="mofidPanel" class="work-panel" role="tabpanel" aria-labelledby="tab-mofid">
-    <div class="feat-stack" id="mofidFeatured"></div>
+    <div class="feat-grid" id="mofidFeatured"></div>
     <div class="rest-block" id="mofidRestBlock">
       <div class="rest-label">More from Mofid</div>
-      <div class="rest-grid" id="mofidGrid"></div>
+      <div class="work-grid2" id="mofidGrid"></div>
     </div>
     <div class="rest-block" id="mofid3dBlock">
       <div class="rest-label">3D Designs</div>
-      <div class="mofid-3d-gallery" id="mofid3dGallery"></div>
+      <div class="stills-flow" id="mofid3dGallery"></div>
     </div>
   </div><!-- end mofidPanel -->
   <!-- ═══ PERSONAL PANEL ═══ -->
   <div id="personalPanel" class="work-panel" role="tabpanel" aria-labelledby="tab-personal" style="display:none">
-    <div class="feat-stack feat-stack--pairs" id="personalFeatured"></div>
+    <div class="feat-grid" id="personalFeatured"></div>
     <div class="rest-block" id="personalRestBlock">
       <div class="rest-label">More Work</div>
-      <div class="rest-grid" id="personalGrid"></div>
+      <div class="work-grid2" id="personalGrid"></div>
     </div>
   </div><!-- end personalPanel -->
 </section>
@@ -2113,22 +2079,41 @@
       });
     }, { threshold: 0.16, rootMargin: '0px 0px -7% 0px' });
   }
-  const CTA_ARROW = '<span class="feat-cta-dot"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span><span>View</span>';
-
-  // Build one small grid card (used by both tabs). `data` carries dataset attrs.
-  function buildRestCard(posterSrc, motionSrc, title, cat, data) {
+  // Build one work card (16:9, title overlaid inside). Used by featured + grid.
+  function makeWCard(posterSrc, motionSrc, title, cat, data) {
     const card = document.createElement('div');
-    card.className = 'rest-card work-item';
+    card.className = 'wcard work-item wreveal';
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', 'View: ' + title);
     Object.keys(data).forEach(function(k) { card.dataset[k] = data[k]; });
     card.appendChild(mkWorkVideo(posterSrc, motionSrc));
-    const ov = document.createElement('div');
-    ov.className = 'rest-card-ov';
-    ov.innerHTML = '<div class="rest-card-title">' + title + '</div><div class="rest-card-cat">' + cat + '</div>';
-    card.appendChild(ov);
+    const scrim = document.createElement('div');
+    scrim.className = 'wcard-scrim';
+    card.appendChild(scrim);
+    const cap = document.createElement('div');
+    cap.className = 'wcard-cap';
+    cap.innerHTML = '<div class="wcard-title">' + title + '</div>' + (cat ? '<div class="wcard-cat">' + cat + '</div>' : '');
+    card.appendChild(cap);
     return card;
+  }
+
+  // 3D Designs: scroll-driven overlapping collage (alternating sides, images
+  // stacking slightly over one another as you move down; gaps between groups).
+  function buildStillsFlow(container, count) {
+    if (!container || container.childElementCount) return;
+    for (let gi = 1; gi <= count; gi++) {
+      const wrap = document.createElement('div');
+      wrap.className = 'still wreveal still--' + (gi % 2 ? 'l' : 'r');
+      if (gi !== 1 && gi % 5 === 1) wrap.classList.add('still--gap');
+      const im = document.createElement('img');
+      im.loading = 'lazy';
+      im.alt = '3D design ' + gi;
+      im.src = 'media/mofid/3d-designs/' + ('0' + gi).slice(-2) + '.jpg';
+      im.onload = function() { this.parentNode.classList.add('loaded'); };
+      wrap.appendChild(im);
+      container.appendChild(wrap);
+    }
   }
 
   let personalPanelBuilt = false;
@@ -2143,63 +2128,34 @@
     const featuredIds = PERSONAL_FEATURED.filter(function(id) { return byId[id]; });
     const featSet = {}; featuredIds.forEach(function(id) { featSet[id] = true; });
 
-    // ── Featured: two cards per band, vertically offset ──
     featWrap.innerHTML = '';
-    for (let i = 0; i < featuredIds.length; i += 2) {
-      const pair = document.createElement('div');
-      pair.className = 'feat-pair';
-      [featuredIds[i], featuredIds[i + 1]].forEach(function(id, j) {
-        if (!id) return;
-        const rec = byId[id], p = rec.p, n = i + j;
-        const itemWrap = document.createElement('div');
-        itemWrap.className = 'feat-pair-item feat-reveal';
-        if (j === 1) itemWrap.style.transitionDelay = '.14s';
+    featuredIds.forEach(function(id) {
+      const rec = byId[id], p = rec.p;
+      featWrap.appendChild(makeWCard(
+        'media/' + p.id + '/poster.jpg', 'media/' + p.id + '/motion.mp4',
+        p.title, (ECCHO_CATS[p.type] || p.type || ''),
+        { idx: String(rec.idx), cat: p.type || '' }
+      ));
+    });
 
-        const card = document.createElement('div');
-        card.className = 'feat-media work-item';
-        card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0');
-        card.setAttribute('aria-label', 'View project: ' + p.title);
-        card.dataset.idx = String(rec.idx);
-        card.dataset.cat = p.type || '';
-        card.appendChild(mkWorkVideo('media/' + p.id + '/poster.jpg', 'media/' + p.id + '/motion.mp4'));
-        itemWrap.appendChild(card);
-
-        const text = document.createElement('div');
-        text.className = 'feat-text';
-        text.innerHTML =
-          '<span class="feat-index">' + ('0' + (n + 1)).slice(-2) + '</span>' +
-          '<h3 class="feat-title">' + p.title + '</h3>' +
-          '<p class="feat-sub">' + (p.desc || '') + '</p>' +
-          '<span class="feat-cat">' + (ECCHO_CATS[p.type] || p.type || '') + '</span>';
-        itemWrap.appendChild(text);
-        pair.appendChild(itemWrap);
-      });
-      featWrap.appendChild(pair);
-    }
-
-    // ── Grid: every project (featured ones hidden in the 'all' view) ──
     grid.innerHTML = '';
     ECCHO_PROJECTS.forEach(function(p, i) {
-      const card = buildRestCard(
+      grid.appendChild(makeWCard(
         'media/' + p.id + '/poster.jpg', 'media/' + p.id + '/motion.mp4',
         p.title, (ECCHO_CATS[p.type] || p.type || ''),
         { idx: String(i), cat: p.type || '', featured: featSet[p.id] ? '1' : '' }
-      );
-      grid.appendChild(card);
+      ));
     });
 
-    // Reveal + lazy video wiring
     const rev = makeRevealObserver();
-    featWrap.querySelectorAll('.feat-reveal').forEach(function(el) { rev.observe(el); });
-    grid.querySelectorAll('.rest-card').forEach(function(el) { rev.observe(el); });
+    featWrap.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
+    grid.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
     wireThumbVideos(document.getElementById('personalPanel'));
 
-    // Filter routing: 'all' shows featured + non-featured grid; a category hides
-    // the featured band and shows every matching card in the grid.
     rebuildCarousel = function(filter) {
       const all = filter === 'all';
       featWrap.style.display = all ? '' : 'none';
-      grid.querySelectorAll('.rest-card').forEach(function(card) {
+      grid.querySelectorAll('.wcard').forEach(function(card) {
         const match = all ? (card.dataset.featured !== '1') : (card.dataset.cat === filter);
         card.style.display = match ? '' : 'none';
       });
@@ -2207,8 +2163,7 @@
     rebuildCarousel('all');
   }
 
-
-  // ── Mofid carousel (lazy-initialized on first tab switch) ────────────────
+  // ── Mofid videos (grouped by category) ───────────────────────────────────
   const MOFID_SECTIONS_DATA = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
 
   function mofidSlugToTitle(s) {
@@ -2225,9 +2180,6 @@
     const gallery = document.getElementById('mofid3dGallery');
     if (!featWrap || !grid) return;
 
-    const descFor = window.mofidDescFor || function() { return ''; };
-
-    // Flat list of every Mofid video, plus a lookup for category labels.
     const labelByKey = {};
     const allVids = [];
     MOFID_SECTIONS_DATA.forEach(function(sec) {
@@ -2237,73 +2189,32 @@
     const featKey = function(slug, catKey) { return catKey + '/' + slug; };
     const featSet = {}; MOFID_FEATURED.forEach(function(f) { featSet[featKey(f.slug, f.catKey)] = true; });
 
-    // ── Featured: big alternating rows (card left, text right; then flipped) ──
     featWrap.innerHTML = '';
-    MOFID_FEATURED.forEach(function(f, n) {
-      const side = (n % 2 === 0) ? 'left' : 'right';
-      const row = document.createElement('div');
-      row.className = 'feat-row feat-row--' + side;
-      const title = mofidSlugToTitle(f.slug);
-      const catLabel = labelByKey[f.catKey] || f.catKey;
-      const poster = 'media/mofid/' + f.catKey + '/' + f.slug + '.jpg';
-      const motion = 'media/mofid/' + f.catKey + '/' + f.slug + '.mp4';
-
-      const media = document.createElement('div');
-      media.className = 'feat-media work-item feat-reveal';
-      media.setAttribute('role', 'button'); media.setAttribute('tabindex', '0');
-      media.setAttribute('aria-label', 'View: ' + title);
-      media.dataset.mofidSlug = f.slug;
-      media.dataset.mofidKey = f.catKey;
-      media.appendChild(mkWorkVideo(poster, motion));
-
-      const text = document.createElement('div');
-      text.className = 'feat-text feat-reveal';
-      text.innerHTML =
-        '<span class="feat-index">' + ('0' + (n + 1)).slice(-2) + '</span>' +
-        '<h3 class="feat-title">' + title + '</h3>' +
-        '<p class="feat-sub">' + descFor(f.slug, f.catKey) + '</p>' +
-        '<span class="feat-cat">' + catLabel + '</span>' +
-        '<span class="feat-cta">' + CTA_ARROW + '</span>';
-      // The CTA opens the same card; make the whole text block also clickable.
-      text.setAttribute('role', 'button'); text.setAttribute('tabindex', '0');
-      text.classList.add('work-item');
-      text.dataset.mofidSlug = f.slug;
-      text.dataset.mofidKey = f.catKey;
-
-      if (side === 'left') { row.appendChild(media); row.appendChild(text); }
-      else { row.appendChild(text); row.appendChild(media); }
-      featWrap.appendChild(row);
+    MOFID_FEATURED.forEach(function(f) {
+      featWrap.appendChild(makeWCard(
+        'media/mofid/' + f.catKey + '/' + f.slug + '.jpg',
+        'media/mofid/' + f.catKey + '/' + f.slug + '.mp4',
+        mofidSlugToTitle(f.slug), (labelByKey[f.catKey] || f.catKey),
+        { mofidSlug: f.slug, mofidKey: f.catKey }
+      ));
     });
 
-    // ── Grid: every video (featured ones hidden in the 'all' view) ──
     grid.innerHTML = '';
     allVids.forEach(function(v) {
-      const card = buildRestCard(
+      grid.appendChild(makeWCard(
         'media/mofid/' + v.catKey + '/' + v.slug + '.jpg',
         'media/mofid/' + v.catKey + '/' + v.slug + '.mp4',
         mofidSlugToTitle(v.slug), v.catLabel,
         { mofidSlug: v.slug, mofidKey: v.catKey, featured: featSet[featKey(v.slug, v.catKey)] ? '1' : '' }
-      );
-      grid.appendChild(card);
+      ));
     });
 
-    // ── 3D Designs: 48-still masonry ──
-    if (gallery && !gallery.childElementCount) {
-      for (let gi = 1; gi <= 48; gi++) {
-        const im = document.createElement('img');
-        im.className = 'mofid-3d-item';
-        im.loading = 'lazy';
-        im.alt = '3D design ' + gi;
-        im.src = 'media/mofid/3d-designs/' + ('0' + gi).slice(-2) + '.jpg';
-        im.onload = function() { this.classList.add('loaded'); };
-        gallery.appendChild(im);
-      }
-    }
+    buildStillsFlow(gallery, 48);
 
-    // Reveal + lazy video wiring
     const rev = makeRevealObserver();
-    featWrap.querySelectorAll('.feat-reveal').forEach(function(el) { rev.observe(el); });
-    grid.querySelectorAll('.rest-card').forEach(function(el) { rev.observe(el); });
+    featWrap.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
+    grid.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
+    if (gallery) gallery.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
     wireThumbVideos(document.getElementById('mofidPanel'));
 
     const rest3d = document.getElementById('mofid3dBlock');
@@ -2311,7 +2222,7 @@
       const all = filter === 'all';
       featWrap.style.display = all ? '' : 'none';
       if (rest3d) rest3d.style.display = all ? '' : 'none';
-      grid.querySelectorAll('.rest-card').forEach(function(card) {
+      grid.querySelectorAll('.wcard').forEach(function(card) {
         const match = all ? (card.dataset.featured !== '1') : (card.dataset.mofidKey === filter);
         card.style.display = match ? '' : 'none';
       });
