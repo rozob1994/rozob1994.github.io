@@ -65,6 +65,10 @@
     /* settled state after intro — padding lives here so media queries can override it */
     #hero.hero-settled{padding:0 56px 36px 52px}
     .hero-bg{display:none}
+    /* Hero showreel: Mofid work playing full-bleed behind the ECCHO title */
+    #heroReel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
+    #heroReelTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
+    @media (prefers-reduced-motion: reduce){#heroReel{display:none}}
 
     /* CSS GLASS LOGO */
     .hero-logo-wrap{
@@ -1149,6 +1153,8 @@
 <canvas id="framesCanvas"></canvas>
 
 <section id="hero">
+  <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+  <div id="heroReelTint"></div>
   <div class="hero-bg"></div>
 </section>
 
@@ -1181,36 +1187,6 @@
       </button>
     </div>
   </div>
-  <!-- ═══ SHOWREEL SLOT ═══════════════════════════════════════════════════════
-     Drop media/showreel.mp4 here when the reel is ready — the block below
-     auto-shows once that file exists (toggle display:none → display:block).
-     Suggested container: full-width, ~56vw height, muted=false, controls.
-     ═══════════════════════════════════════════════════════════════════════ -->
-  <div id="showreelSlot" style="display:none;margin-bottom:48px;position:relative;z-index:1">
-    <video id="showreelVideo"
-      src="media/showreel.mp4"
-      controls
-      playsinline
-      preload="none"
-      style="width:100%;display:block;aspect-ratio:16/9;background:#0d1020;object-fit:cover"
-      aria-label="Showreel">
-    </video>
-  </div>
-  <script>
-    // Show the showreel slot only if the video file actually loads
-    (function(){
-      var v = document.getElementById('showreelVideo');
-      if (!v) return;
-      v.addEventListener('loadedmetadata', function() {
-        document.getElementById('showreelSlot').style.display = '';
-      });
-      v.addEventListener('error', function() {
-        document.getElementById('showreelSlot').style.display = 'none';
-      });
-      // Trigger a load probe
-      v.load();
-    })();
-  </script>
   <!-- ═══ MOFID PANEL (default) ═══ -->
   <div id="mofidPanel" class="work-panel" role="tabpanel" aria-labelledby="tab-mofid">
     <div class="feat-stack" id="mofidFeatured"></div>
