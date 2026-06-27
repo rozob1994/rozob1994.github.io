@@ -182,12 +182,17 @@
     /* SECTIONS */
     .section-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--yellow);margin-bottom:56px;display:flex;align-items:center;gap:18px}
 
-    #work{padding:120px 0 120px 56px;background:#07080f;position:relative;overflow:visible;z-index:22}
+    #work{padding:64px 56px 110px 56px;background:#07080f;position:relative;overflow:visible;z-index:22}
+    /* Bold studio statement above the work tabs */
+    .work-intro{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.5vw,56px);line-height:1.06;letter-spacing:-.015em;color:#fff;max-width:20ch;margin:0 0 clamp(36px,4.5vw,64px)}
+    .work-intro .wi-soft{color:rgba(255,255,255,0.42)}
+    .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
+    @media(max-width:600px){.work-intro{max-width:none}}
     #workBgCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;opacity:0;transition:opacity 1.4s var(--ease)}
     .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
     #work .work-header{position:relative;z-index:6}
     #work #carouselOuter{position:relative;z-index:1}
-    .work-header{display:flex;align-items:center;justify-content:space-between;padding:0 56px 0 0;position:relative;z-index:2;margin-bottom:56px}
+    .work-header{display:flex;align-items:center;justify-content:space-between;padding:0;position:relative;z-index:2;margin-bottom:44px}
     .work-header .section-title{margin-bottom:0}
 
     /* Filter button wrapper — hover triggers expand */
@@ -401,8 +406,8 @@
       .hero-author{font-size:13px}
 
       /* Work */
-      #work{padding-left:28px;padding-right:0}
-      .work-header{padding:0 28px 0 0;margin-bottom:36px}
+      #work{padding-left:28px;padding-right:28px}
+      .work-header{padding:0;margin-bottom:36px}
       .work-item{width:260px;height:340px}
       #carouselOuter{min-height:340px}
 
@@ -446,8 +451,8 @@
       .hero-author{font-size:12px}
 
       /* Work */
-      #work{padding-left:20px;padding-right:0}
-      .work-header{padding:0 20px 0 0;margin-bottom:28px}
+      #work{padding-left:20px;padding-right:20px}
+      .work-header{padding:0;margin-bottom:28px}
       .work-item{width:240px;height:310px}
       #carouselOuter{min-height:310px}
 
@@ -1044,48 +1049,47 @@
     }
 
     /* ══════════════════════════════════════════════════════════════════════
-       WORK PANELS — FutureDeluxe-style cards: 16:9, title inside, no subtext
+       WORK PANELS — FutureDeluxe-style cards: 16:9, title inside, sharp edges
        ════════════════════════════════════════════════════════════════════ */
     .work-panel{position:relative;z-index:1}
 
-    /* One card component, used by featured + grid */
-    .wcard{position:relative;display:block;width:100%;aspect-ratio:16/9;overflow:hidden;background:var(--surface);border-radius:4px;cursor:none}
+    .wcard{position:relative;display:block;width:100%;aspect-ratio:16/9;overflow:hidden;background:var(--surface);cursor:none}
     .wcard .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.001);transition:transform 1.3s var(--ease)}
     .wcard:hover .work-img{transform:scale(1.3)}                 /* slow zoom ~30%, clipped */
     .wcard-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.30) 32%,rgba(7,8,15,0) 58%)}
-    .wcard-cap{position:absolute;left:0;bottom:0;z-index:2;padding:clamp(18px,2.1vw,32px);pointer-events:none}
-    .wcard-title{font-family:var(--font-display);font-weight:700;font-size:clamp(20px,2.05vw,32px);line-height:1.04;color:#fff;letter-spacing:-.01em}
-    .wcard-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:9px}
+    .wcard-cap{position:absolute;left:0;bottom:0;z-index:2;padding:clamp(16px,1.8vw,28px);pointer-events:none}
+    .wcard-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,1.9vw,30px);line-height:1.04;color:#fff;letter-spacing:-.01em}
+    .wcard-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:8px}
     .wcard::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .55s var(--ease);pointer-events:none;z-index:3}
     .wcard:hover::after{border-color:rgba(245,217,78,0.34)}
 
-    /* Scroll reveal: very subtle swipe-up + fade */
-    .wreveal{opacity:0;transform:translateY(46px);transition:opacity 1.15s var(--ease),transform 1.15s var(--ease)}
+    /* Scroll reveal: subtle swipe-up + fade (one card at a time) */
+    .wreveal{opacity:0;transform:translateY(46px);transition:opacity 1.05s var(--ease),transform 1.05s var(--ease)}
     .wreveal.in{opacity:1;transform:translateY(0)}
+    /* stills fade in only (transform reserved for the horizontal scatter) */
+    .sreveal{opacity:0;transition:opacity 1.05s var(--ease)}
+    .sreveal.in{opacity:1}
 
-    /* Featured: large cards, asymmetric two columns (right column dropped, FD-style) */
-    .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,3.6vw,72px);padding:4px 0 clamp(64px,7vw,120px)}
-    .feat-grid > *:nth-child(even){margin-top:clamp(60px,8vw,150px)}
-
-    /* Grid of the rest: even two-up rows with breathing space */
-    .work-grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,3.6vw,64px)}
+    /* Featured + grid: two columns, right column dropped so cards reveal one
+       by one as you scroll; gap halved from before. */
+    .feat-grid,.work-grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(15px,1.8vw,34px)}
+    .feat-grid{padding:4px 0 clamp(64px,7vw,120px)}
+    .feat-grid > *:nth-child(even),.work-grid2 > *:nth-child(even){margin-top:clamp(48px,6vw,110px)}
     .rest-block{padding:0 0 48px}
-    .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 clamp(26px,3vw,44px);padding-top:clamp(36px,4.4vw,60px);border-top:1px solid rgba(255,255,255,0.08)}
+    .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 clamp(24px,3vw,40px);padding-top:clamp(36px,4.4vw,60px);border-top:1px solid rgba(255,255,255,0.08)}
 
-    /* 3D Designs: scroll-driven overlapping collage (alternating sides, stacking) */
-    .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
-    .still{position:relative;width:60%;max-width:780px;border-radius:4px;overflow:hidden;margin-top:clamp(-92px,-7vw,-40px);box-shadow:0 36px 90px -34px rgba(0,0,0,0.72)}
-    .still:first-child{margin-top:0}
-    .still--l{align-self:flex-start}
-    .still--r{align-self:flex-end}
-    .still--gap{margin-top:clamp(52px,7vw,116px)}
+    /* 3D Designs: centered overlapping collage (scatter + stack, compact) */
+    .stills-flow{position:relative;display:flex;flex-direction:column;align-items:center;padding-bottom:40px}
+    .still{position:relative;width:clamp(300px,48%,660px);margin-top:-16%;overflow:hidden;box-shadow:0 44px 100px -34px rgba(0,0,0,0.85)}
+    .still:first-child{margin-top:5%}
+    .still--gap{margin-top:clamp(28px,3.5vw,64px)}
     .still img{width:100%;height:auto;display:block}
-    @media(max-width:760px){.still{width:84%;margin-top:clamp(-60px,-9vw,-30px)}}
+    @media(max-width:760px){.still{width:88%;margin-top:-26%}}
 
     @media(max-width:760px){
-      .feat-grid,.work-grid2{grid-template-columns:1fr;gap:34px}
-      .feat-grid > *:nth-child(even){margin-top:0}
-      .wcard-title{font-size:clamp(22px,6vw,30px)}
+      .feat-grid,.work-grid2{grid-template-columns:1fr;gap:22px}
+      .feat-grid > *:nth-child(even),.work-grid2 > *:nth-child(even){margin-top:0}
+      .wcard-title{font-size:clamp(20px,5.5vw,28px)}
     }
     @media (prefers-reduced-motion: reduce){
       .wreveal{opacity:1!important;transform:none!important;transition:none}
@@ -1137,6 +1141,7 @@
 
 <section id="work">
   <canvas id="workBgCanvas" aria-hidden="true"></canvas>
+  <h2 class="work-intro">Eccho is a creative studio. <span class="wi-soft">We craft visuals that make brands resonate<span class="wi-dot"></span></span></h2>
   <div class="work-header">
     <div class="work-tabs" role="tablist" aria-label="Work section">
       <button class="work-tab work-tab--active" id="tab-mofid" role="tab" aria-selected="true" aria-controls="mofidPanel" data-tab="mofid">Mofid Securities</button>
@@ -1455,7 +1460,7 @@
       raf = requestAnimationFrame(frame);
       const now = performance.now();
       ctx.clearRect(0, 0, W, H);
-      const rCore  = minDim * 0.075;  // keep the centre (pulsing dot) clear
+      const rCore  = minDim * 0.135;  // wider clear zone so balls don't crowd the dot or the % readout
       const rFade  = minDim * 0.34;   // alpha starts dropping…
       const rOuter = minDim * 0.48;   // …reaches 0 (~half the screen)
       const rMax   = minDim * 0.52;   // how far a ring travels
@@ -1690,7 +1695,7 @@
     // Everything starts moving at t=0
     fCanvas.style.opacity          = '0';         // canvas dissolves
     canvasBg.style.opacity         = '0';         // blue cover fades — hero animation now visible
-    heroEl.style.height            = '40vh';       // blue collapses to final height (matches the settled min-height so there's no snap)
+    heroEl.style.height            = 'calc(100vh - 420px)';  // tall reel — pushes the first work card mostly below the fold
     heroContent.style.transform    = 'translateY(0)'; // text rises from below into position
     heroContent.style.pointerEvents = 'all';
 
@@ -1729,7 +1734,7 @@
       }
 
       // Strip transitions, switch to min-height so hero is flexible for content
-      heroEl.style.cssText      = 'min-height:40vh;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#0d1fd4;';
+      heroEl.style.cssText      = 'min-height:calc(100vh - 420px);display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#0d1fd4;';
       heroEl.classList.add('hero-settled');
       heroContent.style.cssText = 'position:relative;transform:none;opacity:1;z-index:4;pointer-events:all;top:auto;bottom:auto;left:auto;right:auto;';
 
@@ -1825,20 +1830,19 @@
   // Display-name overrides for Mofid videos (slug → title). Anything not listed
   // falls back to a prettified version of the slug. Used by cards + the popup.
   const MOFID_TITLES = {
+    'main': 'Mofid Card',
     'ayar-pre-roll-red-cloth-7': 'Ayar — Gold Fund',
     'mofid-4-9-glass-motion': 'Mofid 4.0',
-    'aix-3d-loop-4k': 'AIX Exhibition Identity',
+    'aix-3d-loop-pollished-glitched-edited-2-4k': 'AIX Exhibition Identity',
     'negah-logomotion-final': 'Negah Annual Event',
     'jahat-1403-teaser': 'Jahat 1403',
     'safe-motion-expo-ready': 'Mofid Funds Explainer'
   };
   const MOFID_FEATURED = [
-    { slug:'ayar-pre-roll-red-cloth-7',  catKey:'pre-rolls' },
-    { slug:'mofid-4-9-glass-motion',     catKey:'mofid-ident-r-d' },
-    { slug:'aix-3d-loop-4k',             catKey:'aix-exhibitions' },
-    { slug:'negah-logomotion-final',     catKey:'logomotions' },
-    { slug:'jahat-1403-teaser',          catKey:'annual-jahat-festival' },
-    { slug:'safe-motion-expo-ready',     catKey:'exhibition-explainer-motion' }
+    { slug:'main',                                  catKey:'mofid-card-concept-motion' },
+    { slug:'mofid-4-9-glass-motion',                catKey:'mofid-ident-r-d' },
+    { slug:'jahat-1403-teaser',                     catKey:'annual-jahat-festival' },
+    { slug:'aix-3d-loop-pollished-glitched-edited-2-4k', catKey:'aix-exhibitions' }
   ];
 
   const PERSONAL_FILTERS = [
@@ -2056,7 +2060,7 @@
       entries.forEach(function(e) {
         if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
       });
-    }, { threshold: 0.16, rootMargin: '0px 0px -7% 0px' });
+    }, { threshold: 0.6, rootMargin: '0px' }); // reveal once ~60% of a card is in view → one at a time
   }
   // Build one work card (16:9, title overlaid inside). Used by featured + grid.
   function makeWCard(posterSrc, motionSrc, title, cat, data) {
@@ -2077,19 +2081,21 @@
     return card;
   }
 
-  // 3D Designs: scroll-driven overlapping collage (alternating sides, images
-  // stacking slightly over one another as you move down; gaps between groups).
+  // 3D Designs: centered overlapping collage — images scatter left/right of
+  // centre and stack over one another as you scroll (compact, not edge-to-edge).
   function buildStillsFlow(container, count) {
     if (!container || container.childElementCount) return;
+    // horizontal nudge pattern (px from centre) — repeats, gives a scattered look
+    const NUDGE = [-150, 120, -60, 175, -110, 55, -185, 95, 25, -135, 80, -40];
     for (let gi = 1; gi <= count; gi++) {
       const wrap = document.createElement('div');
-      wrap.className = 'still wreveal still--' + (gi % 2 ? 'l' : 'r');
-      if (gi !== 1 && gi % 5 === 1) wrap.classList.add('still--gap');
+      wrap.className = 'still sreveal';
+      if (gi !== 1 && gi % 6 === 1) wrap.classList.add('still--gap'); // breathing room between groups
+      wrap.style.transform = 'translateX(' + NUDGE[(gi - 1) % NUDGE.length] + 'px)';
       const im = document.createElement('img');
       im.loading = 'lazy';
       im.alt = '3D design ' + gi;
       im.src = 'media/mofid/3d-designs/' + ('0' + gi).slice(-2) + '.jpg';
-      im.onload = function() { this.parentNode.classList.add('loaded'); };
       wrap.appendChild(im);
       container.appendChild(wrap);
     }
@@ -2193,7 +2199,7 @@
     const rev = makeRevealObserver();
     featWrap.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
     grid.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
-    if (gallery) gallery.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
+    if (gallery) gallery.querySelectorAll('.sreveal').forEach(function(el) { rev.observe(el); });
     wireThumbVideos(document.getElementById('mofidPanel'));
 
     const rest3d = document.getElementById('mofid3dBlock');
