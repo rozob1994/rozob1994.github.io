@@ -2050,15 +2050,16 @@
   // ══════════════════════════════════════════════════════════════════════
   //  WORK PANELS — featured editorial cards + grid of the rest
   // ══════════════════════════════════════════════════════════════════════
-  function mkWorkVideo(posterSrc, motionSrc) {
-    const vid = document.createElement('video');
-    vid.className = 'work-img';
-    vid.muted = true; vid.loop = true;
-    vid.setAttribute('playsinline', ''); vid.preload = 'none';
-    vid.setAttribute('aria-hidden', 'true');
-    vid.poster = posterSrc;
-    if (canMotion && motionSrc) vid.dataset.src = motionSrc;
-    return vid;
+  // Cards show a static thumbnail (image) — the video only loads/plays in the
+  // popup on click. This keeps dozens of cards from decoding video at once.
+  function mkWorkThumb(posterSrc, alt) {
+    const img = document.createElement('img');
+    img.className = 'work-img';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.src = posterSrc;
+    img.alt = alt || '';
+    return img;
   }
   // Reveal-on-scroll: add `.in` once each element enters the viewport.
   function makeRevealObserver() {
@@ -2076,7 +2077,7 @@
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', 'View: ' + title);
     Object.keys(data).forEach(function(k) { card.dataset[k] = data[k]; });
-    card.appendChild(mkWorkVideo(posterSrc, motionSrc));
+    card.appendChild(mkWorkThumb(posterSrc, title));
     const scrim = document.createElement('div');
     scrim.className = 'wcard-scrim';
     card.appendChild(scrim);
