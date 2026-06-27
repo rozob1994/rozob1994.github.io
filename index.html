@@ -1092,16 +1092,14 @@
     .rest-block{padding:0 0 48px}
     .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 clamp(24px,3vw,40px);padding-top:clamp(36px,4.4vw,60px);border-top:1px solid rgba(255,255,255,0.08)}
     .col-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,1.8vw,32px);align-items:start}
-    .col{display:flex;flex-direction:column;gap:clamp(48px,5vw,92px)}
-    /* Only the small featured block staggers the right column. The long grid
-       below stays a clean, aligned two-column so it never "breaks". */
-    .feat-grid .col-b{margin-top:clamp(90px,10vw,170px)}
+    .col{display:flex;flex-direction:column;gap:clamp(80px,9vw,170px)}
+    .col-b{margin-top:clamp(120px,15vw,260px)}        /* right column sits lower for the staggered left/right rhythm */
 
     /* 3D Designs: rhythm of overlapping clusters and clean grids */
     .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
-    /* clusters now sit side by side (horizontal) with a gentle vertical scatter */
-    .still-cluster{position:relative;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:clamp(16px,2.4vw,44px);margin:clamp(40px,5vw,90px) 0}
-    .still-cluster .sc{position:relative;flex:1 1 0;min-width:0;max-width:46%;overflow:hidden}
+    /* clusters sit side by side and overlap a little (widths + overlap set in JS) */
+    .still-cluster{position:relative;display:flex;flex-direction:row;justify-content:center;align-items:center;margin:clamp(40px,5vw,90px) 0}
+    .still-cluster .sc{position:relative;flex:0 0 auto;min-width:0;overflow:hidden}
     .still-cluster .sc img{width:100%;height:auto;display:block}
     .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.2vw,20px);margin:clamp(54px,7vw,120px) 0}
     .still-grid .sg{overflow:hidden;background:var(--surface)}
@@ -1115,9 +1113,7 @@
     @media(max-width:760px){
       .col-grid{grid-template-columns:1fr;gap:0}
       .col{gap:44px}
-      .feat-grid .col-b{margin-top:44px}
-      .still-cluster{gap:12px}
-      .still-cluster .sc{max-width:50%}
+      .col-b{margin-top:44px}
       .still-grid{grid-template-columns:repeat(2,1fr)}
       .wcard-title{font-size:clamp(20px,5.5vw,28px)}
     }
@@ -2163,7 +2159,11 @@
         const cell = document.createElement('div');
         cell.className = (g.cluster ? 'sc' : 'sg') + ' sreveal';
         if (g.cluster) {
-          const ty = (rand(gIdx * 17 + k * 3 + 1) - 0.5) * 2 * maxNudge;   // unique per cluster
+          const overlap = 8;                                  // % of cluster width the images overlap
+          cell.style.width = ((100 + (g.n - 1) * overlap) / g.n) + '%';
+          if (k > 0) cell.style.marginLeft = '-' + overlap + '%';
+          cell.style.zIndex = String(rand(gIdx * 31 + k * 7 + 5) > 0.5 ? 2 : 1);
+          const ty = (rand(gIdx * 17 + k * 3 + 1) - 0.5) * 2 * maxNudge;   // gentle vertical scatter
           cell.style.transform = 'translateY(' + Math.round(ty) + 'px)';
         }
         cell.appendChild(img(n)); block.appendChild(cell);
