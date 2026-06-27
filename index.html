@@ -205,8 +205,9 @@
     nav.on-light .nav-toggle span{background:#15161d}
     nav.on-light.scrolled{background:rgba(233,233,236,0.92);border-color:rgba(0,0,0,0.08)}
     /* Bold studio statement above the work tabs */
-    .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.5vw,56px);line-height:1.06;letter-spacing:-.015em;color:#fff;max-width:20ch;margin:0 0 clamp(36px,4.5vw,64px)}
+    .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:800;font-size:clamp(21px,2.5vw,38px);line-height:1.08;letter-spacing:-.015em;color:#fff;max-width:24ch;margin:0 0 clamp(26px,3vw,44px)}
     .work-intro .wi-soft{color:rgba(255,255,255,0.42)}
+    .work-intro .wi-blue{color:#0d1fd4}
     .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
     @media(max-width:600px){.work-intro{max-width:none}}
     #workBgCanvas{display:none}
@@ -218,7 +219,7 @@
 
     /* Filter button wrapper — hover triggers expand */
     .work-burger-wrap{
-      display:flex;
+      display:none;   /* filter removed */
       align-items:center;
       position:relative;
     }
@@ -1066,12 +1067,15 @@
     .work-panel{position:relative;z-index:1}
 
     .wcard{position:relative;display:block;width:100%;aspect-ratio:16/9;overflow:hidden;background:var(--surface);cursor:none}
-    .wcard .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.001);transition:transform 1.3s var(--ease)}
-    .wcard:hover .work-img{transform:scale(1.3)}                 /* slow zoom ~30%, clipped */
+    .wcard .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.001);transition:transform 5s var(--ease)}
+    .wcard:hover .work-img{transform:scale(1.3)}                 /* slow ~5s zoom, clipped */
     .wcard-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.30) 32%,rgba(7,8,15,0) 58%)}
     .wcard-cap{position:absolute;left:0;bottom:0;z-index:2;padding:clamp(16px,1.8vw,28px);pointer-events:none}
     .wcard-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,1.9vw,30px);line-height:1.04;color:#fff;letter-spacing:-.01em}
     .wcard-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:8px}
+    /* yellow line that trims in left→right under the title/subtext on hover */
+    .wcard-cap::after{content:'';display:block;height:2px;width:0;margin-top:12px;background:var(--yellow);transition:width .7s var(--ease)}
+    .wcard:hover .wcard-cap::after{width:100%}
     .wcard::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .55s var(--ease);pointer-events:none;z-index:3}
     .wcard:hover::after{border-color:rgba(245,217,78,0.34)}
 
@@ -1094,18 +1098,23 @@
     /* 3D Designs: rhythm of overlapping clusters and clean grids */
     .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
     .still-cluster{position:relative;display:flex;flex-direction:column;align-items:center;margin:clamp(54px,7vw,120px) 0}
-    .still-cluster .sc{position:relative;width:clamp(280px,52%,620px);margin-top:-8%;overflow:hidden;box-shadow:0 40px 95px -34px rgba(0,0,0,0.82)}
+    .still-cluster .sc{position:relative;width:clamp(340px,62%,740px);margin-top:-5%;overflow:hidden}
     .still-cluster .sc:first-child{margin-top:0}
     .still-cluster .sc img{width:100%;height:auto;display:block}
     .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.2vw,20px);margin:clamp(54px,7vw,120px) 0}
     .still-grid .sg{overflow:hidden;background:var(--surface)}
     .still-grid .sg img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 
+    /* Back-to-top button at the bottom of the work section (light theme) */
+    .back-to-top{display:flex;align-items:center;gap:10px;margin:clamp(48px,6vw,96px) auto 0;padding:13px 26px;background:transparent;border:1px solid rgba(0,0,0,0.24);color:#15161d;font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:none;transition:background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
+    .back-to-top svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .back-to-top:hover{background:#15161d;border-color:#15161d;color:#e9e9ec}
+
     @media(max-width:760px){
       .col-grid{grid-template-columns:1fr;gap:0}
       .col{gap:44px}
       .col-b{margin-top:44px}
-      .still-cluster .sc{width:84%;margin-top:-14%}
+      .still-cluster .sc{width:92%;margin-top:-5%}
       .still-grid{grid-template-columns:repeat(2,1fr)}
       .wcard-title{font-size:clamp(20px,5.5vw,28px)}
     }
@@ -1159,7 +1168,7 @@
 
 <section id="work">
   <canvas id="workBgCanvas" aria-hidden="true"></canvas>
-  <h2 class="work-intro">Eccho is a creative studio. <span class="wi-soft">We craft visuals that make brands resonate<span class="wi-dot"></span></span></h2>
+  <h2 class="work-intro">Eccho is a creative studio. <span class="wi-soft">We craft visuals that make brands <span class="wi-blue">resonate</span>.</span></h2>
   <div class="work-header">
     <div class="work-tabs" role="tablist" aria-label="Work section">
       <button class="work-tab work-tab--active" id="tab-mofid" role="tab" aria-selected="true" aria-controls="mofidPanel" data-tab="mofid">Mofid Securities</button>
@@ -1198,6 +1207,10 @@
       <div class="work-grid2" id="personalGrid"></div>
     </div>
   </div><!-- end personalPanel -->
+  <button id="backToTop" class="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>
+    <span>Back to top</span>
+  </button>
 </section>
 
 <section id="about">
@@ -1210,19 +1223,8 @@
       <h2 class="about-heading" id="aboutHeading"><span class="aw">GOOD</span> <span class="aw">DESIGN</span> <span class="aw"><em>ECHOES</em></span></h2>
     </div>
     <div class="about-col-right" id="aboutColRight">
-      <p class="about-intro">3D artist and motion designer turning brands into bold, moving visuals — based in Iran, working worldwide.</p>
-      <p class="about-body">I studied architecture at the Iran University of Science and Technology, where I built an eye for space, form and light — then taught myself 3D and motion design to bring that sensibility to screens and stories. I create work that helps brands establish a strong, lasting presence.</p>
-      <div class="about-meta-row">
-        <div class="about-disciplines">
-          <span class="about-disc-label">What I do</span>
-          <span class="about-disc-list">3D Design &middot; 3D Motion &middot; 2D Motion &middot; Branding</span>
-        </div>
-        <div class="about-tools">
-          <span class="about-disc-label">Tools</span>
-          <span class="about-disc-list">Cinema 4D &middot; Redshift &middot; After Effects &middot; Illustrator &middot; Photoshop</span>
-        </div>
-        <div class="about-stats-inline"><span class="asi-val">5+</span> Years Active &nbsp;&middot;&nbsp; <span class="asi-val">3</span> Disciplines &nbsp;&middot;&nbsp; <span class="asi-val">&#8734;</span> Iterations</div>
-      </div>
+      <p class="about-intro">We bring your vision to life.</p>
+      <p class="about-body">Every project gets everything we&rsquo;ve got — we don&rsquo;t stop until it&rsquo;s the best work we can make.</p>
     </div>
   </div><!-- end about-center -->
   <div class="about-marquee-wrap" style="margin-top:48px">
@@ -1952,6 +1954,16 @@
     window._switchWorkTab = switchTab;
   })();
 
+  // Back-to-top button (bottom of the work section, both tabs)
+  (function initBackToTop() {
+    var btn = document.getElementById('backToTop');
+    var work = document.getElementById('work');
+    if (!btn || !work) return;
+    btn.addEventListener('click', function () {
+      window.scrollTo({ top: work.offsetTop, behavior: 'smooth' });
+    });
+  })();
+
   // ── Hero dot: gentle scale-up in place next to the logo + scroll parallax ──
   function initHeroDotScroll(targetLeft, targetTop) {
     const dot = document.querySelector('.hero-dot');
@@ -2112,41 +2124,49 @@
     grid.appendChild(a); grid.appendChild(bcol); container.appendChild(grid);
   }
 
-  // 3D Designs: a rhythm of small overlapping clusters and clean grids, so the
-  // range reads clearly instead of one endless stack.
+  // 3D Designs: a rhythm of loose overlapping clusters and clean grids. Each
+  // cluster gets its own wide, minimally-overlapping scatter, and no image is
+  // ever left alone at the end (a tiny tail group merges into the previous one).
   function buildStillsFlow(container, count) {
     if (!container || container.childElementCount) return;
-    const NUDGE = [-120, 90, -50, 135, -95, 45];
-    const CLUSTER = [3, 4];          // cluster sizes cycle
-    const GRID = 6;                  // images per clean grid
+    const CLUSTER = [3, 4], GRID = 6;
+    // 1) plan the groups
+    const groups = [];
     let gi = 1, ci = 0, cluster = true;
+    while (gi <= count) {
+      const n = Math.min(cluster ? CLUSTER[ci++ % CLUSTER.length] : GRID, count - gi + 1);
+      groups.push({ cluster: cluster, n: n, start: gi });
+      gi += n; cluster = !cluster;
+    }
+    // merge a lonely/tiny tail group into the previous group
+    if (groups.length > 1 && groups[groups.length - 1].n < 3) {
+      groups[groups.length - 2].n += groups[groups.length - 1].n;
+      groups.pop();
+    }
+    // 2) render
+    const maxNudge = Math.min(260, Math.max(80, (window.innerWidth - 112) * 0.18));
+    function rand(s) { const x = Math.sin(s * 127.1 + 311.7) * 43758.5; return x - Math.floor(x); }
     function img(n) {
       const im = document.createElement('img');
       im.loading = 'lazy'; im.alt = '3D design ' + n;
       im.src = 'media/mofid/3d-designs/' + ('0' + n).slice(-2) + '.jpg';
       return im;
     }
-    while (gi <= count) {
-      if (cluster) {
-        const n = Math.min(CLUSTER[ci % CLUSTER.length], count - gi + 1); ci++;
-        const block = document.createElement('div'); block.className = 'still-cluster';
-        for (let k = 0; k < n; k++, gi++) {
-          const sc = document.createElement('div'); sc.className = 'sc sreveal';
-          sc.style.transform = 'translateX(' + NUDGE[k % NUDGE.length] + 'px)';
-          sc.appendChild(img(gi)); block.appendChild(sc);
+    groups.forEach(function (g, gIdx) {
+      let k, n = g.start;
+      const block = document.createElement('div');
+      block.className = g.cluster ? 'still-cluster' : 'still-grid';
+      for (k = 0; k < g.n; k++, n++) {
+        const cell = document.createElement('div');
+        cell.className = (g.cluster ? 'sc' : 'sg') + ' sreveal';
+        if (g.cluster) {
+          const tx = (rand(gIdx * 17 + k * 3 + 1) - 0.5) * 2 * maxNudge;   // unique per cluster
+          cell.style.transform = 'translateX(' + Math.round(tx) + 'px)';
         }
-        container.appendChild(block);
-      } else {
-        const n = Math.min(GRID, count - gi + 1);
-        const block = document.createElement('div'); block.className = 'still-grid';
-        for (let k = 0; k < n; k++, gi++) {
-          const sg = document.createElement('div'); sg.className = 'sg sreveal';
-          sg.appendChild(img(gi)); block.appendChild(sg);
-        }
-        container.appendChild(block);
+        cell.appendChild(img(n)); block.appendChild(cell);
       }
-      cluster = !cluster;
-    }
+      container.appendChild(block);
+    });
   }
 
   let personalPanelBuilt = false;
