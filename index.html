@@ -47,7 +47,9 @@
     nav.on-blue.scrolled{background:rgba(13,31,212,0.88);border-color:rgba(255,255,255,0.1)}
     /* When the project overlay is open, the nav goes solid dark (not blue) so it
        reads as part of the overlay chrome instead of a distracting blue ribbon. */
-    body.po-active #navbar{background:#07080f;border-bottom-color:rgba(255,255,255,0.08);backdrop-filter:none}
+    /* Any open popup (project or Mofid) hides the top ribbon entirely so the
+       close button never overlaps it. */
+    body.po-active #navbar{opacity:0;pointer-events:none}
     body.po-active #navbar .nav-links a{color:rgba(255,255,255,0.6)}
     body.po-active #navbar .nav-links a:hover{color:#fff}
     body.po-active #navbar .nav-logo img{filter:brightness(0) invert(1)}
@@ -55,9 +57,9 @@
     .nav-logo-word{font-family:var(--font-display);font-weight:800;font-size:23px;letter-spacing:-.02em;color:#fff;line-height:1}
     .nav-logo-dot{position:relative;width:9px;height:9px;border-radius:50%;background:var(--yellow);margin-left:1px;transform:scale(0);transform-origin:center;transition:transform .62s var(--ease);box-shadow:0 0 14px 3px rgba(245,217,78,0.5)}
     .nav-logo-dot.dot-in{transform:scale(1)}
-    .nav-logo-dot.echo-active::before,.nav-logo-dot.echo-active::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;transform:translate(-50%,-50%);border:1.5px solid rgba(245,217,78,0.34);border-radius:50%;pointer-events:none;animation:echoExpandSm 5.4s var(--ease) infinite}
-    .nav-logo-dot.echo-active::after{animation-delay:2.7s}
-    @keyframes echoExpandSm{0%{width:0;height:0;opacity:0.34}8%{opacity:0.28}100%{width:64px;height:64px;opacity:0}}
+    .nav-logo-dot.echo-active::before,.nav-logo-dot.echo-active::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;transform:translate(-50%,-50%);border:2.5px solid rgba(245,217,78,0.62);border-radius:50%;pointer-events:none;animation:echoExpandSm 4.6s var(--ease) infinite}
+    .nav-logo-dot.echo-active::after{animation-delay:2.3s}
+    @keyframes echoExpandSm{0%{width:0;height:0;opacity:0.62}10%{opacity:0.55}100%{width:72px;height:72px;opacity:0}}
     .nav-links{list-style:none;display:flex;gap:44px}
     .nav-links a{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .25s;position:relative}
     .nav-links a::after{content:'';position:absolute;bottom:-3px;left:0;width:0;height:1px;background:var(--yellow);transition:width 0.35s var(--ease)}
@@ -71,7 +73,7 @@
     .nav-toggle.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
 
     /* HERO */
-    #hero{min-height:80vh;position:relative;overflow:visible;background:#0d1fd4}
+    #hero{min-height:80vh;position:relative;overflow:visible;background:#e9e9ec}
     /* settled state after intro — padding lives here so media queries can override it */
     #hero.hero-settled{padding:0 56px 36px 52px}
     .hero-bg{display:none}
@@ -166,7 +168,7 @@
        so the ink edges align at any font size */
     .hero-title{font-family:var(--font-display);font-size:clamp(80px,10vw,140px);font-weight:800;line-height:0.9;color:#fff;letter-spacing:-.02em;margin-left:-0.065em}
     .hero-subtitle{font-family:var(--font-display);font-size:clamp(18px,2.2vw,28px);font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:0.15em;margin-top:2px;line-height:1;margin-left:-0.07em}
-    .hero-author{font-family:var(--font-mono);font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-top:4px;margin-left:-0.07em}
+    .hero-author{font-family:var(--font-mono);font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.82);text-transform:uppercase;margin-top:4px;margin-left:-0.07em;text-shadow:0 1px 16px rgba(0,0,0,0.5)}
     .scroll-pill{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:lowercase;color:#fff;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);border-radius:100px;padding:6px 20px;z-index:50;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
     .scroll-pill.pill-visible{opacity:1!important}
 
@@ -206,7 +208,11 @@
     nav.on-light{color:#15161d}
     nav.on-light .nav-logo-word{color:#15161d}
     nav.on-light .nav-links a{color:rgba(21,22,29,0.55)}
-    nav.on-light .nav-links a:hover{color:#15161d}
+    nav.on-light .nav-links a:hover{color:#0d1fd4}
+    /* On bright surfaces the signature dot, its pulse, and the hover underlines go blue */
+    nav.on-light .nav-logo-dot{background:#0d1fd4;box-shadow:0 0 14px 3px rgba(13,31,212,0.4)}
+    nav.on-light .nav-logo-dot.echo-active::before,nav.on-light .nav-logo-dot.echo-active::after{border-color:rgba(13,31,212,0.6)}
+    nav.on-light .nav-links a::after{background:#0d1fd4}
     nav.on-light .nav-toggle span{background:#15161d}
     nav.on-light.scrolled{background:rgba(233,233,236,0.92);border-color:rgba(0,0,0,0.08)}
     /* Bold studio statement above the work tabs */
@@ -1098,15 +1104,16 @@
     .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 clamp(24px,3vw,40px);padding-top:clamp(36px,4.4vw,60px);border-top:1px solid rgba(255,255,255,0.08)}
     .col-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,1.8vw,32px);align-items:start}
     .col{display:flex;flex-direction:column;gap:clamp(80px,9vw,170px)}
-    /* Featured block staggers via CSS; the long grids are balanced in JS
-       (balanceGrid) so their columns stay staggered yet end flush. */
-    .feat-grid .col-b{margin-top:clamp(120px,15vw,260px)}
+    /* Right column sits lower for the staggered left/right rhythm (featured AND
+       the longer grids); JS re-flows visible cards so they always alternate. */
+    .col-b{margin-top:clamp(120px,15vw,260px)}
 
     /* 3D Designs: rhythm of overlapping clusters and clean grids */
     .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
-    /* clusters cascade diagonally: images alternate left/right and overlap at
-       the corners, with varied crops (sizes, aspect + offsets all set in JS). */
-    .still-cluster{position:relative;display:block;width:100%;max-width:780px;margin:clamp(26px,3.5vw,64px) auto}
+    /* clusters cascade diagonally across the full row: large images (~the size
+       of the 3-up grid cells) zigzag and overlap at the corners, with varied
+       crops. Sizes + positions are all set in JS. */
+    .still-cluster{position:relative;display:block;width:100%;margin:clamp(30px,4vw,72px) 0}
     .still-cluster .sc{position:relative;display:block;overflow:hidden;background:var(--surface)}
     .still-cluster .sc img{width:100%;height:100%;object-fit:cover;display:block}
     .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.2vw,20px);margin:clamp(40px,5vw,90px) 0}
@@ -1121,7 +1128,7 @@
     @media(max-width:760px){
       .col-grid{grid-template-columns:1fr;gap:0}
       .col{gap:44px}
-      .feat-grid .col-b{margin-top:44px}
+      .col-b{margin-top:44px}
       .still-grid{grid-template-columns:repeat(2,1fr)}
       .wcard-title{font-size:clamp(20px,5.5vw,28px)}
     }
@@ -1695,11 +1702,12 @@
 
     // ── PHASE 1: Position everything BEFORE any transition fires ─────────────
     // Hero: full-height, overflow:hidden so off-screen content stays hidden
-    heroEl.style.cssText = 'height:80vh;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#0d1fd4;overflow:hidden;';
+    heroEl.style.cssText = 'height:80vh;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;overflow:hidden;';
     heroEl.classList.add('hero-settled');
 
-    // Hero content: parked below the viewport — will rise up into position
-    heroContent.style.cssText = 'position:relative;transform:translateY(110vh);opacity:1;z-index:4;pointer-events:none;will-change:transform;top:auto;bottom:auto;left:auto;right:auto;';
+    // Hero content: parked below the viewport — rises up to sit ON the reel
+    // (bottom-left), leaving the white strip below the reel empty.
+    heroContent.style.cssText = 'position:absolute;left:52px;bottom:20%;transform:translateY(110vh);opacity:1;z-index:4;pointer-events:none;will-change:transform;top:auto;right:auto;';
     heroEl.appendChild(heroContent);
 
     // Make other sections visible but keep them below fold (scroll locked)
@@ -1766,9 +1774,9 @@
       }
 
       // Strip transitions, switch to min-height so hero is flexible for content
-      heroEl.style.cssText      = 'min-height:calc(100vh - 420px);display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#0d1fd4;';
+      heroEl.style.cssText      = 'min-height:calc(100vh - 420px);display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;';
       heroEl.classList.add('hero-settled');
-      heroContent.style.cssText = 'position:relative;transform:none;opacity:1;z-index:4;pointer-events:all;top:auto;bottom:auto;left:auto;right:auto;';
+      heroContent.style.cssText = 'position:absolute;left:52px;bottom:20%;transform:none;opacity:1;z-index:4;pointer-events:all;top:auto;right:auto;';
 
       // The signature dot now lives next to the ECCHO logo in the nav — pop it
       // up gently in place, then start the soft pulse.
@@ -1973,7 +1981,15 @@
     var work = document.getElementById('work');
     if (!btn || !work) return;
     btn.addEventListener('click', function () {
-      window.scrollTo({ top: work.offsetTop, behavior: 'smooth' });
+      // Land on the tabs (with breathing room under the ribbon) — the studio
+      // subtext scrolls out of view so it never stacks with the ECCHO logo.
+      var header = work.querySelector('.work-header');
+      var nav = document.getElementById('navbar');
+      var navH = nav ? nav.offsetHeight : 72;
+      var target = header
+        ? (header.getBoundingClientRect().top + window.scrollY - navH - 28)
+        : work.offsetTop;
+      window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
     });
   })();
 
@@ -2133,45 +2149,38 @@
     const grid = document.createElement('div'); grid.className = 'col-grid';
     const a = document.createElement('div'); a.className = 'col col-a';
     const bcol = document.createElement('div'); bcol.className = 'col col-b';
-    cards.forEach(function(card, i) { (i % 2 === 0 ? a : bcol).appendChild(card); });
+    cards.forEach(function(card, i) { card.dataset.order = i; (i % 2 === 0 ? a : bcol).appendChild(card); });
     grid.appendChild(a); grid.appendChild(bcol); container.appendChild(grid);
   }
 
-  // Keep the bottoms of the two staggered columns flush so the last cards never
-  // hang alone. Because cards are equal-height, we offset the SHORTER column
-  // down by the (count difference × card pitch) — that both staggers and ends level.
+  // Re-flow only the VISIBLE cards into the two columns so they always alternate
+  // one-left / one-right (hidden featured cards no longer break the rhythm and
+  // bunch the tail on one side). The column offset is handled in CSS, exactly
+  // like the featured block.
   function balanceGrid(gridEl) {
     if (!gridEl) return;
     const cg = gridEl.querySelector('.col-grid'); if (!cg) return;
     const a = cg.querySelector('.col-a'), b = cg.querySelector('.col-b'); if (!a || !b) return;
     a.style.marginTop = ''; b.style.marginTop = '';
-    if (window.matchMedia('(max-width:760px)').matches) return;   // single column on mobile
-    if (!gridEl.getClientRects().length) return;                  // panel hidden — skip
-    function vis(col) { return Array.prototype.filter.call(col.children, function (c) { return getComputedStyle(c).display !== 'none'; }); }
-    const va = vis(a), vb = vis(b);
-    if (!va.length || !vb.length) return;
-    const cardH = va[0].getBoundingClientRect().height; if (!cardH) return;
-    const gap = parseFloat(getComputedStyle(a).rowGap) || 0;
-    const pitch = cardH + gap;
-    const diff = va.length - vb.length;
-    if (diff > 0) b.style.marginTop = (diff * pitch) + 'px';
-    else if (diff < 0) a.style.marginTop = (-diff * pitch) + 'px';
+    const all = Array.prototype.slice.call(cg.querySelectorAll('.wcard'))
+      .sort(function (x, y) { return (+x.dataset.order) - (+y.dataset.order); });
+    let vi = 0;
+    all.forEach(function (c) {
+      if (c.style.display === 'none') { a.appendChild(c); return; }  // park hidden cards (collapsed)
+      (vi % 2 === 0 ? a : b).appendChild(c); vi++;
+    });
   }
   function balanceWorkGrids() {
     ['mofidGrid', 'personalGrid'].forEach(function (id) { balanceGrid(document.getElementById(id)); });
   }
   window.balanceWorkGrids = balanceWorkGrids;
-  (function () {
-    let t;
-    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(balanceWorkGrids, 150); }, { passive: true });
-  })();
 
   // 3D Designs: a rhythm of loose overlapping clusters and clean grids. Each
   // cluster gets its own wide, minimally-overlapping scatter, and no image is
   // ever left alone at the end (a tiny tail group merges into the previous one).
   function buildStillsFlow(container, count) {
     if (!container || container.childElementCount) return;
-    const CLUSTER = [2, 3], GRID = 6;
+    const CLUSTER = [3, 4, 2], GRID = 6;
     // 1) plan the groups
     const groups = [];
     let gi = 1, ci = 0, cluster = true;
@@ -2201,17 +2210,18 @@
         const cell = document.createElement('div');
         cell.className = (g.cluster ? 'sc' : 'sg') + ' sreveal';
         if (g.cluster) {
-          // diagonal cascade: alternate the side, overlap the previous image's
-          // corner, and crop to a varied aspect ratio for a dynamic composition
-          var ar = ['4 / 3', '1 / 1', '16 / 9', '3 / 4', '3 / 2'][(g.start + k) % 5];
-          cell.style.width = (50 + Math.round(rand(gIdx * 13 + k * 5 + 2) * 14)) + '%'; // 50–64%
+          // diagonal zigzag: large images (~3-up grid size) that march down the
+          // row, alternating left/right and overlapping the previous image at a
+          // corner, each cropped to a varied aspect ratio.
+          var ar = ['4 / 3', '3 / 2', '16 / 9', '1 / 1', '5 / 4'][(g.start + k) % 5];
+          var W = 36 + Math.round(rand(gIdx * 13 + k * 5 + 2) * 6);   // 36–42% of the row (a touch over a 3-up cell)
+          cell.style.width = W + '%';
           cell.style.aspectRatio = ar;
-          if (k % 2 === 0) cell.style.marginRight = 'auto';     // pinned left
-          else cell.style.marginLeft = 'auto';                 // pinned right
-          if (k > 0) cell.style.marginTop = '-' + (7 + Math.round(rand(gIdx * 7 + k) * 5)) + '%';
-          var nudge = (rand(gIdx * 17 + k * 3 + 1) - 0.5) * 12; // small horizontal jitter (%)
-          cell.style.transform = 'translateX(' + nudge.toFixed(1) + '%)';
-          cell.style.zIndex = String(k + 1);                    // later images sit in front
+          var jit = Math.round(rand(gIdx * 5 + k * 3 + 9) * 6);       // 0–6
+          var left = (k % 2 === 0) ? (4 + jit) : (100 - W - 4 - 26 - jit); // pull right images inward so corners overlap
+          cell.style.marginLeft = Math.max(0, left) + '%';
+          if (k > 0) cell.style.marginTop = '-' + (8 + Math.round(rand(gIdx * 7 + k) * 6)) + '%'; // vertical corner overlap
+          cell.style.zIndex = String(k + 1);                          // later images sit in front
         }
         cell.appendChild(img(n)); block.appendChild(cell);
       }
@@ -2331,12 +2341,12 @@
     requestAnimationFrame(function () { balanceGrid(grid); });
   }
 
-  // Mofid cards (featured + grid) open the single-video popup directly.
+  // Mofid cards (featured + grid) open the SAME overlay as personal projects.
   document.addEventListener('click', function(e) {
     const item = e.target.closest('.wcard');
     if (!item || !item.dataset.mofidSlug) return;
-    if (typeof window.openMofidExpand === 'function') {
-      window.openMofidExpand(item.dataset.mofidSlug, item.dataset.mofidKey);
+    if (typeof window.openMofidProject === 'function') {
+      window.openMofidProject(item.dataset.mofidSlug, item.dataset.mofidKey);
     }
   });
   document.addEventListener('keydown', function(e) {
@@ -2344,8 +2354,8 @@
     const item = e.target.closest && e.target.closest('.wcard');
     if (!item || !item.dataset.mofidSlug) return;
     e.preventDefault();
-    if (typeof window.openMofidExpand === 'function') {
-      window.openMofidExpand(item.dataset.mofidSlug, item.dataset.mofidKey);
+    if (typeof window.openMofidProject === 'function') {
+      window.openMofidProject(item.dataset.mofidSlug, item.dataset.mofidKey);
     }
   });
 
@@ -3037,6 +3047,8 @@
 
     let currentIdx = 0;
     let galleryObserver = null;
+    let mode = 'personal';                 // 'personal' | 'mofid'
+    function activeArr() { return mode === 'mofid' ? MOFID_PROJECTS : projects; }
 
     // ── Sidebar scroll progress ──────────────────────────────────────────
     function onOverlayScroll() {
@@ -3079,9 +3091,7 @@
       {name:'Roozbeh Ghanbarzadeh', title:'Motion Designer'}
     ];
 
-    function populate(idx) {
-      const p = projects[idx];
-
+    function populate(p) {
       // ── Normal overlay ───────────────────────────────────────────────
       restoreNormalOverlay();
       titleEl.textContent = p.title;
@@ -3122,14 +3132,15 @@
         // Blurred backdrop fills the fixed 16:9 frame behind the media, so a
         // vertical or off-ratio source is letterboxed over a soft fill rather
         // than hard black bars. Always present (poster + video are contained).
+        const posterSrc = p.poster || ('media/' + p.id + '/poster.jpg');
         const blurBg = document.createElement('div');
         blurBg.className = 'po-hero-blur-bg';
-        blurBg.style.backgroundImage = 'url("media/' + p.id + '/poster.jpg")';
+        blurBg.style.backgroundImage = 'url("' + posterSrc + '")';
         heroEl.appendChild(blurBg);
 
         // poster image — contained inside the 16:9 frame (CSS object-fit:contain)
         const posterImg = new Image();
-        posterImg.src = 'media/' + p.id + '/poster.jpg';
+        posterImg.src = posterSrc;
         posterImg.onload = function() { posterImg.classList.add('loaded'); };
         heroEl.appendChild(posterImg);
 
@@ -3152,7 +3163,7 @@
           posterImg.remove();
           playWrap.remove();
 
-          const src = p.hasFull ? 'media/' + p.id + '/full.mp4' : 'media/' + p.id + '/motion.mp4';
+          const src = p.video || (p.hasFull ? 'media/' + p.id + '/full.mp4' : 'media/' + p.id + '/motion.mp4');
           const vid = document.createElement('video');
           vid.src = src;
           vid.controls = true;
@@ -3193,6 +3204,32 @@
 
     // ── Mofid overlay helpers ──────────────────────────────────────────
     const MOFID_SECTIONS = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
+
+    // Each Mofid work becomes a "project" so it opens in the exact same overlay
+    // as the personal projects (hero video, description, credits, prev/next).
+    // Credits/gallery are placeholders for now (owner will supply real data).
+    function mofidTitleFor(s) {
+      if (typeof MOFID_TITLES !== 'undefined' && MOFID_TITLES[s]) return MOFID_TITLES[s];
+      return s.replace(/[-_]/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    }
+    const MOFID_PROJECTS = [];
+    MOFID_SECTIONS.forEach(function (sec) {
+      sec.slugs.forEach(function (slug) {
+        MOFID_PROJECTS.push({
+          id: 'mofid/' + sec.key + '/' + slug,
+          slug: slug, catKey: sec.key,
+          title: mofidTitleFor(slug),
+          desc: (typeof window.mofidDescFor === 'function')
+            ? window.mofidDescFor(slug, sec.key)
+            : 'In-house motion design for Mofid Securities.',
+          type: sec.label,
+          poster: 'media/mofid/' + sec.key + '/' + slug + '.jpg',
+          video: 'media/mofid/' + sec.key + '/' + slug + '.mp4',
+          hasFull: false,
+          gallery: 0
+        });
+      });
+    });
 
     function restoreNormalOverlay() {
       if (innerEl.dataset.mofid !== 'true') return;
@@ -3287,7 +3324,7 @@
     function open(idx, skipHistory) {
       currentIdx = idx;
       lastFocused = document.activeElement;
-      populate(idx);
+      populate(activeArr()[idx]);
       overlay.classList.add('po-open');
       document.body.classList.add('po-active');
       closeBtn.classList.add('visible');
@@ -3297,8 +3334,14 @@
       document.body.style.overflow = 'hidden';
       triggerAnimate();
       closeBtn.focus({preventScroll: true});
-      if (!skipHistory) tryHistory('pushState', { project: projects[idx].id }, '', '#' + projects[idx].id);
+      if (!skipHistory && mode === 'personal') tryHistory('pushState', { project: projects[idx].id }, '', '#' + projects[idx].id);
     }
+    // Open a specific Mofid work in the same overlay as the personal projects.
+    window.openMofidProject = function (slug, catKey) {
+      var idx = MOFID_PROJECTS.findIndex(function (m) { return m.slug === slug && (!catKey || m.catKey === catKey); });
+      if (idx < 0) idx = MOFID_PROJECTS.findIndex(function (m) { return m.slug === slug; });
+      if (idx >= 0) { mode = 'mofid'; open(idx, true); }
+    };
 
     function closeVisuals() {
       overlay.classList.remove('po-open');
@@ -3327,7 +3370,7 @@
     function openFromItem(item) {
       if (!isPersonalItem(item)) return;
       const idx = parseInt(item.dataset.idx);
-      if (!isNaN(idx) && idx < projects.length) open(idx);
+      if (!isNaN(idx) && idx < projects.length) { mode = 'personal'; open(idx); }
     }
     document.addEventListener('click', e => {
       const item = e.target.closest('.wcard');
@@ -3342,6 +3385,7 @@
     closeBtn.addEventListener('click', close);
 
     function currentList() {
+      if (mode === 'mofid') return MOFID_PROJECTS.map((_, i) => i);
       return projects.map((_,i) => i).filter(i => activeFilter === 'all' || projects[i].type === activeFilter);
     }
     function step(dir) {
@@ -3351,9 +3395,9 @@
       const next = (here < 0 ? 0 : (here + dir + list.length) % list.length);
       currentIdx = list[next];
       overlay.scrollTop = 0;
-      populate(currentIdx);
+      populate(activeArr()[currentIdx]);
       triggerAnimate();
-      tryHistory('replaceState', { project: projects[currentIdx].id }, '', '#' + projects[currentIdx].id);
+      if (mode === 'personal') tryHistory('replaceState', { project: projects[currentIdx].id }, '', '#' + projects[currentIdx].id);
     }
     prevBtn.addEventListener('click', () => step(-1));
     nextBtn.addEventListener('click', () => step(1));
