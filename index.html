@@ -961,52 +961,43 @@
     .mofid-3d-gallery{column-count:4;column-gap:8px}
     .mofid-3d-item{width:100%;height:auto;display:block;break-inside:avoid;margin:0 0 8px;border-radius:2px;background:#0d1020;opacity:0;transition:opacity 0.5s var(--ease)}
     .mofid-3d-item.loaded{opacity:1}
-    /* ── Mofid expand: fixed centered modal ── */
-    .mofid-expand-backdrop{
-      position:fixed;inset:0;z-index:10100;
-      background:rgba(0,0,0,0.78);
-      opacity:0;pointer-events:none;
-      transition:opacity 0.3s var(--ease);
-    }
+    /* ── Mofid popup: full-height panel (top↔bottom, side margins), scrollable ── */
+    .mofid-expand-backdrop{position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,0.82);opacity:0;pointer-events:none;transition:opacity 0.3s var(--ease)}
     .mofid-expand-backdrop.open{opacity:1;pointer-events:auto}
     .mofid-expand-panel{
-      position:fixed;top:50%;left:50%;z-index:10200;
-      width:min(1100px,92vw);max-height:90vh;
-      transform:translate(-50%,-50%) scale(0.96);
-      background:#0d1020;border-radius:10px;
-      border:1.5px solid rgba(245,217,78,0.18);
-      overflow:hidden;
+      position:fixed;top:0;bottom:0;left:50%;z-index:10200;
+      width:min(1080px,94vw);
+      transform:translateX(-50%) translateY(26px);
+      background:#0b0d18;
+      border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);
+      overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
       opacity:0;pointer-events:none;
-      transition:opacity 0.32s var(--ease),transform 0.32s var(--ease);
-      display:flex;flex-direction:column;
+      transition:opacity 0.34s var(--ease),transform 0.34s var(--ease);
     }
-    .mofid-expand-panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-    .mofid-expand-inner{display:flex;gap:0;flex-direction:column;height:100%;overflow:hidden}
-    .mofid-expand-video-wrap{flex:1 1 auto;min-height:0;position:relative;background:#000}
-    .mofid-expand-video-wrap video{width:100%;height:100%;max-height:calc(90vh - 100px);display:block;object-fit:contain;background:#000}
-    .mofid-expand-info{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:16px 70px 16px 24px;background:#0d1020;border-top:1px solid rgba(255,255,255,0.07)}
-    .mofid-expand-textcol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px}
-    .mofid-expand-name{font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .mofid-expand-desc{font-family:var(--font-body);font-size:13px;line-height:1.5;color:rgba(255,255,255,0.6);margin:0;max-width:760px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .mofid-expand-cat-label{font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--yellow);flex:0 0 auto;align-self:flex-start;padding-top:3px}
-    .mofid-expand-stills{display:none}
-    .mofid-expand-x{position:absolute;top:14px;right:16px;z-index:6;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:none;padding:0;transition:background 0.2s,border-color 0.2s,transform 0.2s}
+    .mofid-expand-panel.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+    .me-video{position:relative;width:100%;aspect-ratio:16/9;background:#000}
+    .me-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block}
+    .me-body{padding:clamp(26px,3vw,50px) clamp(22px,3vw,54px) clamp(64px,8vw,120px)}
+    .me-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--yellow);margin-bottom:13px}
+    .me-title{font-family:var(--font-display);font-weight:800;font-size:clamp(26px,3.4vw,48px);line-height:1.04;letter-spacing:-.01em;color:#fff;margin:0 0 18px}
+    .me-desc{font-family:var(--font-body);font-size:clamp(14px,1.05vw,16px);line-height:1.7;color:rgba(255,255,255,0.66);margin:0;max-width:72ch}
+    .me-related{margin-top:clamp(50px,6vw,92px)}
+    .me-related-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:0 0 22px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.08)}
+    .me-related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .me-rel{position:relative;aspect-ratio:16/9;overflow:hidden;cursor:none;background:var(--surface)}
+    .me-rel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
+    .me-rel:hover img{transform:scale(1.08)}
+    .me-rel-cap{position:absolute;left:0;right:0;bottom:0;padding:16px 12px 11px;z-index:2;background:linear-gradient(to top,rgba(7,8,15,0.9),rgba(7,8,15,0));font-family:var(--font-display);font-weight:600;font-size:13px;line-height:1.15;color:#fff}
+    .mofid-expand-x{position:fixed;top:16px;right:max(16px,calc(50% - min(540px,47vw) + 14px));z-index:10300;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.6);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transition:background .2s,border-color .2s,transform .2s}
+    .mofid-expand-x.visible{display:flex}
     .mofid-expand-x:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:scale(1.1)}
-    /* prev / next nav arrows */
-    .mofid-expand-prev,.mofid-expand-next{
-      position:fixed;top:50%;z-index:10300;
-      width:48px;height:48px;border-radius:50%;
-      background:rgba(13,16,32,0.82);border:1.5px solid rgba(255,255,255,0.25);
-      color:#fff;font-size:22px;line-height:1;
-      display:none;align-items:center;justify-content:center;
-      cursor:none;padding:0;
-      transform:translateY(-50%);
-      transition:background 0.2s,border-color 0.2s,transform 0.2s;
-    }
-    .mofid-expand-prev{left:calc(50% - min(550px,46vw) - 60px)}
-    .mofid-expand-next{right:calc(50% - min(550px,46vw) - 60px)}
+    .mofid-expand-prev,.mofid-expand-next{position:fixed;top:50%;z-index:10300;width:48px;height:48px;border-radius:50%;background:rgba(13,16,32,0.82);border:1.5px solid rgba(255,255,255,0.25);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transform:translateY(-50%);transition:background .2s,border-color .2s,transform .2s}
+    .mofid-expand-prev{left:max(8px,calc(50% - min(540px,47vw) - 60px))}
+    .mofid-expand-next{right:max(8px,calc(50% - min(540px,47vw) - 60px))}
     .mofid-expand-prev.visible,.mofid-expand-next.visible{display:flex}
     .mofid-expand-prev:hover,.mofid-expand-next:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:translateY(-50%) scale(1.1)}
+    @media(max-width:900px){.me-related-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.mofid-expand-panel{width:100vw}.me-related-grid{grid-template-columns:1fr 1fr}.mofid-expand-x{right:12px}}
     .mofid-play-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;cursor:none}
     .mofid-play-btn{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;transition:background 0.2s,transform 0.2s}
     .mofid-play-btn svg{width:18px;height:18px;fill:#fff;margin-left:3px}
@@ -2344,40 +2335,30 @@
     xBtn.innerHTML = '&times;';
     xBtn.setAttribute('aria-label', 'Close');
 
-    var vidWrap = document.createElement('div');
-    vidWrap.className = 'mofid-expand-video-wrap';
-
+    // video at the top of the scrollable panel
+    var meVideo = document.createElement('div');
+    meVideo.className = 'me-video';
     var fullVid = document.createElement('video');
     fullVid.muted = false;
     fullVid.controls = true;
     fullVid.setAttribute('playsinline', '');
     fullVid.preload = 'metadata';
-    vidWrap.appendChild(fullVid);
+    meVideo.appendChild(fullVid);
 
-    var panelInner = document.createElement('div');
-    panelInner.className = 'mofid-expand-inner';
+    // body: category, title, description, related grid
+    var meBody = document.createElement('div');
+    meBody.className = 'me-body';
+    var catLabelEl = document.createElement('div'); catLabelEl.className = 'me-cat';
+    var nameEl = document.createElement('h2'); nameEl.className = 'me-title';
+    var descEl = document.createElement('p'); descEl.className = 'me-desc';
+    var related = document.createElement('div'); related.className = 'me-related';
+    var relLabel = document.createElement('div'); relLabel.className = 'me-related-label'; relLabel.textContent = 'Related work';
+    var relGrid = document.createElement('div'); relGrid.className = 'me-related-grid';
+    related.appendChild(relLabel); related.appendChild(relGrid);
+    meBody.appendChild(catLabelEl); meBody.appendChild(nameEl); meBody.appendChild(descEl); meBody.appendChild(related);
 
-    var infoBar = document.createElement('div');
-    infoBar.className = 'mofid-expand-info';
-
-    var textCol = document.createElement('div');
-    textCol.className = 'mofid-expand-textcol';
-    var nameEl = document.createElement('div');
-    nameEl.className = 'mofid-expand-name';
-    var descEl = document.createElement('p');
-    descEl.className = 'mofid-expand-desc';
-    textCol.appendChild(nameEl);
-    textCol.appendChild(descEl);
-
-    var catLabelEl = document.createElement('div');
-    catLabelEl.className = 'mofid-expand-cat-label';
-
-    infoBar.appendChild(textCol);
-    infoBar.appendChild(catLabelEl);
-    panelInner.appendChild(vidWrap);
-    panelInner.appendChild(infoBar);
-    panel.appendChild(xBtn);
-    panel.appendChild(panelInner);
+    panel.appendChild(meVideo);
+    panel.appendChild(meBody);
 
     var prevBtn = document.createElement('button');
     prevBtn.className = 'mofid-expand-prev';
@@ -2389,10 +2370,10 @@
     nextBtn.setAttribute('aria-label', 'Next');
     nextBtn.innerHTML = '&#8594;';
 
-    // Attach the single-video popup to <body> so it can open on its own
-    // (cards in the work panels open it directly — no grouped overlay needed).
+    // Attach to <body> so the popup (and its fixed chrome) opens on its own.
     document.body.appendChild(backdrop);
     document.body.appendChild(panel);
+    document.body.appendChild(xBtn);
     document.body.appendChild(prevBtn);
     document.body.appendChild(nextBtn);
 
@@ -2411,6 +2392,26 @@
       nameEl.textContent = slugToTitle(work.slug);
       descEl.textContent = MOFID_DESC_BY_SLUG[work.slug] || MOFID_DESC[work.catKey] || 'In-house motion design for Mofid Securities — built to give the brand a confident, consistent voice on screen.';
       catLabelEl.textContent = work.catLabel;
+
+      // Related: other videos in the same category, topped up from the rest.
+      var rel = allWorks.filter(function(w) { return w.catKey === work.catKey && w.slug !== work.slug; });
+      if (rel.length < 6) {
+        allWorks.forEach(function(w) { if (w.slug !== work.slug && rel.indexOf(w) < 0 && rel.length < 6) rel.push(w); });
+      }
+      rel = rel.slice(0, 6);
+      relGrid.innerHTML = '';
+      rel.forEach(function(w) {
+        var cell = document.createElement('div'); cell.className = 'me-rel';
+        cell.setAttribute('role', 'button'); cell.setAttribute('tabindex', '0');
+        var im = document.createElement('img'); im.loading = 'lazy'; im.decoding = 'async';
+        im.src = 'media/mofid/' + w.catKey + '/' + w.slug + '.jpg'; im.alt = slugToTitle(w.slug);
+        var cap = document.createElement('div'); cap.className = 'me-rel-cap'; cap.textContent = slugToTitle(w.slug);
+        cell.appendChild(im); cell.appendChild(cap);
+        cell.addEventListener('click', function() { var i = allWorks.indexOf(w); if (i >= 0) populateModal(i); });
+        relGrid.appendChild(cell);
+      });
+
+      panel.scrollTop = 0;
       fullVid.play().catch(function(){});
     }
 
@@ -2418,6 +2419,7 @@
       populateModal(idx);
       backdrop.classList.add('open');
       panel.classList.add('open');
+      xBtn.classList.add('visible');
       prevBtn.classList.add('visible');
       nextBtn.classList.add('visible');
       modalOpen = true;
@@ -2429,6 +2431,7 @@
       fullVid.pause();
       panel.classList.remove('open');
       backdrop.classList.remove('open');
+      xBtn.classList.remove('visible');
       prevBtn.classList.remove('visible');
       nextBtn.classList.remove('visible');
       modalOpen = false;
