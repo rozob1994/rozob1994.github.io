@@ -2071,7 +2071,7 @@
   // Build one work card (16:9, title overlaid inside). Used by featured + grid.
   function makeWCard(posterSrc, motionSrc, title, cat, data) {
     const card = document.createElement('div');
-    card.className = 'wcard work-item wreveal';
+    card.className = 'wcard wreveal';
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', 'View: ' + title);
@@ -2246,7 +2246,7 @@
 
   // Mofid cards (featured + grid) open the single-video popup directly.
   document.addEventListener('click', function(e) {
-    const item = e.target.closest('.work-item');
+    const item = e.target.closest('.wcard');
     if (!item || !item.dataset.mofidSlug) return;
     if (typeof window.openMofidExpand === 'function') {
       window.openMofidExpand(item.dataset.mofidSlug, item.dataset.mofidKey);
@@ -2254,7 +2254,7 @@
   });
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const item = e.target.closest && e.target.closest('.work-item');
+    const item = e.target.closest && e.target.closest('.wcard');
     if (!item || !item.dataset.mofidSlug) return;
     e.preventDefault();
     if (typeof window.openMofidExpand === 'function') {
@@ -3199,12 +3199,12 @@
       if (!isNaN(idx) && idx < projects.length) open(idx);
     }
     document.addEventListener('click', e => {
-      const item = e.target.closest('.work-item');
+      const item = e.target.closest('.wcard');
       if (item && isPersonalItem(item)) openFromItem(item);
     });
     document.addEventListener('keydown', e => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const item = e.target.closest?.('.work-item');
+      const item = e.target.closest?.('.wcard');
       if (item && isPersonalItem(item)) { e.preventDefault(); openFromItem(item); }
     });
 
