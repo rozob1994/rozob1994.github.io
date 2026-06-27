@@ -30,6 +30,9 @@
     #cursor-dot{position:fixed;width:8px;height:8px;background:var(--yellow);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference}
     #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(245,217,78,0.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .4s var(--ease),height .4s,border-color .3s}
     body.hovering #cursor-ring{width:60px;height:60px;border-color:var(--yellow)}
+    /* over bright surfaces (e.g. the light work section) the ring goes dark so it stays visible */
+    body.cursor-light #cursor-ring{border-color:rgba(21,22,29,0.4)}
+    body.cursor-light.hovering #cursor-ring{border-color:#15161d}
 
     body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");background-size:180px;pointer-events:none;z-index:9000;opacity:.4}
 
@@ -73,8 +76,10 @@
     #hero.hero-settled{padding:0 56px 36px 52px}
     .hero-bg{display:none}
     /* Hero showreel: Mofid work playing full-bleed behind the ECCHO title */
-    #heroReel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
-    #heroReelTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
+    /* Reel is 15% shorter and top-anchored, leaving empty space below it
+       (the subtext stays put at the bottom of the hero). */
+    #heroReel{position:absolute;inset:0 0 auto 0;width:100%;height:85%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
+    #heroReelTint{position:absolute;inset:0 0 auto 0;height:85%;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
     @media (prefers-reduced-motion: reduce){#heroReel{display:none}}
 
     /* CSS GLASS LOGO */
@@ -205,7 +210,7 @@
     nav.on-light .nav-toggle span{background:#15161d}
     nav.on-light.scrolled{background:rgba(233,233,236,0.92);border-color:rgba(0,0,0,0.08)}
     /* Bold studio statement above the work tabs */
-    .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:800;font-size:clamp(21px,2.5vw,38px);line-height:1.12;letter-spacing:-.015em;color:#fff;max-width:24ch;margin:0 0 clamp(64px,8vw,128px)}
+    .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:800;font-size:clamp(21px,2.5vw,38px);line-height:1.12;letter-spacing:-.015em;color:#fff;max-width:24ch;margin:0 0 clamp(84px,10vw,158px)}
     .work-intro .wi-soft{color:rgba(255,255,255,0.42)}
     .work-intro .wi-blue{color:#0d1fd4}
     .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
@@ -214,7 +219,7 @@
     .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
     #work .work-header{position:relative;z-index:6}
     #work #carouselOuter{position:relative;z-index:1}
-    .work-header{display:flex;align-items:center;justify-content:space-between;padding:0;position:relative;z-index:2;margin-bottom:44px}
+    .work-header{display:flex;align-items:center;justify-content:space-between;padding:0;position:relative;z-index:2;margin-bottom:12px}
     .work-header .section-title{margin-bottom:0}
 
     /* Filter button wrapper — hover triggers expand */
@@ -429,7 +434,7 @@
 
       /* Work */
       #work{padding-left:28px;padding-right:28px}
-      .work-header{padding:0;margin-bottom:36px}
+      .work-header{padding:0;margin-bottom:12px}
       .work-item{width:260px;height:340px}
       #carouselOuter{min-height:340px}
 
@@ -474,7 +479,7 @@
 
       /* Work */
       #work{padding-left:20px;padding-right:20px}
-      .work-header{padding:0;margin-bottom:28px}
+      .work-header{padding:0;margin-bottom:10px}
       .work-item{width:240px;height:310px}
       #carouselOuter{min-height:310px}
 
@@ -984,22 +989,21 @@
     .mofid-3d-item{width:100%;height:auto;display:block;break-inside:avoid;margin:0 0 8px;border-radius:2px;background:#0d1020;opacity:0;transition:opacity 0.5s var(--ease)}
     .mofid-3d-item.loaded{opacity:1}
     /* ── Mofid popup: full-height panel (top↔bottom, side margins), scrollable ── */
-    .mofid-expand-backdrop{position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,0.82);opacity:0;pointer-events:none;transition:opacity 0.3s var(--ease)}
+    .mofid-expand-backdrop{position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,0.82);opacity:0;pointer-events:none;transition:opacity 0.3s var(--ease)}
     .mofid-expand-backdrop.open{opacity:1;pointer-events:auto}
     .mofid-expand-panel{
-      position:fixed;top:0;bottom:0;left:50%;z-index:10200;
-      width:min(1404px,96vw);
-      transform:translateX(-50%) translateY(26px);
+      position:fixed;inset:0;z-index:9200;
       background:#0b0d18;
-      border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);
       overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
       opacity:0;pointer-events:none;
+      transform:translateY(26px);
       transition:opacity 0.34s var(--ease),transform 0.34s var(--ease);
     }
-    .mofid-expand-panel.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+    .mofid-expand-panel.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+    .me-inner{max-width:1180px;margin:0 auto;padding:clamp(72px,9vh,118px) clamp(18px,3vw,40px) 0}
     .me-video{position:relative;width:100%;aspect-ratio:16/9;background:#000}
     .me-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block}
-    .me-body{padding:clamp(26px,3vw,50px) clamp(22px,3vw,54px) clamp(64px,8vw,120px)}
+    .me-body{padding:clamp(26px,3vw,50px) 0 clamp(64px,8vw,120px)}
     .me-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--yellow);margin-bottom:13px}
     .me-title{font-family:var(--font-display);font-weight:800;font-size:clamp(26px,3.4vw,48px);line-height:1.04;letter-spacing:-.01em;color:#fff;margin:0 0 18px}
     .me-desc{font-family:var(--font-body);font-size:clamp(14px,1.05vw,16px);line-height:1.7;color:rgba(255,255,255,0.66);margin:0;max-width:72ch}
@@ -1010,16 +1014,17 @@
     .me-rel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
     .me-rel:hover img{transform:scale(1.08)}
     .me-rel-cap{position:absolute;left:0;right:0;bottom:0;padding:16px 12px 11px;z-index:2;background:linear-gradient(to top,rgba(7,8,15,0.9),rgba(7,8,15,0));font-family:var(--font-display);font-weight:600;font-size:13px;line-height:1.15;color:#fff}
-    .mofid-expand-x{position:fixed;top:16px;right:max(16px,calc(50% - min(702px,48vw) + 14px));z-index:10300;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,0.6);border:1.5px solid rgba(255,255,255,0.32);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transition:background .2s,border-color .2s,transform .2s}
+    .mofid-expand-x{position:fixed;top:24px;right:36px;z-index:9300;display:none;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.62);background:none;border:none;cursor:none;padding:8px;transition:color .2s var(--ease)}
     .mofid-expand-x.visible{display:flex}
-    .mofid-expand-x:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:scale(1.1)}
-    .mofid-expand-prev,.mofid-expand-next{position:fixed;top:50%;z-index:10300;width:48px;height:48px;border-radius:50%;background:rgba(13,16,32,0.82);border:1.5px solid rgba(255,255,255,0.25);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transform:translateY(-50%);transition:background .2s,border-color .2s,transform .2s}
-    .mofid-expand-prev{left:max(8px,calc(50% - min(702px,48vw) - 60px))}
-    .mofid-expand-next{right:max(8px,calc(50% - min(702px,48vw) - 60px))}
+    .mofid-expand-x:hover{color:#fff}
+    .mofid-expand-x svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.5;fill:none}
+    .mofid-expand-prev,.mofid-expand-next{position:fixed;top:50%;z-index:9300;width:48px;height:48px;border-radius:50%;background:rgba(13,16,32,0.82);border:1.5px solid rgba(255,255,255,0.25);color:#fff;font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;cursor:none;padding:0;transform:translateY(-50%);transition:background .2s,border-color .2s,transform .2s}
+    .mofid-expand-prev{left:24px}
+    .mofid-expand-next{right:24px}
     .mofid-expand-prev.visible,.mofid-expand-next.visible{display:flex}
     .mofid-expand-prev:hover,.mofid-expand-next:hover{background:var(--yellow);border-color:var(--yellow);color:#07080f;transform:translateY(-50%) scale(1.1)}
     @media(max-width:900px){.me-related-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:600px){.mofid-expand-panel{width:100vw}.me-related-grid{grid-template-columns:1fr 1fr}.mofid-expand-x{right:12px}}
+    @media(max-width:600px){.me-related-grid{grid-template-columns:1fr 1fr}.mofid-expand-x{right:16px;top:16px}}
     .mofid-play-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;cursor:none}
     .mofid-play-btn{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;transition:background 0.2s,transform 0.2s}
     .mofid-play-btn svg{width:18px;height:18px;fill:#fff;margin-left:3px}
@@ -1088,20 +1093,23 @@
 
     /* Featured + grid: two real columns (flex) so cards keep 16:9, sit far
        apart vertically, reveal one at a time, and never leave gaps at the end. */
-    .feat-grid{padding:clamp(14px,1.8vw,28px) 0 clamp(20px,3vw,56px)}   /* tight under the tabs so the first card just peeks */
+    .feat-grid{padding:clamp(6px,1vw,14px) 0 clamp(20px,3vw,56px)}   /* tight under the tabs so the first card just peeks */
     .rest-block{padding:0 0 48px}
     .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 clamp(24px,3vw,40px);padding-top:clamp(36px,4.4vw,60px);border-top:1px solid rgba(255,255,255,0.08)}
     .col-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,1.8vw,32px);align-items:start}
     .col{display:flex;flex-direction:column;gap:clamp(80px,9vw,170px)}
-    .col-b{margin-top:clamp(120px,15vw,260px)}        /* right column sits lower for the staggered left/right rhythm */
+    /* Featured block staggers via CSS; the long grids are balanced in JS
+       (balanceGrid) so their columns stay staggered yet end flush. */
+    .feat-grid .col-b{margin-top:clamp(120px,15vw,260px)}
 
     /* 3D Designs: rhythm of overlapping clusters and clean grids */
     .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
-    /* clusters sit side by side and overlap a little (widths + overlap set in JS) */
-    .still-cluster{position:relative;display:flex;flex-direction:row;justify-content:center;align-items:center;margin:clamp(40px,5vw,90px) 0}
-    .still-cluster .sc{position:relative;flex:0 0 auto;min-width:0;overflow:hidden}
-    .still-cluster .sc img{width:100%;height:auto;display:block}
-    .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.2vw,20px);margin:clamp(54px,7vw,120px) 0}
+    /* clusters cascade diagonally: images alternate left/right and overlap at
+       the corners, with varied crops (sizes, aspect + offsets all set in JS). */
+    .still-cluster{position:relative;display:block;width:100%;max-width:780px;margin:clamp(26px,3.5vw,64px) auto}
+    .still-cluster .sc{position:relative;display:block;overflow:hidden;background:var(--surface)}
+    .still-cluster .sc img{width:100%;height:100%;object-fit:cover;display:block}
+    .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.2vw,20px);margin:clamp(40px,5vw,90px) 0}
     .still-grid .sg{overflow:hidden;background:var(--surface)}
     .still-grid .sg img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 
@@ -1113,7 +1121,7 @@
     @media(max-width:760px){
       .col-grid{grid-template-columns:1fr;gap:0}
       .col{gap:44px}
-      .col-b{margin-top:44px}
+      .feat-grid .col-b{margin-top:44px}
       .still-grid{grid-template-columns:repeat(2,1fr)}
       .wcard-title{font-size:clamp(20px,5.5vw,28px)}
     }
@@ -1160,7 +1168,6 @@
 </section>
 
 <div class="hero-content">
-  <div class="hero-subtitle">DESIGN STUDIO</div>
   <div class="hero-author"><span class="hero-author-by">by</span> Roozbeh Ghanbarzadeh</div>
 </div>
 <div class="scroll-pill">scroll</div>
@@ -1388,7 +1395,13 @@
   const dot=document.getElementById('cursor-dot'), ring=document.getElementById('cursor-ring');
   let mx=0,my=0,rx=0,ry=0;
   document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
-  (function ar(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(ar);})();
+  const _workSec=document.getElementById('work');
+  function _darkOverlayOpen(){return document.querySelector('#projectOverlay.po-open,#mofidOverlay.mofid-open,.mofid-expand-panel.open')!=null;}
+  (function ar(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';
+    let light=false;
+    if(_workSec && !_darkOverlayOpen()){const r=_workSec.getBoundingClientRect();light=my>=r.top&&my<=r.bottom;}
+    document.body.classList.toggle('cursor-light',light);
+    requestAnimationFrame(ar);})();
   document.querySelectorAll('a,button,.work-item,.service-card').forEach(el=>{
     el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
     el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
@@ -1940,6 +1953,7 @@
         buildFilterButtons('mofid');
         if (mofidRebuild) mofidRebuild('all');
       }
+      if (typeof window.balanceWorkGrids === 'function') requestAnimationFrame(window.balanceWorkGrids);
     }
 
     tabs.forEach(function(t) {
@@ -2123,6 +2137,35 @@
     grid.appendChild(a); grid.appendChild(bcol); container.appendChild(grid);
   }
 
+  // Keep the bottoms of the two staggered columns flush so the last cards never
+  // hang alone. Because cards are equal-height, we offset the SHORTER column
+  // down by the (count difference × card pitch) — that both staggers and ends level.
+  function balanceGrid(gridEl) {
+    if (!gridEl) return;
+    const cg = gridEl.querySelector('.col-grid'); if (!cg) return;
+    const a = cg.querySelector('.col-a'), b = cg.querySelector('.col-b'); if (!a || !b) return;
+    a.style.marginTop = ''; b.style.marginTop = '';
+    if (window.matchMedia('(max-width:760px)').matches) return;   // single column on mobile
+    if (!gridEl.getClientRects().length) return;                  // panel hidden — skip
+    function vis(col) { return Array.prototype.filter.call(col.children, function (c) { return getComputedStyle(c).display !== 'none'; }); }
+    const va = vis(a), vb = vis(b);
+    if (!va.length || !vb.length) return;
+    const cardH = va[0].getBoundingClientRect().height; if (!cardH) return;
+    const gap = parseFloat(getComputedStyle(a).rowGap) || 0;
+    const pitch = cardH + gap;
+    const diff = va.length - vb.length;
+    if (diff > 0) b.style.marginTop = (diff * pitch) + 'px';
+    else if (diff < 0) a.style.marginTop = (-diff * pitch) + 'px';
+  }
+  function balanceWorkGrids() {
+    ['mofidGrid', 'personalGrid'].forEach(function (id) { balanceGrid(document.getElementById(id)); });
+  }
+  window.balanceWorkGrids = balanceWorkGrids;
+  (function () {
+    let t;
+    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(balanceWorkGrids, 150); }, { passive: true });
+  })();
+
   // 3D Designs: a rhythm of loose overlapping clusters and clean grids. Each
   // cluster gets its own wide, minimally-overlapping scatter, and no image is
   // ever left alone at the end (a tiny tail group merges into the previous one).
@@ -2142,8 +2185,7 @@
       groups[groups.length - 2].n += groups[groups.length - 1].n;
       groups.pop();
     }
-    // 2) render — clusters sit side by side with a gentle vertical scatter
-    const maxNudge = Math.min(70, Math.max(26, window.innerWidth * 0.045));
+    // 2) render — clusters cascade diagonally with overlapping, cropped images
     function rand(s) { const x = Math.sin(s * 127.1 + 311.7) * 43758.5; return x - Math.floor(x); }
     function img(n) {
       const im = document.createElement('img');
@@ -2159,12 +2201,17 @@
         const cell = document.createElement('div');
         cell.className = (g.cluster ? 'sc' : 'sg') + ' sreveal';
         if (g.cluster) {
-          const overlap = 8;                                  // % of cluster width the images overlap
-          cell.style.width = ((100 + (g.n - 1) * overlap) / g.n) + '%';
-          if (k > 0) cell.style.marginLeft = '-' + overlap + '%';
-          cell.style.zIndex = String(rand(gIdx * 31 + k * 7 + 5) > 0.5 ? 2 : 1);
-          const ty = (rand(gIdx * 17 + k * 3 + 1) - 0.5) * 2 * maxNudge;   // gentle vertical scatter
-          cell.style.transform = 'translateY(' + Math.round(ty) + 'px)';
+          // diagonal cascade: alternate the side, overlap the previous image's
+          // corner, and crop to a varied aspect ratio for a dynamic composition
+          var ar = ['4 / 3', '1 / 1', '16 / 9', '3 / 4', '3 / 2'][(g.start + k) % 5];
+          cell.style.width = (50 + Math.round(rand(gIdx * 13 + k * 5 + 2) * 14)) + '%'; // 50–64%
+          cell.style.aspectRatio = ar;
+          if (k % 2 === 0) cell.style.marginRight = 'auto';     // pinned left
+          else cell.style.marginLeft = 'auto';                 // pinned right
+          if (k > 0) cell.style.marginTop = '-' + (7 + Math.round(rand(gIdx * 7 + k) * 5)) + '%';
+          var nudge = (rand(gIdx * 17 + k * 3 + 1) - 0.5) * 12; // small horizontal jitter (%)
+          cell.style.transform = 'translateX(' + nudge.toFixed(1) + '%)';
+          cell.style.zIndex = String(k + 1);                    // later images sit in front
         }
         cell.appendChild(img(n)); block.appendChild(cell);
       }
@@ -2212,8 +2259,10 @@
         const match = all ? (card.dataset.featured !== '1') : (card.dataset.cat === filter);
         card.style.display = match ? '' : 'none';
       });
+      balanceGrid(grid);
     };
     rebuildCarousel('all');
+    requestAnimationFrame(function () { balanceGrid(grid); });
   }
 
   // ── Mofid videos (grouped by category) ───────────────────────────────────
@@ -2276,8 +2325,10 @@
         const match = all ? (card.dataset.featured !== '1') : (card.dataset.mofidKey === filter);
         card.style.display = match ? '' : 'none';
       });
+      balanceGrid(grid);
     };
     mofidRebuild('all');
+    requestAnimationFrame(function () { balanceGrid(grid); });
   }
 
   // Mofid cards (featured + grid) open the single-video popup directly.
@@ -2376,7 +2427,7 @@
 
     var xBtn = document.createElement('button');
     xBtn.className = 'mofid-expand-x';
-    xBtn.innerHTML = '&times;';
+    xBtn.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> close';
     xBtn.setAttribute('aria-label', 'Close');
 
     // video at the top of the scrollable panel
@@ -2385,6 +2436,7 @@
     var fullVid = document.createElement('video');
     fullVid.muted = false;
     fullVid.controls = true;
+    fullVid.loop = true;
     fullVid.setAttribute('playsinline', '');
     fullVid.preload = 'metadata';
     meVideo.appendChild(fullVid);
@@ -2401,8 +2453,10 @@
     related.appendChild(relLabel); related.appendChild(relGrid);
     meBody.appendChild(catLabelEl); meBody.appendChild(nameEl); meBody.appendChild(descEl); meBody.appendChild(related);
 
-    panel.appendChild(meVideo);
-    panel.appendChild(meBody);
+    var meInner = document.createElement('div'); meInner.className = 'me-inner';
+    meInner.appendChild(meVideo);
+    meInner.appendChild(meBody);
+    panel.appendChild(meInner);
 
     var prevBtn = document.createElement('button');
     prevBtn.className = 'mofid-expand-prev';
@@ -2843,9 +2897,11 @@
         const r = el.getBoundingClientRect();
         if (r.top <= midY && r.bottom >= midY) onLight = true;
       });
-      navbar.classList.toggle('on-light', onLight);
-      navbar.classList.toggle('on-blue', onBlue);
-      navbar.classList.toggle('scrolled', scrollY > 60);
+      const isScrolled = scrollY > 60;
+      // Once scrolled, the ribbon is always the light/white bar (never blue).
+      navbar.classList.toggle('on-light', onLight || isScrolled);
+      navbar.classList.toggle('on-blue', onBlue && !isScrolled);
+      navbar.classList.toggle('scrolled', isScrolled);
       navbar.classList.toggle('hidden', cw.getBoundingClientRect().top < window.innerHeight * 0.5);
     }
     window.addEventListener('scroll', updateNav, {passive:true});
