@@ -320,7 +320,7 @@
     .service-desc{font-size:16px;color:rgba(255,255,255,0.6);line-height:1.8}
 
     /* CONTACT */
-    #contact-wrapper{position:relative;min-height:140vh;background:#07080f}
+    #contact-wrapper{position:relative;min-height:135vh;background:#07080f}
     .contact-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
     #contactGlowDot{position:absolute;width:32px;height:32px;background:#f5d94e;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 60px rgba(245,217,78,0.9),0 0 120px rgba(245,217,78,0.4),0 0 200px rgba(245,217,78,0.2);animation:contactPulse 2s ease-in-out infinite;z-index:1;pointer-events:none;will-change:transform}
     @keyframes contactPulse{
@@ -335,7 +335,11 @@
     #contactReveal{position:absolute;inset:0;background:#f5d94e;clip-path:circle(0% at 50% 50%);z-index:1}
     #contactContent{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 56px;pointer-events:none}
 
-    .contact-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto}
+    #contactIcons{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .ct-icon{position:absolute;color:#0d1fd4;transform:scale(0);transition:transform .6s cubic-bezier(.16,1,.3,1)}
+    .ct-icon.in{transform:scale(1)}
+    .ct-icon svg{width:100%;height:100%;display:block}
+    .contact-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto}
     .contact-photo{aspect-ratio:3/4;background:rgba(0,0,0,0.15);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:500px}
     .contact-photo img{width:100%;height:100%;object-fit:cover;display:block}
     .contact-photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:16px}
@@ -1185,6 +1189,7 @@
     <div id="contactGlowRing"></div>
     <div id="contactReveal">
       <div id="contactContent">
+      <div id="contactIcons" aria-hidden="true"></div>
       <div class="contact-inner">
         <div class="contact-photo">
           <img src="media/contact-photo.jpg" alt="Roozbeh Ghanbarzadeh" />
@@ -1721,6 +1726,7 @@
       window.addEventListener('scroll', onScroll, {passive:true});
       initWorkCarousel();
       initContactScroll();
+      initContactIcons();
       initNavSection();
       initAboutDot();
       initWorkBgCanvas();
@@ -2577,8 +2583,10 @@
       const top = wrapper.offsetTop;
       const wh = window.innerHeight;
       const scrollableH = wrapper.scrollHeight - wh;
-      // Progress starts when section top enters the bottom of the viewport
-      const progress = scrollableH > 0 ? Math.max(0, Math.min(1, (scrollY - top + wh * 0.75) / scrollableH)) : 0;
+      // Reveal spans from the section scrolling in to the moment it unpins, so the
+      // iris finishes opening right as you reach the bottom — no dead scroll after.
+      const span = scrollableH + wh * 0.4;
+      const progress = span > 0 ? Math.max(0, Math.min(1, (scrollY - (top - wh * 0.4)) / span)) : 0;
       if (Math.abs(progress - lastP) < 0.001) return;
       lastP = progress;
       if (progress <= 0) {
@@ -2589,18 +2597,68 @@
       } else {
         glowDot.style.transition = 'opacity 0.3s ease';
         glowDot.style.opacity = '0';
-        const pct = Math.min(150, (progress / 0.88) * 150);
+        const pct = Math.min(150, progress * 160);   // fully open by ~94% of the scroll
         const cp = 'circle(' + pct.toFixed(1) + '% at 50% 50%)';
         reveal.style.clipPath = cp;
         // Sync content clip-path so content is only visible inside the expanding iris
         if (content) {
           content.style.clipPath = cp;
-          content.style.pointerEvents = progress >= 0.75 ? 'all' : 'none';
+          content.style.pointerEvents = progress >= 0.65 ? 'all' : 'none';
         }
       }
     }
     window.addEventListener('scroll', update, {passive:true});
     update();
+  }
+
+  // ── Contact: blue minimal tool-concept icons popping in the empty space ────
+  function initContactIcons() {
+    const layer = document.getElementById('contactIcons');
+    const inner = document.querySelector('.contact-inner');
+    const wrap  = document.getElementById('contact-wrapper');
+    if (!layer || !inner || !wrap) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Abstract marks for the toolkit — keyframe, ease curve, bezier anchor (AE),
+    // cloner grid, cube, spline (C4D), material sphere (Redshift), pen nib (Ai),
+    // layers (Ps). Single blue colour, minimal.
+    const ICONS = [
+      '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 21.5 12 12 21.5 2.5 12Z"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 20C10 20 9 4 21 4"/><circle cx="3" cy="20" r="1.8" fill="currentColor" stroke="none"/><circle cx="21" cy="4" r="1.8" fill="currentColor" stroke="none"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 18Q12 2 20 13"/><rect x="2.4" y="16.4" width="3.2" height="3.2" fill="currentColor" stroke="none"/><rect x="18.4" y="11.4" width="3.2" height="3.2" fill="currentColor" stroke="none"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="1.8"/><circle cx="12" cy="5" r="1.8"/><circle cx="19" cy="5" r="1.8"/><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/><circle cx="5" cy="19" r="1.8"/><circle cx="12" cy="19" r="1.8"/><circle cx="19" cy="19" r="1.8"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2.5 21 7.5V16.5L12 21.5 3 16.5V7.5Z"/><path d="M12 2.5V12M3 7.5 12 12 21 7.5"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 17C7 17 7 7 12 7S17 17 21 17"/><circle cx="3" cy="17" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="7" r="1.8" fill="currentColor" stroke="none"/><circle cx="21" cy="17" r="1.8" fill="currentColor" stroke="none"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M6.5 9.5A6.5 6.5 0 0 1 14 7.5" stroke-linecap="round"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 18 10 6l8 8-12 4Z"/><path d="M10 14 6 18"/><circle cx="6" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>',
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3 21 8 12 13 3 8Z"/><path d="M3 13 12 18 21 13"/></svg>'
+    ];
+    let inView = false, active = 0, timer = null;
+    function spawn() {
+      if (inView && active < 2) {
+        const lr = layer.getBoundingClientRect(), ir = inner.getBoundingClientRect();
+        const zones = [];
+        if (ir.left - lr.left > 120)  zones.push([lr.left + 12, ir.left - 88,  lr.top + 16,  lr.bottom - 20]);
+        if (lr.right - ir.right > 120) zones.push([ir.right + 16, lr.right - 88, lr.top + 16,  lr.bottom - 20]);
+        if (ir.top - lr.top > 110)    zones.push([lr.left + 12,  lr.right - 88, lr.top + 12,  ir.top - 88]);
+        if (lr.bottom - ir.bottom > 110) zones.push([lr.left + 12, lr.right - 88, ir.bottom + 16, lr.bottom - 20]);
+        if (zones.length) {
+          const z = zones[Math.floor(Math.random() * zones.length)];
+          const size = 42 + Math.random() * 33;
+          const x = z[0] + Math.random() * Math.max(8, (z[1] - z[0])) - lr.left;
+          const y = z[2] + Math.random() * Math.max(8, (z[3] - z[2])) - lr.top;
+          const el = document.createElement('div');
+          el.className = 'ct-icon';
+          el.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + size + 'px;height:' + size + 'px';
+          el.innerHTML = ICONS[Math.floor(Math.random() * ICONS.length)];
+          layer.appendChild(el); active++;
+          void el.offsetWidth; el.classList.add('in');
+          setTimeout(function () { el.classList.remove('in'); setTimeout(function () { el.remove(); active--; }, 650); }, 1100 + Math.random() * 1400);
+        }
+      }
+      schedule();
+    }
+    function schedule() { clearTimeout(timer); if (inView) timer = setTimeout(spawn, 600 + Math.random() * 2600); }
+    new IntersectionObserver(function (es) { inView = es[0].isIntersecting; if (inView) schedule(); else clearTimeout(timer); }, { threshold: 0.05 }).observe(wrap);
   }
 
   // ── Work section canvas blob background ───────────────────────────────────
