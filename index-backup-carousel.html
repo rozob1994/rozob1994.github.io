@@ -1031,91 +1031,6 @@
       .work-item{transform:none}
       .echo-ripple{display:none}
     }
-
-    /* ══════════════════════════════════════════════════════════════════════
-       WORK PANELS — featured editorial cards + grid of the rest
-       (replaces the old infinite carousels)
-       ════════════════════════════════════════════════════════════════════ */
-    .work-panel{position:relative;z-index:1}
-    /* ── Featured stack: big cards that reveal as you scroll ── */
-    .feat-stack{display:flex;flex-direction:column;gap:clamp(80px,11vw,160px);padding:8px 0 96px}
-    /* Single big row (Mofid): card on one side, title+subtext on the other */
-    .feat-row{display:grid;grid-template-columns:1.35fr 1fr;align-items:center;gap:clamp(28px,5vw,72px)}
-    .feat-row--right{grid-template-columns:1fr 1.35fr}
-    .feat-row--right .feat-media{order:2}
-    .feat-row--right .feat-text{order:1;text-align:right}
-    .feat-media{position:relative;overflow:hidden;background:var(--surface);aspect-ratio:16/10;cursor:none;border-radius:3px}
-    .feat-media::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .45s cubic-bezier(.16,1,.3,1);pointer-events:none;z-index:2}
-    .feat-media:hover::after{border-color:rgba(245,217,78,0.32)}
-    .feat-media .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)}
-    .feat-media:hover .work-img{transform:scale(1.05)}
-    .feat-index{font-family:var(--font-mono);font-size:12px;letter-spacing:.25em;color:var(--yellow);margin-bottom:14px;display:block}
-    .feat-title{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4.6vw,64px);line-height:1.02;color:#fff;margin:0 0 16px;letter-spacing:-.01em}
-    .feat-sub{font-family:var(--font-body);font-size:clamp(13px,1.15vw,16px);line-height:1.6;color:rgba(255,255,255,0.62);margin:0 0 18px;max-width:46ch;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .feat-row--right .feat-sub{margin-left:auto}
-    .feat-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.4)}
-    .feat-cta{display:inline-flex;align-items:center;gap:9px;margin-top:22px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#fff;cursor:none}
-    .feat-cta .feat-cta-dot{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;transition:background .25s,border-color .25s,transform .25s}
-    .feat-cta .feat-cta-dot svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;transition:stroke .25s}
-    .feat-row:hover .feat-cta-dot{background:var(--yellow);border-color:var(--yellow);transform:scale(1.08)}
-    .feat-row:hover .feat-cta-dot svg{stroke:#07080f}
-    .feat-row--right .feat-cta{flex-direction:row-reverse}
-
-    /* ── Personal pairs: two cards per band, vertically offset ── */
-    .feat-stack--pairs{gap:clamp(72px,9vw,128px)}
-    .feat-pair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,56px);align-items:start}
-    .feat-pair .feat-pair-item:nth-child(2){margin-top:clamp(48px,7vw,120px)}
-    .feat-pair-item .feat-media{aspect-ratio:4/5}
-    .feat-pair-item .feat-title{font-size:clamp(24px,3vw,40px);margin:18px 0 10px}
-    .feat-pair-item .feat-index{margin-bottom:10px}
-    .feat-pair-item .feat-sub{font-size:clamp(12px,1vw,14px);-webkit-line-clamp:2;margin-bottom:0}
-
-    /* ── Reveal-on-scroll: gentle pop in from the side ── */
-    .feat-reveal{opacity:0;transform:translateY(54px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
-    .feat-row--left  .feat-media.feat-reveal{transform:translate(-46px,54px)}
-    .feat-row--right .feat-media.feat-reveal{transform:translate(46px,54px)}
-    .feat-row--left  .feat-text.feat-reveal{transform:translate(28px,54px)}
-    .feat-row--right .feat-text.feat-reveal{transform:translate(-28px,54px)}
-    .feat-reveal.in{opacity:1;transform:translate(0,0)}
-    .feat-text.feat-reveal{transition-delay:.12s}
-
-    /* ── Grid of the rest ── */
-    .rest-block{padding:0 0 40px}
-    .rest-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin:0 0 26px;padding-top:34px;border-top:1px solid rgba(255,255,255,0.08)}
-    .rest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-    .rest-card{position:relative;overflow:hidden;background:var(--surface);aspect-ratio:4/3;cursor:none;border-radius:3px;opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
-    .rest-card.in{opacity:1;transform:translateY(0)}
-    .rest-card::after{content:'';position:absolute;inset:0;border:1px solid rgba(245,217,78,0);transition:border-color .4s;pointer-events:none;z-index:3}
-    .rest-card:hover::after{border-color:rgba(245,217,78,0.28)}
-    .rest-card .work-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s cubic-bezier(.16,1,.3,1)}
-    .rest-card:hover .work-img{transform:scale(1.06)}
-    .rest-card-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(7,8,15,0.92) 0%,rgba(7,8,15,0.25) 55%,transparent 100%);opacity:0;transition:opacity .4s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;justify-content:flex-end;padding:18px;z-index:2}
-    .rest-card:hover .rest-card-ov{opacity:1}
-    .rest-card-title{font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff;transform:translateY(8px);transition:transform .4s cubic-bezier(.16,1,.3,1)}
-    .rest-card-cat{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--yellow);margin-top:5px;transform:translateY(8px);opacity:0;transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .45s}
-    .rest-card:hover .rest-card-title,.rest-card:hover .rest-card-cat{transform:translateY(0)}
-    .rest-card:hover .rest-card-cat{opacity:1}
-
-    @media(max-width:860px){
-      .feat-row,.feat-row--right{grid-template-columns:1fr;gap:20px}
-      .feat-row--right .feat-media{order:0}
-      .feat-row--right .feat-text{order:0;text-align:left}
-      .feat-row--right .feat-sub{margin-left:0}
-      .feat-row--right .feat-cta{flex-direction:row}
-      .feat-media,.feat-pair-item .feat-media{aspect-ratio:16/10}
-      .feat-stack{gap:64px;padding-bottom:64px}
-      .feat-pair{grid-template-columns:1fr;gap:48px}
-      .feat-pair .feat-pair-item:nth-child(2){margin-top:0}
-      .feat-row--left .feat-media.feat-reveal,.feat-row--right .feat-media.feat-reveal,
-      .feat-row--left .feat-text.feat-reveal,.feat-row--right .feat-text.feat-reveal{transform:translateY(40px)}
-      .rest-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-    }
-    @media(max-width:560px){
-      .rest-grid{grid-template-columns:1fr 1fr;gap:8px}
-    }
-    @media (prefers-reduced-motion: reduce){
-      .feat-reveal,.rest-card{opacity:1!important;transform:none!important;transition:none}
-    }
   </style>
 </head>
 <body class="seq-playing">
@@ -1165,8 +1080,8 @@
   <canvas id="workBgCanvas" aria-hidden="true"></canvas>
   <div class="work-header">
     <div class="work-tabs" role="tablist" aria-label="Work section">
-      <button class="work-tab work-tab--active" id="tab-mofid" role="tab" aria-selected="true" aria-controls="mofidPanel" data-tab="mofid">Mofid Securities</button>
-      <button class="work-tab" id="tab-personal" role="tab" aria-selected="false" aria-controls="personalPanel" data-tab="personal">Personal Work</button>
+      <button class="work-tab work-tab--active" id="tab-personal" role="tab" aria-selected="true" aria-controls="carouselOuter" data-tab="personal">Personal Work</button>
+      <button class="work-tab" id="tab-mofid" role="tab" aria-selected="false" aria-controls="carouselOuter" data-tab="mofid">Mofid Securities</button>
     </div>
     <div class="work-burger-wrap" id="workBurgerWrap">
       <div id="workFilterPanel" class="work-filter-panel">
@@ -1211,26 +1126,20 @@
       v.load();
     })();
   </script>
-  <!-- ═══ MOFID PANEL (default) ═══ -->
-  <div id="mofidPanel" class="work-panel" role="tabpanel" aria-labelledby="tab-mofid">
-    <div class="feat-stack" id="mofidFeatured"></div>
-    <div class="rest-block" id="mofidRestBlock">
-      <div class="rest-label">More from Mofid</div>
-      <div class="rest-grid" id="mofidGrid"></div>
-    </div>
-    <div class="rest-block" id="mofid3dBlock">
-      <div class="rest-label">3D Designs</div>
-      <div class="mofid-3d-gallery" id="mofid3dGallery"></div>
-    </div>
-  </div><!-- end mofidPanel -->
-  <!-- ═══ PERSONAL PANEL ═══ -->
-  <div id="personalPanel" class="work-panel" role="tabpanel" aria-labelledby="tab-personal" style="display:none">
-    <div class="feat-stack feat-stack--pairs" id="personalFeatured"></div>
-    <div class="rest-block" id="personalRestBlock">
-      <div class="rest-label">More Work</div>
-      <div class="rest-grid" id="personalGrid"></div>
-    </div>
-  </div><!-- end personalPanel -->
+  <div id="carouselOuter" style="position:relative">
+    <div id="carouselTrack">
+    </div><!-- end carouselTrack -->
+    <button class="carousel-ff-arrow" id="carouselFfArrow" aria-label="Fast forward" tabindex="-1">
+      <span class="ff-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="17" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
+    </button>
+  </div><!-- end carouselOuter -->
+  <div id="mofidCarouselOuter" style="position:relative">
+    <div id="mofidCarouselTrack">
+    </div><!-- end mofidCarouselTrack -->
+    <button class="carousel-ff-arrow" id="mofidFfArrow" aria-label="Fast forward" tabindex="-1">
+      <span class="ff-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="17" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span>
+    </button>
+  </div><!-- end mofidCarouselOuter -->
 </section>
 
 <section id="about">
@@ -1815,8 +1724,7 @@
       ].join(';') + ';';
 
       window.addEventListener('scroll', onScroll, {passive:true});
-      // Build the default (Mofid) work panel + its filter buttons.
-      if (window._switchWorkTab) window._switchWorkTab('mofid');
+      initWorkCarousel();
       initContactScroll();
       initContactIcons();
       initNavSection();
@@ -1888,22 +1796,9 @@
 
   // WORK FILTERS — rebuild carousel with only matching discipline
   let activeFilter = 'all';
-  let rebuildCarousel = null; // set by buildPersonalPanel — filters the personal panel
-  let mofidRebuild = null;    // set by buildMofidPanel — filters the mofid panel
-  let currentWorkTab = 'mofid';
-
-  // ── Featured selections: the big alternating cards at the top of each tab.
-  //    The rest of each list falls into the grid below automatically.
-  //    (Owner can re-order / swap these freely.)
-  const PERSONAL_FEATURED = ['amirkabir-hotel','kerosene','spad-foolad','daal-campaign','arya','daal-sales-report'];
-  const MOFID_FEATURED = [
-    { slug:'ayar-pre-roll-red-cloth-7',  catKey:'pre-rolls' },
-    { slug:'mofid-4-9-glass-motion',     catKey:'mofid-ident-r-d' },
-    { slug:'aix-3d-loop-4k',             catKey:'aix-exhibitions' },
-    { slug:'negah-logomotion-final',     catKey:'logomotions' },
-    { slug:'jahat-1403-teaser',          catKey:'annual-jahat-festival' },
-    { slug:'safe-motion-expo-ready',     catKey:'exhibition-explainer-motion' }
-  ];
+  let rebuildCarousel = null; // set by initWorkCarousel
+  let mofidRebuild = null;    // set by initMofidCarousel
+  let currentWorkTab = 'personal';
 
   const PERSONAL_FILTERS = [
     { filter: 'all',       label: 'All' },
@@ -1953,10 +1848,10 @@
   // ── WORK TABS: Personal Work / Mofid Securities ───────────────────────────
   (function initWorkTabs() {
     const tabs = document.querySelectorAll('.work-tab');
-    const personalPanel = document.getElementById('personalPanel');
-    const mofidPanel = document.getElementById('mofidPanel');
+    const personalOuter = document.getElementById('carouselOuter');
+    const mofidOuter = document.getElementById('mofidCarouselOuter');
     const burgerWrap = document.getElementById('workBurgerWrap');
-    if (!tabs.length || !personalPanel || !mofidPanel) return;
+    if (!tabs.length || !personalOuter || !mofidOuter) return;
 
     function switchTab(tab) {
       currentWorkTab = tab;
@@ -1969,16 +1864,15 @@
       if (burgerWrap) burgerWrap.style.display = '';
       activeFilter = 'all';
       if (tab === 'personal') {
-        mofidPanel.style.display = 'none';
-        personalPanel.style.display = '';
-        if (typeof buildPersonalPanel === 'function') buildPersonalPanel();
+        personalOuter.style.display = '';
+        mofidOuter.style.display = 'none';
         buildFilterButtons('personal');
         if (rebuildCarousel) rebuildCarousel('all');
       } else {
-        personalPanel.style.display = 'none';
-        mofidPanel.style.display = '';
-        if (typeof buildMofidPanel === 'function') buildMofidPanel();
+        personalOuter.style.display = 'none';
+        mofidOuter.style.display = 'block';
         buildFilterButtons('mofid');
+        if (typeof initMofidCarousel === 'function') initMofidCarousel();
         if (mofidRebuild) mofidRebuild('all');
       }
     }
@@ -2120,249 +2014,235 @@
     }
   });
 
-  // ══════════════════════════════════════════════════════════════════════
-  //  WORK PANELS — featured editorial cards + grid of the rest
-  // ══════════════════════════════════════════════════════════════════════
-  function mkWorkVideo(posterSrc, motionSrc) {
-    const vid = document.createElement('video');
-    vid.className = 'work-img';
-    vid.muted = true; vid.loop = true;
-    vid.setAttribute('playsinline', ''); vid.preload = 'none';
-    vid.setAttribute('aria-hidden', 'true');
-    vid.poster = posterSrc;
-    if (canMotion && motionSrc) vid.dataset.src = motionSrc;
-    return vid;
+  function buildCarouselItems(projects, track) {
+    // Build work-item cards from a projects array into a track element.
+    // Returns origItems array for buildTrack filtering.
+    track.innerHTML = '';
+    return projects.map(function(p, i) {
+      const item = document.createElement('div');
+      item.className = 'work-item'; // NO reveal class — opacity must be 1
+      item.setAttribute('role', 'button');
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('aria-label', 'View project: ' + p.title);
+      item.dataset.idx = String(i);
+      item.dataset.cat = p.type || '';
+      item.dataset.pid = p.id;
+      const vid = document.createElement('video');
+      vid.className = 'work-img';
+      vid.muted = true;
+      vid.loop = true;
+      vid.setAttribute('playsinline', '');
+      vid.preload = 'none';
+      vid.setAttribute('aria-hidden', 'true');
+      vid.poster = 'media/' + p.id + '/poster.jpg';
+      vid.dataset.src = 'media/' + p.id + '/motion.mp4';
+      const ov = document.createElement('div');
+      ov.className = 'work-overlay';
+      ov.innerHTML = '<div class="work-title">' + p.title + '</div><div class="work-cat">' + (ECCHO_CATS[p.type] || p.type || '') + '</div>';
+      item.appendChild(vid);
+      item.appendChild(ov);
+      track.appendChild(item);
+      return item;
+    });
   }
-  // Reveal-on-scroll: add `.in` once each element enters the viewport.
-  function makeRevealObserver() {
-    return new IntersectionObserver(function(entries, obs) {
-      entries.forEach(function(e) {
-        if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
+
+  function makeCarousel(outerEl, trackEl, ffArrowEl, onCardClick) {
+    // Generic seamless carousel with 2x speed, fast-forward arrow, hover-pause.
+    let totalW = 0, pos = 0, paused = false, carouselVisible = true;
+    let ffActive = false, ffClickMult = 0, clickStage = -1, staticMode = false;
+    const CLICK_MULTS = [3.5, 5, 2]; // click 1 → 2 → 3 (3rd returns to hover speed), then cycles
+    const BASE_SPEED = 1.15; // base px per 60fps-frame (time-normalized in tick)
+    const FF_MULT = 2.0;    // fast-forward multiplier while hovering the arrow
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) paused = true;
+
+    outerEl.addEventListener('mouseenter', () => paused = true);
+    outerEl.addEventListener('mouseleave', () => { if (!reducedMotion) paused = false; });
+    let entranceDone = false;
+    new IntersectionObserver(es => {
+      carouselVisible = es[0].isIntersecting;
+      if (es[0].isIntersecting && !entranceDone) {
+        entranceDone = true;
+        if (!reducedMotion) {
+          const kids = trackEl.children;
+          for (let i = 0; i < kids.length; i++) { kids[i].style.animationDelay = (i * 0.045) + 's'; kids[i].classList.add('card-in'); }
+        }
+      }
+    }, {rootMargin: '100px'}).observe(outerEl);
+
+    if (ffArrowEl && !reducedMotion) {
+      // Hover = temporary 2× speed-up (as before)
+      ffArrowEl.addEventListener('mouseenter', () => { paused = false; ffActive = true; ffArrowEl.classList.add('ff-active'); });
+      ffArrowEl.addEventListener('mouseleave', () => { ffActive = false; if (ffClickMult === 0) { ffArrowEl.classList.remove('ff-active'); paused = true; } });
+      // Click = persistent speed that cycles: faster → fastest → back to hover speed
+      ffArrowEl.addEventListener('click', () => {
+        clickStage = (clickStage + 1) % CLICK_MULTS.length;
+        ffClickMult = CLICK_MULTS[clickStage];
+        ffArrowEl.classList.add('ff-active');
       });
-    }, { threshold: 0.16, rootMargin: '0px 0px -7% 0px' });
-  }
-  const CTA_ARROW = '<span class="feat-cta-dot"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="18" y2="12"/><polyline points="12 6 18 12 12 18"/></svg></span><span>View</span>';
-
-  // Build one small grid card (used by both tabs). `data` carries dataset attrs.
-  function buildRestCard(posterSrc, motionSrc, title, cat, data) {
-    const card = document.createElement('div');
-    card.className = 'rest-card work-item';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('aria-label', 'View: ' + title);
-    Object.keys(data).forEach(function(k) { card.dataset[k] = data[k]; });
-    card.appendChild(mkWorkVideo(posterSrc, motionSrc));
-    const ov = document.createElement('div');
-    ov.className = 'rest-card-ov';
-    ov.innerHTML = '<div class="rest-card-title">' + title + '</div><div class="rest-card-cat">' + cat + '</div>';
-    card.appendChild(ov);
-    return card;
-  }
-
-  let personalPanelBuilt = false;
-  function buildPersonalPanel() {
-    if (personalPanelBuilt) return;
-    personalPanelBuilt = true;
-    const featWrap = document.getElementById('personalFeatured');
-    const grid = document.getElementById('personalGrid');
-    if (!featWrap || !grid) return;
-
-    const byId = {}; ECCHO_PROJECTS.forEach(function(p, i) { byId[p.id] = { p: p, idx: i }; });
-    const featuredIds = PERSONAL_FEATURED.filter(function(id) { return byId[id]; });
-    const featSet = {}; featuredIds.forEach(function(id) { featSet[id] = true; });
-
-    // ── Featured: two cards per band, vertically offset ──
-    featWrap.innerHTML = '';
-    for (let i = 0; i < featuredIds.length; i += 2) {
-      const pair = document.createElement('div');
-      pair.className = 'feat-pair';
-      [featuredIds[i], featuredIds[i + 1]].forEach(function(id, j) {
-        if (!id) return;
-        const rec = byId[id], p = rec.p, n = i + j;
-        const itemWrap = document.createElement('div');
-        itemWrap.className = 'feat-pair-item feat-reveal';
-        if (j === 1) itemWrap.style.transitionDelay = '.14s';
-
-        const card = document.createElement('div');
-        card.className = 'feat-media work-item';
-        card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0');
-        card.setAttribute('aria-label', 'View project: ' + p.title);
-        card.dataset.idx = String(rec.idx);
-        card.dataset.cat = p.type || '';
-        card.appendChild(mkWorkVideo('media/' + p.id + '/poster.jpg', 'media/' + p.id + '/motion.mp4'));
-        itemWrap.appendChild(card);
-
-        const text = document.createElement('div');
-        text.className = 'feat-text';
-        text.innerHTML =
-          '<span class="feat-index">' + ('0' + (n + 1)).slice(-2) + '</span>' +
-          '<h3 class="feat-title">' + p.title + '</h3>' +
-          '<p class="feat-sub">' + (p.desc || '') + '</p>' +
-          '<span class="feat-cat">' + (ECCHO_CATS[p.type] || p.type || '') + '</span>';
-        itemWrap.appendChild(text);
-        pair.appendChild(itemWrap);
-      });
-      featWrap.appendChild(pair);
     }
 
-    // ── Grid: every project (featured ones hidden in the 'all' view) ──
-    grid.innerHTML = '';
-    ECCHO_PROJECTS.forEach(function(p, i) {
-      const card = buildRestCard(
-        'media/' + p.id + '/poster.jpg', 'media/' + p.id + '/motion.mp4',
-        p.title, (ECCHO_CATS[p.type] || p.type || ''),
-        { idx: String(i), cat: p.type || '', featured: featSet[p.id] ? '1' : '' }
-      );
-      grid.appendChild(card);
-    });
-
-    // Reveal + lazy video wiring
-    const rev = makeRevealObserver();
-    featWrap.querySelectorAll('.feat-reveal').forEach(function(el) { rev.observe(el); });
-    grid.querySelectorAll('.rest-card').forEach(function(el) { rev.observe(el); });
-    wireThumbVideos(document.getElementById('personalPanel'));
-
-    // Filter routing: 'all' shows featured + non-featured grid; a category hides
-    // the featured band and shows every matching card in the grid.
-    rebuildCarousel = function(filter) {
-      const all = filter === 'all';
-      featWrap.style.display = all ? '' : 'none';
-      grid.querySelectorAll('.rest-card').forEach(function(card) {
-        const match = all ? (card.dataset.featured !== '1') : (card.dataset.cat === filter);
-        card.style.display = match ? '' : 'none';
+    // click delegation — forward to onCardClick if provided
+    if (onCardClick) {
+      outerEl.addEventListener('click', e => {
+        const item = e.target.closest('.work-item');
+        if (item) onCardClick(item);
       });
-    };
-    rebuildCarousel('all');
+      outerEl.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const item = e.target.closest('.work-item');
+        if (item) { e.preventDefault(); onCardClick(item); }
+      });
+    }
+
+    function setTotalW() {
+      requestAnimationFrame(() => { totalW = trackEl.scrollWidth / 2; });
+    }
+    // Static mode: too few items to fill the row → don't loop, just sit centered.
+    function setStatic(on) { staticMode = on; trackEl.classList.toggle('carousel-static', on); if (on) { totalW = 0; pos = 0; trackEl.style.transform = 'none'; } }
+
+    let last = performance.now();
+    function tick(now) {
+      const dt = Math.min((now - last) || 16.7, 50); // ms since last frame, capped so a stall doesn't jump
+      last = now;
+      // latched click speed keeps it scrolling even over the carousel; otherwise hover-pause applies
+      const moving = !staticMode && carouselVisible && totalW > 0 && (ffClickMult > 0 || !paused);
+      if (moving) {
+        const mult = ffClickMult > 0 ? ffClickMult : (ffActive ? FF_MULT : 1);
+        pos += BASE_SPEED * mult * (dt / 16.6667);
+        if (pos >= totalW) pos -= totalW;
+        trackEl.style.transform = 'translateX(-' + pos + 'px)';
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    return { setTotalW, setStatic };
   }
 
+  function initWorkCarousel() {
+    const track = document.getElementById('carouselTrack');
+    const outer = document.getElementById('carouselOuter');
+    const ffArrow = document.getElementById('carouselFfArrow');
+    if (!track || !outer) return;
+
+    const origItems = buildCarouselItems(ECCHO_PROJECTS, track);
+
+    const carousel = makeCarousel(outer, track, ffArrow, null); // clicks handled globally by project overlay
+
+    function buildTrack(filter) {
+      track.innerHTML = '';
+      track.style.transform = 'translateX(0)';
+      const visible = filter === 'all' ? origItems : origItems.filter(item => item.dataset.cat === filter);
+      if (!visible.length) { return; }
+      visible.forEach(item => track.appendChild(item));
+      // Decide: if the items already fill the row, clone + loop; if there are too
+      // few to fill it, sit them still and centered (no pointless repeating).
+      const contentW = track.scrollWidth;   // reading scrollWidth forces layout — available now
+      const outerW = outer.clientWidth;
+      if (contentW <= outerW - 24) {
+        carousel.setStatic(true);
+      } else {
+        carousel.setStatic(false);
+        visible.forEach(item => {
+          const clone = item.cloneNode(true);
+          clone.setAttribute('aria-hidden', 'true');
+          track.appendChild(clone);
+        });
+        carousel.setTotalW();
+      }
+      wireThumbVideos();
+    }
+
+    rebuildCarousel = buildTrack;
+    buildTrack('all');
+  }
 
   // ── Mofid carousel (lazy-initialized on first tab switch) ────────────────
   const MOFID_SECTIONS_DATA = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
 
-  function mofidSlugToTitle(s) {
-    return s.replace(/[-_]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-  }
+  let mofidCarouselBuilt = false;
 
-  let mofidPanelBuilt = false;
-  function buildMofidPanel() {
-    if (mofidPanelBuilt) return;
-    mofidPanelBuilt = true;
-    const featWrap = document.getElementById('mofidFeatured');
-    const grid = document.getElementById('mofidGrid');
-    const gallery = document.getElementById('mofid3dGallery');
-    if (!featWrap || !grid) return;
+  function initMofidCarousel() {
+    if (mofidCarouselBuilt) return;
+    mofidCarouselBuilt = true;
 
-    const descFor = window.mofidDescFor || function() { return ''; };
+    const track = document.getElementById('mofidCarouselTrack');
+    const outer = document.getElementById('mofidCarouselOuter');
+    const ffArrow = document.getElementById('mofidFfArrow');
+    if (!track || !outer) return;
 
-    // Flat list of every Mofid video, plus a lookup for category labels.
-    const labelByKey = {};
-    const allVids = [];
+    // Build one card per Mofid video across all sections
+    const mofidCards = [];
     MOFID_SECTIONS_DATA.forEach(function(sec) {
-      labelByKey[sec.key] = sec.label;
-      sec.slugs.forEach(function(slug) { allVids.push({ slug: slug, catKey: sec.key, catLabel: sec.label }); });
-    });
-    const featKey = function(slug, catKey) { return catKey + '/' + slug; };
-    const featSet = {}; MOFID_FEATURED.forEach(function(f) { featSet[featKey(f.slug, f.catKey)] = true; });
-
-    // ── Featured: big alternating rows (card left, text right; then flipped) ──
-    featWrap.innerHTML = '';
-    MOFID_FEATURED.forEach(function(f, n) {
-      const side = (n % 2 === 0) ? 'left' : 'right';
-      const row = document.createElement('div');
-      row.className = 'feat-row feat-row--' + side;
-      const title = mofidSlugToTitle(f.slug);
-      const catLabel = labelByKey[f.catKey] || f.catKey;
-      const poster = 'media/mofid/' + f.catKey + '/' + f.slug + '.jpg';
-      const motion = 'media/mofid/' + f.catKey + '/' + f.slug + '.mp4';
-
-      const media = document.createElement('div');
-      media.className = 'feat-media work-item feat-reveal';
-      media.setAttribute('role', 'button'); media.setAttribute('tabindex', '0');
-      media.setAttribute('aria-label', 'View: ' + title);
-      media.dataset.mofidSlug = f.slug;
-      media.dataset.mofidKey = f.catKey;
-      media.appendChild(mkWorkVideo(poster, motion));
-
-      const text = document.createElement('div');
-      text.className = 'feat-text feat-reveal';
-      text.innerHTML =
-        '<span class="feat-index">' + ('0' + (n + 1)).slice(-2) + '</span>' +
-        '<h3 class="feat-title">' + title + '</h3>' +
-        '<p class="feat-sub">' + descFor(f.slug, f.catKey) + '</p>' +
-        '<span class="feat-cat">' + catLabel + '</span>' +
-        '<span class="feat-cta">' + CTA_ARROW + '</span>';
-      // The CTA opens the same card; make the whole text block also clickable.
-      text.setAttribute('role', 'button'); text.setAttribute('tabindex', '0');
-      text.classList.add('work-item');
-      text.dataset.mofidSlug = f.slug;
-      text.dataset.mofidKey = f.catKey;
-
-      if (side === 'left') { row.appendChild(media); row.appendChild(text); }
-      else { row.appendChild(text); row.appendChild(media); }
-      featWrap.appendChild(row);
-    });
-
-    // ── Grid: every video (featured ones hidden in the 'all' view) ──
-    grid.innerHTML = '';
-    allVids.forEach(function(v) {
-      const card = buildRestCard(
-        'media/mofid/' + v.catKey + '/' + v.slug + '.jpg',
-        'media/mofid/' + v.catKey + '/' + v.slug + '.mp4',
-        mofidSlugToTitle(v.slug), v.catLabel,
-        { mofidSlug: v.slug, mofidKey: v.catKey, featured: featSet[featKey(v.slug, v.catKey)] ? '1' : '' }
-      );
-      grid.appendChild(card);
-    });
-
-    // ── 3D Designs: 48-still masonry ──
-    if (gallery && !gallery.childElementCount) {
-      for (let gi = 1; gi <= 48; gi++) {
-        const im = document.createElement('img');
-        im.className = 'mofid-3d-item';
-        im.loading = 'lazy';
-        im.alt = '3D design ' + gi;
-        im.src = 'media/mofid/3d-designs/' + ('0' + gi).slice(-2) + '.jpg';
-        im.onload = function() { this.classList.add('loaded'); };
-        gallery.appendChild(im);
-      }
-    }
-
-    // Reveal + lazy video wiring
-    const rev = makeRevealObserver();
-    featWrap.querySelectorAll('.feat-reveal').forEach(function(el) { rev.observe(el); });
-    grid.querySelectorAll('.rest-card').forEach(function(el) { rev.observe(el); });
-    wireThumbVideos(document.getElementById('mofidPanel'));
-
-    const rest3d = document.getElementById('mofid3dBlock');
-    mofidRebuild = function(filter) {
-      const all = filter === 'all';
-      featWrap.style.display = all ? '' : 'none';
-      if (rest3d) rest3d.style.display = all ? '' : 'none';
-      grid.querySelectorAll('.rest-card').forEach(function(card) {
-        const match = all ? (card.dataset.featured !== '1') : (card.dataset.mofidKey === filter);
-        card.style.display = match ? '' : 'none';
+      sec.slugs.forEach(function(slug) {
+        mofidCards.push({ id: 'mofid/' + sec.key + '/' + slug, title: slugToTitle(slug), cat: sec.key, catLabel: sec.label, slug: slug, secKey: sec.key });
       });
-    };
-    mofidRebuild('all');
-  }
+    });
 
-  // Mofid cards (featured + grid) open the single-video popup directly.
-  document.addEventListener('click', function(e) {
-    const item = e.target.closest('.work-item');
-    if (!item || !item.dataset.mofidSlug) return;
-    if (typeof window.openMofidExpand === 'function') {
-      window.openMofidExpand(item.dataset.mofidSlug, item.dataset.mofidKey);
+    function slugToTitle(s) {
+      return s.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
-  });
-  document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const item = e.target.closest && e.target.closest('.work-item');
-    if (!item || !item.dataset.mofidSlug) return;
-    e.preventDefault();
-    if (typeof window.openMofidExpand === 'function') {
-      window.openMofidExpand(item.dataset.mofidSlug, item.dataset.mofidKey);
+
+    track.innerHTML = '';
+    const origItems = mofidCards.map(function(card, i) {
+      const item = document.createElement('div');
+      item.className = 'work-item'; // no reveal class
+      item.setAttribute('role', 'button');
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('aria-label', 'View: ' + card.title);
+      item.dataset.idx = String(i);
+      item.dataset.mofidSlug = card.slug;
+      item.dataset.mofidKey = card.secKey;
+      const vid = document.createElement('video');
+      vid.className = 'work-img';
+      vid.muted = true;
+      vid.loop = true;
+      vid.setAttribute('playsinline', '');
+      vid.preload = 'none';
+      vid.setAttribute('aria-hidden', 'true');
+      vid.poster = 'media/mofid/' + card.secKey + '/' + card.slug + '.jpg';
+      if (canMotion) vid.dataset.src = 'media/mofid/' + card.secKey + '/' + card.slug + '.mp4';
+      const ov = document.createElement('div');
+      ov.className = 'work-overlay';
+      ov.innerHTML = '<div class="work-title">' + card.title + '</div><div class="work-cat">' + card.catLabel + '</div>';
+      item.appendChild(vid);
+      item.appendChild(ov);
+      track.appendChild(item);
+      return item;
+    });
+
+    const carousel = makeCarousel(outer, track, ffArrow, function(item) {
+      // clicked a Mofid card — open the grouped overlay
+      openMofidOverlay(item.dataset.mofidKey, item.dataset.mofidSlug);
+    });
+
+    function buildMofidTrack(filter) {
+      track.innerHTML = '';
+      track.style.transform = 'translateX(0)';
+      const visible = filter === 'all' ? origItems : origItems.filter(function(item) { return item.dataset.mofidKey === filter; });
+      if (!visible.length) { carousel.setStatic(true); return; }
+      visible.forEach(function(item) { track.appendChild(item); });
+      const contentW = track.scrollWidth, outerW = outer.clientWidth;
+      if (contentW <= outerW - 24) {
+        carousel.setStatic(true);
+      } else {
+        carousel.setStatic(false);
+        visible.forEach(function(item) {
+          const clone = item.cloneNode(true);
+          clone.setAttribute('aria-hidden', 'true');
+          track.appendChild(clone);
+        });
+        carousel.setTotalW();
+      }
+      wireThumbVideos(outer);
     }
-  });
+
+    // seed initial track
+    buildMofidTrack('all');
+    // expose for filter routing
+    mofidRebuild = buildMofidTrack;
+  }
 
   // ── Mofid Securities grouped overlay ─────────────────────────────────────
   (function initMofidOverlay() {
@@ -2489,12 +2369,10 @@
     nextBtn.setAttribute('aria-label', 'Next');
     nextBtn.innerHTML = '&#8594;';
 
-    // Attach the single-video popup to <body> so it can open on its own
-    // (cards in the work panels open it directly — no grouped overlay needed).
-    document.body.appendChild(backdrop);
-    document.body.appendChild(panel);
-    document.body.appendChild(prevBtn);
-    document.body.appendChild(nextBtn);
+    overlay.appendChild(backdrop);
+    overlay.appendChild(panel);
+    overlay.appendChild(prevBtn);
+    overlay.appendChild(nextBtn);
 
     var currentWorkIdx = -1;
     var modalOpen = false;
@@ -2521,8 +2399,6 @@
       prevBtn.classList.add('visible');
       nextBtn.classList.add('visible');
       modalOpen = true;
-      document.body.classList.add('po-active');   // darken the nav while open
-      document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
@@ -2532,28 +2408,10 @@
       prevBtn.classList.remove('visible');
       nextBtn.classList.remove('visible');
       modalOpen = false;
-      // Only release the page if the grouped overlay isn't also open.
-      if (!overlay.classList.contains('mofid-open')) {
-        document.body.classList.remove('po-active');
-        document.body.style.overflow = '';
-      }
     }
 
     xBtn.addEventListener('click', closeModal);
     backdrop.addEventListener('click', closeModal);
-
-    // ── Public hooks: open the single-video popup straight from a work card ──
-    window.mofidDescFor = function(slug, catKey) {
-      return MOFID_DESC_BY_SLUG[slug] || MOFID_DESC[catKey] ||
-        'In-house motion design for Mofid Securities — built to give the brand a confident, consistent voice on screen.';
-    };
-    window.openMofidExpand = function(slug, catKey) {
-      var idx = allWorks.findIndex(function(w) {
-        return w.slug === slug && (!catKey || w.catKey === catKey);
-      });
-      if (idx < 0) idx = allWorks.findIndex(function(w) { return w.slug === slug; });
-      if (idx >= 0) openModal(idx);
-    };
 
     prevBtn.addEventListener('click', function() {
       var idx = (currentWorkIdx - 1 + allWorks.length) % allWorks.length;
