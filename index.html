@@ -48,8 +48,9 @@
     /* When the project overlay is open, the nav goes solid dark (not blue) so it
        reads as part of the overlay chrome instead of a distracting blue ribbon. */
     /* Any open popup (project or Mofid) hides the top ribbon entirely so the
-       close button never overlaps it. */
-    body.po-active #navbar{opacity:0;pointer-events:none}
+       close button never overlaps it. !important overrides the inline
+       opacity:1 the intro reveal puts on #navbar. */
+    body.po-active #navbar{display:none !important}
     body.po-active #navbar .nav-links a{color:rgba(255,255,255,0.6)}
     body.po-active #navbar .nav-links a:hover{color:#fff}
     body.po-active #navbar .nav-logo img{filter:brightness(0) invert(1)}
