@@ -46,7 +46,7 @@
     body.po-active #navbar .nav-links a{color:rgba(255,255,255,0.6)}
     body.po-active #navbar .nav-links a:hover{color:#fff}
     body.po-active #navbar .nav-logo img{filter:brightness(0) invert(1)}
-    .nav-logo{display:none}
+    .nav-logo{display:inline-flex;align-items:center}
     .nav-logo img{height:32px;width:auto;filter:brightness(0) invert(1)}
     .nav-links{list-style:none;display:flex;gap:44px}
     .nav-links a{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .25s;position:relative}
@@ -487,9 +487,9 @@
 
     /* ECHO RINGS — expand from hero dot after it settles */
     @keyframes echoExpand{
-      0%  {width:0;height:0;opacity:0.55}
-      8%  {opacity:0.45}
-      100%{width:304px;height:304px;opacity:0}
+      0%  {width:0;height:0;opacity:0.3}
+      8%  {opacity:0.24}
+      100%{width:210px;height:210px;opacity:0}
     }
     .hero-dot.echo-active::before,
     .hero-dot.echo-active::after{
@@ -498,12 +498,12 @@
       top:50%;left:50%;
       width:0;height:0;
       transform:translate(-50%,-50%);
-      border:2px solid rgba(245,217,78,0.55);
+      border:1.5px solid rgba(245,217,78,0.32);
       border-radius:50%;
       pointer-events:none;
-      animation:echoExpand 4s cubic-bezier(0.2,0,0.8,1) infinite;
+      animation:echoExpand 5.4s cubic-bezier(0.2,0,0.8,1) infinite;
     }
-    .hero-dot.echo-active::after{animation-delay:2s}
+    .hero-dot.echo-active::after{animation-delay:2.7s}
 
     /* SCROLL PROGRESS BAR */
     #scroll-progress{position:fixed;top:0;left:0;height:2px;background:var(--yellow);z-index:9999;width:0%;transition:width 0.05s linear;pointer-events:none;box-shadow:0 0 8px rgba(245,217,78,0.6)}
@@ -1772,11 +1772,13 @@
       // Cap baseline ≈ 70% down the bbox for Syne all-caps; dot center sits on baseline
       const targetTop  = Math.round(ecchoRect.top + ecchoRect.height * 0.70 - dotDiam / 2);
 
-      // Move dot to body so no parent can clip or shift it
+      // Move dot to body so no parent can clip or shift it.
+      // It now sits in its final spot next to the ECCHO logo and scales up
+      // gently in place (no slide-in from the side).
       document.body.appendChild(heroDot);
       heroDot.style.cssText = [
         'position:fixed',
-        'left:' + Math.round(window.innerWidth + 60) + 'px',
+        'left:' + targetLeft + 'px',
         'top:' + targetTop + 'px',
         'width:' + dotDiam + 'px',
         'height:' + dotDiam + 'px',
@@ -1787,7 +1789,10 @@
         'z-index:20',
         'opacity:1',
         'bottom:auto',
-        'right:auto'
+        'right:auto',
+        'transform:scale(0)',
+        'transform-origin:center center',
+        'transition:transform 0.62s cubic-bezier(0.34,1.32,0.5,1)'
       ].join(';') + ';';
 
       window.addEventListener('scroll', onScroll, {passive:true});
@@ -1872,6 +1877,11 @@
   //    The rest of each list falls into the grid below automatically.
   //    (Owner can re-order / swap these freely.)
   const PERSONAL_FEATURED = ['amirkabir-hotel','kerosene','spad-foolad','daal-campaign','arya','daal-sales-report'];
+  // Display-name overrides for Mofid videos (slug → title). Anything not listed
+  // falls back to a prettified version of the slug. Used by cards + the popup.
+  const MOFID_TITLES = {
+    'ayar-pre-roll-red-cloth-7': 'Ayar — Gold Fund'
+  };
   const MOFID_FEATURED = [
     { slug:'ayar-pre-roll-red-cloth-7',  catKey:'pre-rolls' },
     { slug:'mofid-4-9-glass-motion',     catKey:'mofid-ident-r-d' },
@@ -1970,48 +1980,29 @@
     window._switchWorkTab = switchTab;
   })();
 
-  // ── Hero dot: spring entry from right + scroll parallax ─────────────────
+  // ── Hero dot: gentle scale-up in place next to the logo + scroll parallax ──
   function initHeroDotScroll(targetLeft, targetTop) {
     const dot = document.querySelector('.hero-dot');
     if (!dot) return;
 
-    // Spring state
-    let posX = window.innerWidth + 60; // start off-screen right
-    let velX = 0;
-    const stiffness = 0.09, damping = 0.65;
-    let settled = false;
-
     // Parallax: dot drifts up slightly as you scroll, then disappears
     let scrollY = window.scrollY;
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-      scrollY = window.scrollY;
-      if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; }); }
-    }, {passive: true});
+    window.addEventListener('scroll', () => { scrollY = window.scrollY; }, {passive: true});
+
+    // Already parked at targetLeft (set in cssText). Pop it up in place, then
+    // start the gentle pulse once it has settled.
+    dot.style.left = targetLeft + 'px';
+    void dot.offsetWidth; // commit scale(0) before transitioning to scale(1)
+    requestAnimationFrame(() => { dot.style.transform = 'scale(1)'; });
+    setTimeout(() => dot.classList.add('echo-active'), 640);
 
     function tick() {
-      // Spring toward targetLeft
-      if (!settled) {
-        const dx = targetLeft - posX;
-        velX = velX * damping + dx * stiffness;
-        posX += velX;
-        dot.style.left = posX.toFixed(1) + 'px';
-        if (Math.abs(dx) < 0.15 && Math.abs(velX) < 0.1) {
-          posX = targetLeft;
-          dot.style.left = targetLeft + 'px';
-          settled = true;
-          dot.classList.add('echo-active');
-        }
-      }
-
       const dotViewY = targetTop - scrollY;
       dot.style.top = dotViewY.toFixed(1) + 'px';
       dot.style.opacity = dotViewY < -32 ? '0' : '1';
-
       requestAnimationFrame(tick);
     }
-
-    // Brief delay so dot slides in AFTER hero content has settled
+    // Brief delay so the pop fires after hero content has settled
     setTimeout(() => requestAnimationFrame(tick), 120);
   }
 
@@ -2216,6 +2207,7 @@
   const MOFID_SECTIONS_DATA = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
 
   function mofidSlugToTitle(s) {
+    if (MOFID_TITLES[s]) return MOFID_TITLES[s];
     return s.replace(/[-_]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
   }
 
@@ -2405,6 +2397,7 @@
     });
 
     function slugToTitle(s) {
+      if (typeof MOFID_TITLES !== 'undefined' && MOFID_TITLES[s]) return MOFID_TITLES[s];
       return s.replace(/[-_]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
     }
 
