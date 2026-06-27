@@ -79,10 +79,10 @@
     #hero.hero-settled{padding:0 56px 36px 52px}
     .hero-bg{display:none}
     /* Hero showreel: Mofid work playing full-bleed behind the ECCHO title */
-    /* Reel is 15% shorter and top-anchored, leaving empty space below it
-       (the subtext stays put at the bottom of the hero). */
-    #heroReel{position:absolute;inset:0 0 auto 0;width:100%;height:85%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
-    #heroReelTint{position:absolute;inset:0 0 auto 0;height:85%;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
+    /* Reel fills the (shortened) hero; the empty breathing space below it now
+       lives at the top of the work section, so it's one continuous block. */
+    #heroReel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
+    #heroReelTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
     @media (prefers-reduced-motion: reduce){#heroReel{display:none}}
 
     /* CSS GLASS LOGO */
@@ -190,7 +190,9 @@
     /* SECTIONS */
     .section-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--yellow);margin-bottom:56px;display:flex;align-items:center;gap:18px}
 
-    #work{padding:64px 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    /* top padding = base + the 15% reel reduction, so the empty space above the
+       intro is part of THIS section (continuous with the rest of the work bg). */
+    #work{padding:calc(64px + (100vh - 420px) * 0.15) 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
     /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
     #work .work-intro{color:#15161d}
     #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
@@ -1706,9 +1708,9 @@
     heroEl.style.cssText = 'height:80vh;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;overflow:hidden;';
     heroEl.classList.add('hero-settled');
 
-    // Hero content: parked below the viewport — rises up to sit ON the reel
-    // (bottom-left), leaving the white strip below the reel empty.
-    heroContent.style.cssText = 'position:absolute;left:52px;bottom:20%;transform:translateY(110vh);opacity:1;z-index:4;pointer-events:none;will-change:transform;top:auto;right:auto;';
+    // Hero content: parked below the viewport — rises up to sit ON the reel,
+    // bottom-left.
+    heroContent.style.cssText = 'position:absolute;left:52px;bottom:8%;transform:translateY(110vh);opacity:1;z-index:4;pointer-events:none;will-change:transform;top:auto;right:auto;';
     heroEl.appendChild(heroContent);
 
     // Make other sections visible but keep them below fold (scroll locked)
@@ -1736,7 +1738,7 @@
     // Everything starts moving at t=0
     fCanvas.style.opacity          = '0';         // canvas dissolves
     canvasBg.style.opacity         = '0';         // blue cover fades — hero animation now visible
-    heroEl.style.height            = 'calc(100vh - 420px)';  // tall reel — pushes the first work card mostly below the fold
+    heroEl.style.height            = 'calc((100vh - 420px) * 0.85)';  // reel 15% shorter; freed space becomes the work section's top padding
     heroContent.style.transform    = 'translateY(0)'; // text rises from below into position
     heroContent.style.pointerEvents = 'all';
 
@@ -1775,9 +1777,9 @@
       }
 
       // Strip transitions, switch to min-height so hero is flexible for content
-      heroEl.style.cssText      = 'min-height:calc(100vh - 420px);display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;';
+      heroEl.style.cssText      = 'min-height:calc((100vh - 420px) * 0.85);display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;';
       heroEl.classList.add('hero-settled');
-      heroContent.style.cssText = 'position:absolute;left:52px;bottom:20%;transform:none;opacity:1;z-index:4;pointer-events:all;top:auto;right:auto;';
+      heroContent.style.cssText = 'position:absolute;left:52px;bottom:8%;transform:none;opacity:1;z-index:4;pointer-events:all;top:auto;right:auto;';
 
       // The signature dot now lives next to the ECCHO logo in the nav — pop it
       // up gently in place, then start the soft pulse.
