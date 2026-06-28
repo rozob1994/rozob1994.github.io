@@ -702,15 +702,16 @@
     .po-close.visible{display:flex}
     .po-close:hover{color:#fff}
     .po-close svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.5;fill:none}
-    /* hero nav arrows */
+    /* hero carousel arrows — only shown for popups with multiple hero videos */
     .po-arrow{
       position:absolute;top:50%;transform:translateY(-50%);
       left:24px;z-index:5;
       width:40px;height:40px;border-radius:50%;
       background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);
-      display:flex;align-items:center;justify-content:center;
+      display:none;align-items:center;justify-content:center;
       cursor:none;transition:background 0.2s var(--ease);
     }
+    #projectOverlay.po-has-heroes .po-arrow{display:flex}
     .po-arrow-right{left:auto;right:24px}
     .po-arrow:hover{background:rgba(0,0,0,0.6)}
     .po-arrow svg{width:18px;height:18px;stroke:#fff;stroke-width:1.5;fill:none}
@@ -1888,7 +1889,7 @@
   // Explicit order for the "More from Mofid" grid (featured 4 excluded).
   const MOFID_GRID_ORDER = [
     // — 3D / motion —
-    'safes-ident-loop-variety-concept', 'safes-ident-loop-2-edited', 'test-2', 'test-1', 'safes-ident-loop', 'test-3',
+    '__ident__',   // the 6 R&D ident videos merged into one card (carousel popup)
     'main-version-2-fixed-loop', 'octane-kv-test-6', 'ayar-pre-roll-red-cloth-7', 'khodran-pre-roll-edited-2', 'aix-3d-loop-4k',
     'aram-pre-roll', 'atlas-pre-roll-edited-2', 'ayar-pre-roll-edited-2', 'bakhshi-pre-roll-edited', 'cemano-pre-roll-edited-2', 'daroono-pre-roll-with-sound',
     // — 2D motion graphics —
@@ -2339,9 +2340,13 @@
       sec.slugs.forEach(function(slug) { slugMeta[slug] = { catKey: sec.key, catLabel: sec.label }; });
     });
     // Grid follows the explicit order, skipping anything hidden or unknown.
+    // '__ident__' is the merged Identity R&D card (its own thumbnail + carousel popup).
     const allVids = MOFID_GRID_ORDER
-      .filter(function(slug) { return slugMeta[slug] && MOFID_HIDDEN.indexOf(slug) < 0; })
-      .map(function(slug) { return { slug: slug, catKey: slugMeta[slug].catKey, catLabel: slugMeta[slug].catLabel }; });
+      .filter(function(slug) { return slug === '__ident__' || (slugMeta[slug] && MOFID_HIDDEN.indexOf(slug) < 0); })
+      .map(function(slug) {
+        if (slug === '__ident__') return { slug: '__ident__', catKey: 'mofid-ident-r-d', catLabel: 'Identity R&D', title: 'Identity R&D', poster: 'media/mofid/mofid-ident-r-d/test-2.jpg' };
+        return { slug: slug, catKey: slugMeta[slug].catKey, catLabel: slugMeta[slug].catLabel };
+      });
     const featKey = function(slug, catKey) { return catKey + '/' + slug; };
     const featSet = {}; MOFID_FEATURED.forEach(function(f) { featSet[featKey(f.slug, f.catKey)] = true; });
 
@@ -2355,9 +2360,9 @@
     }));
     fillCols(grid, allVids.map(function(v) {
       return makeWCard(
-        'media/mofid/' + v.catKey + '/' + v.slug + '.jpg',
+        v.poster || ('media/mofid/' + v.catKey + '/' + v.slug + '.jpg'),
         'media/mofid/' + v.catKey + '/' + v.slug + '.mp4',
-        mofidSlugToTitle(v.slug), v.catLabel,
+        v.title || mofidSlugToTitle(v.slug), v.catLabel,
         { mofidSlug: v.slug, mofidKey: v.catKey, featured: featSet[featKey(v.slug, v.catKey)] ? '1' : '' }
       );
     }));
@@ -3093,6 +3098,8 @@
     let currentIdx = 0;
     let galleryObserver = null;
     let galleryGen = 0;   // bumped each populate() so stale async gallery loads are dropped
+    let currentProject = null;
+    let heroIdx = 0;      // index into currentProject.heroes (hero carousel)
     let mode = 'personal';                 // 'personal' | 'mofid'
     function activeArr() { return mode === 'mofid' ? MOFID_PROJECTS : projects; }
 
@@ -3168,66 +3175,13 @@
         }).join('');
       }
 
-      // Hero — poster image + centered play button.
-      // p.noMotion = true means a 3D-design stills-only project: show big poster, no play button.
-      // Click play -> plays WITH SOUND: full.mp4 if hasFull, else motion.mp4 unmuted.
-      // Vertical/square videos: object-fit:contain + blurred backdrop.
-      (function buildHero() {
-        heroEl.querySelectorAll('img, video, .po-hero-placeholder, .po-full-btn, .po-hero-play-wrap, .po-hero-blur-bg').forEach(function(el) { el.remove(); });
-
-        // Blurred backdrop fills the fixed 16:9 frame behind the media, so a
-        // vertical or off-ratio source is letterboxed over a soft fill rather
-        // than hard black bars. Always present (poster + video are contained).
-        const posterSrc = p.poster || ('media/' + p.id + '/poster.jpg');
-        const blurBg = document.createElement('div');
-        blurBg.className = 'po-hero-blur-bg';
-        blurBg.style.backgroundImage = 'url("' + posterSrc + '")';
-        heroEl.appendChild(blurBg);
-
-        // poster image — contained inside the 16:9 frame (CSS object-fit:contain)
-        const posterImg = new Image();
-        posterImg.src = posterSrc;
-        posterImg.onload = function() { posterImg.classList.add('loaded'); };
-        heroEl.appendChild(posterImg);
-
-        // no motion for this project — show poster only, no play button
-        if (p.noMotion) return;
-
-        // play button overlay
-        const playWrap = document.createElement('div');
-        playWrap.className = 'po-hero-play-wrap';
-        playWrap.setAttribute('aria-label', 'Play video with sound');
-        const playBtn = document.createElement('button');
-        playBtn.className = 'po-hero-play-btn';
-        playBtn.setAttribute('aria-label', 'Play');
-        playBtn.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>';
-        playWrap.appendChild(playBtn);
-        heroEl.appendChild(playWrap);
-
-        playWrap.addEventListener('click', function() {
-          // remove poster and play button (blur backdrop stays for letterboxing)
-          posterImg.remove();
-          playWrap.remove();
-
-          const src = p.video || (p.hasFull ? 'media/' + p.id + '/full.mp4' : 'media/' + p.id + '/motion.mp4');
-          const vid = document.createElement('video');
-          vid.src = src;
-          vid.controls = true;
-          vid.autoplay = true;
-          vid.muted = false;
-          vid.loop = !p.hasFull;
-          vid.setAttribute('playsinline', '');
-          vid.preload = 'metadata';
-          // the .po-hero video rule defaults to opacity:0 (fades in via .loaded);
-          // a dynamically-added play video must get .loaded too or it stays
-          // invisible while the audio plays. Reveal it once the first frame is ready.
-          vid.addEventListener('loadeddata', function() { vid.classList.add('loaded'); }, { once: true });
-          // object-fit:contain (CSS) keeps the 16:9 frame: 16:9 fills it, vertical
-          // is letterboxed over the blur backdrop.
-          heroEl.appendChild(vid);
-          vid.play().catch(function(){});
-        });
-      })();
+      // Hero — built by renderHero() so it can also flip between a project's
+      // multiple hero videos (the ident carousel) via the arrows.
+      currentProject = p;
+      heroIdx = 0;
+      renderHero();
+      // arrows only appear for projects with a hero carousel (2+ heroes)
+      overlay.classList.toggle('po-has-heroes', !!(p.heroes && p.heroes.length > 1));
 
       // Gallery — either a fixed count (media/{id}/01.jpg …) or, for projects
       // with a galleryDir, auto-probe NN.jpg/png/gif sequentially until missing
@@ -3250,6 +3204,66 @@
           galleryEl.appendChild(item);
         }
       })();
+    }
+
+    // Build the hero (poster + play button) for currentProject at heroIdx.
+    // If the project has a `heroes` array, that hero's video/poster is used;
+    // otherwise it falls back to the project's own poster/video.
+    function renderHero() {
+      const p = currentProject; if (!p) return;
+      const oldVid = heroEl.querySelector('video');
+      if (oldVid) { oldVid.pause(); oldVid.removeAttribute('src'); oldVid.load(); }
+      heroEl.querySelectorAll('img, video, .po-hero-placeholder, .po-full-btn, .po-hero-play-wrap, .po-hero-blur-bg').forEach(function(el) { el.remove(); });
+
+      const hero = (p.heroes && p.heroes[heroIdx]) ? p.heroes[heroIdx] : null;
+      const posterSrc = hero ? hero.poster : (p.poster || ('media/' + p.id + '/poster.jpg'));
+
+      const blurBg = document.createElement('div');
+      blurBg.className = 'po-hero-blur-bg';
+      blurBg.style.backgroundImage = 'url("' + posterSrc + '")';
+      heroEl.appendChild(blurBg);
+
+      const posterImg = new Image();
+      posterImg.src = posterSrc;
+      posterImg.onload = function() { posterImg.classList.add('loaded'); };
+      heroEl.appendChild(posterImg);
+
+      if (p.noMotion) return;
+
+      const playWrap = document.createElement('div');
+      playWrap.className = 'po-hero-play-wrap';
+      playWrap.setAttribute('aria-label', 'Play video with sound');
+      const playBtn = document.createElement('button');
+      playBtn.className = 'po-hero-play-btn';
+      playBtn.setAttribute('aria-label', 'Play');
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>';
+      playWrap.appendChild(playBtn);
+      heroEl.appendChild(playWrap);
+
+      playWrap.addEventListener('click', function() {
+        posterImg.remove();
+        playWrap.remove();
+        const src = hero ? hero.video : (p.video || (p.hasFull ? 'media/' + p.id + '/full.mp4' : 'media/' + p.id + '/motion.mp4'));
+        const vid = document.createElement('video');
+        vid.src = src;
+        vid.controls = true;
+        vid.autoplay = true;
+        vid.muted = false;
+        vid.loop = hero ? true : !p.hasFull;
+        vid.setAttribute('playsinline', '');
+        vid.preload = 'metadata';
+        vid.addEventListener('loadeddata', function() { vid.classList.add('loaded'); }, { once: true });
+        heroEl.appendChild(vid);
+        vid.play().catch(function(){});
+      });
+    }
+
+    // Flip between hero videos (only meaningful when the project has a carousel).
+    function stepHero(dir) {
+      if (!currentProject || !currentProject.heroes || currentProject.heroes.length < 2) return;
+      const n = currentProject.heroes.length;
+      heroIdx = (heroIdx + dir + n) % n;
+      renderHero();
     }
 
     // Sequentially load NN.jpg / .png / .gif (NN = 01, 02, …) from a folder,
@@ -3401,10 +3415,9 @@
 
     let lastFocused = null;
 
-    function open(idx, skipHistory) {
-      currentIdx = idx;
+    function openObject(p) {
       lastFocused = document.activeElement;
-      populate(activeArr()[idx]);
+      populate(p);
       overlay.classList.add('po-open');
       document.body.classList.add('po-active');
       closeBtn.classList.add('visible');
@@ -3414,10 +3427,31 @@
       document.body.style.overflow = 'hidden';
       triggerAnimate();
       closeBtn.focus({preventScroll: true});
+    }
+    function open(idx, skipHistory) {
+      currentIdx = idx;
+      openObject(activeArr()[idx]);
       if (!skipHistory && mode === 'personal') tryHistory('pushState', { project: projects[idx].id }, '', '#' + projects[idx].id);
     }
+    // Merged "Identity R&D" card: one popup with a 3-video hero carousel.
+    const IDENT_PROJECT = {
+      id: 'mofid/mofid-ident-r-d/identity-r-d',
+      slug: '__ident__', catKey: 'mofid-ident-r-d',
+      title: 'Identity R&D',
+      type: 'Identity R&D',
+      desc: '<strong>Identity research in motion</strong> for Mofid — a run of loops testing how the mark breathes, builds and behaves. Each one pushes a different idea before the system was locked. <strong>Experimentation</strong> kept honest by <strong>brand discipline</strong>.',
+      heroes: [
+        { video: 'media/mofid/mofid-ident-r-d/safes-ident-loop-variety-concept.mp4', poster: 'media/mofid/mofid-ident-r-d/safes-ident-loop-variety-concept.jpg' },
+        { video: 'media/mofid/mofid-ident-r-d/safes-ident-loop-2-edited.mp4',        poster: 'media/mofid/mofid-ident-r-d/safes-ident-loop-2-edited.jpg' },
+        { video: 'media/mofid/mofid-ident-r-d/safes-ident-loop.mp4',                 poster: 'media/mofid/mofid-ident-r-d/safes-ident-loop.jpg' }
+      ],
+      poster: 'media/mofid/mofid-ident-r-d/test-2.jpg',
+      galleryDir: 'media/mofid/mofid-ident-r-d/gallery',
+      gallery: 0
+    };
     // Open a specific Mofid work in the same overlay as the personal projects.
     window.openMofidProject = function (slug, catKey) {
+      if (slug === '__ident__') { mode = 'mofid'; openObject(IDENT_PROJECT); return; }
       var idx = MOFID_PROJECTS.findIndex(function (m) { return m.slug === slug && (!catKey || m.catKey === catKey); });
       if (idx < 0) idx = MOFID_PROJECTS.findIndex(function (m) { return m.slug === slug; });
       if (idx >= 0) { mode = 'mofid'; open(idx, true); }
@@ -3464,31 +3498,16 @@
 
     closeBtn.addEventListener('click', close);
 
-    function currentList() {
-      if (mode === 'mofid') return MOFID_PROJECTS.map((_, i) => i);
-      return projects.map((_,i) => i).filter(i =>
-        (activeFilter === 'all' || projects[i].type === activeFilter) &&
-        (typeof PERSONAL_HIDDEN === 'undefined' || PERSONAL_HIDDEN.indexOf(projects[i].id) < 0));
-    }
-    function step(dir) {
-      const list = currentList();
-      if (!list.length) return;
-      const here = list.indexOf(currentIdx);
-      const next = (here < 0 ? 0 : (here + dir + list.length) % list.length);
-      currentIdx = list[next];
-      overlay.scrollTop = 0;
-      populate(activeArr()[currentIdx]);
-      triggerAnimate();
-      if (mode === 'personal') tryHistory('replaceState', { project: projects[currentIdx].id }, '', '#' + projects[currentIdx].id);
-    }
-    prevBtn.addEventListener('click', () => step(-1));
-    nextBtn.addEventListener('click', () => step(1));
+    // Arrows now flip between hero videos (only shown for carousel projects);
+    // there is no project-to-project navigation anymore.
+    prevBtn.addEventListener('click', () => stepHero(-1));
+    nextBtn.addEventListener('click', () => stepHero(1));
 
     document.addEventListener('keydown', e => {
       if (!overlay.classList.contains('po-open')) return;
       if (e.key === 'Escape') close();
-      if (e.key === 'ArrowRight') nextBtn.click();
-      if (e.key === 'ArrowLeft')  prevBtn.click();
+      if (e.key === 'ArrowRight') stepHero(1);
+      if (e.key === 'ArrowLeft')  stepHero(-1);
     });
 
     window.addEventListener('popstate', () => {
