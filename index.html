@@ -1879,7 +1879,8 @@
     'aix-3d-loop-pollished-glitched-edited-2-4k': 'AIX Exhibition Identity',
     'negah-logomotion-final': 'Negah Annual Event',
     'jahat-1403-teaser': 'Jahat 1403',
-    'safe-motion-expo-ready': 'Mofid Funds Explainer'
+    'safe-motion-expo-ready': 'Mofid Funds Explainer',
+    'main-version-2-fixed-loop': 'Tavan'
   };
   const MOFID_FEATURED = [
     { slug:'main',                                  catKey:'mofid-card-concept-motion' },
@@ -1887,6 +1888,25 @@
     { slug:'jahat-1403-teaser',                     catKey:'annual-jahat-festival' },
     { slug:'aix-3d-loop-pollished-glitched-edited-2-4k', catKey:'aix-exhibitions' }
   ];
+  // Hidden from the site (kept here so they can be restored later by removing them).
+  const MOFID_HIDDEN = [
+    'ayar-new-campaign-test-3-with-sound', 'sahami-motion-design-edited-1',
+    'tavan-motion-edited-pre-roll-with-sound', 'negah-1403-branded',
+    'safes-promo-on-logo-edited-2', 'logo-shapes-precomp', 'intro-motion-version-2'
+  ];
+  const PERSONAL_HIDDEN = ['carnaval'];
+  // Explicit order for the "More from Mofid" grid (featured 4 excluded).
+  const MOFID_GRID_ORDER = [
+    // — 3D / motion —
+    'safes-ident-loop-variety-concept', 'safes-ident-loop-2-edited', 'test-2', 'test-1', 'safes-ident-loop', 'test-3',
+    'main-version-2-fixed-loop', 'octane-kv-test-6', 'ayar-pre-roll-red-cloth-7', 'khodran-pre-roll-edited-2', 'aix-3d-loop-4k',
+    'aram-pre-roll', 'atlas-pre-roll-edited-2', 'ayar-pre-roll-edited-2', 'bakhshi-pre-roll-edited', 'cemano-pre-roll-edited-2', 'daroono-pre-roll-with-sound',
+    // — 2D motion graphics —
+    'safe-motion-expo-ready', 'aix-motion-graphics-with-sound', 'jahat-logomotion-final', 'hakemiat-serkati-motion-graphics-test-8-with-sound', 'atieh-motion-edited', 'test-1-with-sound',
+    'negah-logomotion-final'
+  ];
+  // Explicit order for the personal grid (featured + hidden excluded).
+  const PERSONAL_GRID_ORDER = ['biotask', 'red-dot-cafe', 'dream-catcher', 'chillchasht', 'ashianeh', 'rotbeyar'];
 
   const PERSONAL_FILTERS = [
     { filter: 'all',       label: 'All' },
@@ -2212,10 +2232,19 @@
       // 4 — one centred on top (in front), two below
       { h: IMG_H + 15, boxes: [ { l: 31.5, t: 0, z: 2 }, { l: 8, t: 15, z: 1 }, { l: 55, t: 15, z: 1 } ] }
     ];
+    // Reorder so images of the same project sit next to each other (grouped:
+    // Mofid Card, gold bar, gold+red, gold coins, gold vault, vault wheels,
+    // teal-cube vaults, banknotes, cars, phones/apps, keypads, glass cubes, …).
+    const STILLS_ORDER = [
+      2, 3, 4, 27, 34, 1, 6, 14, 43, 5, 9, 17, 10, 28, 36, 45, 46, 48,
+      8, 11, 29, 33, 24, 18, 23, 41, 42, 12, 13, 31, 30, 35, 37, 19, 21, 38,
+      39, 15, 16, 20, 7, 44, 47, 25, 26, 32, 40, 22
+    ];
     function img(n) {
+      const idx = STILLS_ORDER[n - 1] || n;
       const im = document.createElement('img');
-      im.loading = 'lazy'; im.alt = '3D design ' + n;
-      im.src = 'media/mofid/3d-designs/' + ('0' + n).slice(-2) + '.jpg';
+      im.loading = 'lazy'; im.alt = '3D design ' + idx;
+      im.src = 'media/mofid/3d-designs/' + ('0' + idx).slice(-2) + '.jpg';
       return im;
     }
     let clusterCount = 0;
@@ -2268,11 +2297,13 @@
         { idx: String(rec.idx), cat: p.type || '' }
       );
     }));
-    fillCols(grid, ECCHO_PROJECTS.map(function(p, i) {
+    const gridOrder = PERSONAL_GRID_ORDER.filter(function(id) { return byId[id] && PERSONAL_HIDDEN.indexOf(id) < 0; });
+    fillCols(grid, gridOrder.map(function(id) {
+      const rec = byId[id], p = rec.p;
       return makeWCard(
         'media/' + p.id + '/poster.jpg', 'media/' + p.id + '/motion.mp4',
         p.title, (ECCHO_CATS[p.type] || p.type || ''),
-        { idx: String(i), cat: p.type || '', featured: featSet[p.id] ? '1' : '' }
+        { idx: String(rec.idx), cat: p.type || '' }
       );
     }));
 
@@ -2312,11 +2343,15 @@
     if (!featWrap || !grid) return;
 
     const labelByKey = {};
-    const allVids = [];
+    const slugMeta = {};
     MOFID_SECTIONS_DATA.forEach(function(sec) {
       labelByKey[sec.key] = sec.label;
-      sec.slugs.forEach(function(slug) { allVids.push({ slug: slug, catKey: sec.key, catLabel: sec.label }); });
+      sec.slugs.forEach(function(slug) { slugMeta[slug] = { catKey: sec.key, catLabel: sec.label }; });
     });
+    // Grid follows the explicit order, skipping anything hidden or unknown.
+    const allVids = MOFID_GRID_ORDER
+      .filter(function(slug) { return slugMeta[slug] && MOFID_HIDDEN.indexOf(slug) < 0; })
+      .map(function(slug) { return { slug: slug, catKey: slugMeta[slug].catKey, catLabel: slugMeta[slug].catLabel }; });
     const featKey = function(slug, catKey) { return catKey + '/' + slug; };
     const featSet = {}; MOFID_FEATURED.forEach(function(f) { featSet[featKey(f.slug, f.catKey)] = true; });
 
@@ -3234,6 +3269,7 @@
     const MOFID_PROJECTS = [];
     MOFID_SECTIONS.forEach(function (sec) {
       sec.slugs.forEach(function (slug) {
+        if (typeof MOFID_HIDDEN !== 'undefined' && MOFID_HIDDEN.indexOf(slug) >= 0) return; // hidden works
         MOFID_PROJECTS.push({
           id: 'mofid/' + sec.key + '/' + slug,
           slug: slug, catKey: sec.key,
@@ -3405,7 +3441,9 @@
 
     function currentList() {
       if (mode === 'mofid') return MOFID_PROJECTS.map((_, i) => i);
-      return projects.map((_,i) => i).filter(i => activeFilter === 'all' || projects[i].type === activeFilter);
+      return projects.map((_,i) => i).filter(i =>
+        (activeFilter === 'all' || projects[i].type === activeFilter) &&
+        (typeof PERSONAL_HIDDEN === 'undefined' || PERSONAL_HIDDEN.indexOf(projects[i].id) < 0));
     }
     function step(dir) {
       const list = currentList();
