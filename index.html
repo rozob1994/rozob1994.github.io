@@ -3097,6 +3097,7 @@
 
     let currentIdx = 0;
     let galleryObserver = null;
+    let galleryVidObserver = null;   // plays/pauses gallery loop-videos by visibility
     let galleryGen = 0;   // bumped each populate() so stale async gallery loads are dropped
     let currentProject = null;
     let heroIdx = 0;      // index into currentProject.heroes (hero carousel)
@@ -3266,31 +3267,62 @@
       renderHero();
     }
 
-    // Sequentially load NN.jpg / .png / .gif (NN = 01, 02, …) from a folder,
-    // stopping at the first index that has no file in any of those extensions.
+    // Sequentially load gallery items NN (= 01, 02, …) from a folder, stopping
+    // at the first index with no file. Each index can be a looping video
+    // (NN.mp4, played only while on-screen) or an image (NN.jpg/png/gif).
     function probeGallery(galleryEl, dir, gen) {
-      const exts = ['jpg', 'png', 'gif'];
-      function tryIndex(n) {
-        if (gen !== galleryGen) return;              // a newer project is open — abandon
+      if (galleryVidObserver) galleryVidObserver.disconnect();
+      galleryVidObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) e.target.play().catch(function(){}); else e.target.pause();
+        });
+      }, { root: overlay, threshold: 0.1 });
+
+      function addItem(node) {
+        const item = document.createElement('div');
+        item.className = 'po-gallery-item';
+        item.appendChild(node);
+        galleryEl.appendChild(item);
+        observeGallery();
+      }
+      function tryVideo(n) {
+        if (gen !== galleryGen) return;
         const nn = ('0' + n).slice(-2);
+        const v = document.createElement('video');
+        v.muted = true; v.loop = true; v.setAttribute('playsinline', ''); v.preload = 'metadata';
+        v.style.cssText = 'width:100%;height:auto;display:block;';
+        let settled = false;
+        v.addEventListener('loadeddata', function() {
+          if (settled) return; settled = true;
+          if (gen !== galleryGen) return;
+          v.classList.add('loaded');
+          addItem(v);
+          galleryVidObserver.observe(v);
+          tryVideo(n + 1);
+        }, { once: true });
+        v.addEventListener('error', function() {
+          if (settled) return; settled = true;
+          tryImage(n);                                // no video at this index — try an image
+        }, { once: true });
+        v.src = dir + '/' + nn + '.mp4';
+      }
+      function tryImage(n) {
+        if (gen !== galleryGen) return;
+        const exts = ['jpg', 'png', 'gif'];
         let ei = 0;
         const img = new Image();
-        function attempt() { img.src = dir + '/' + nn + '.' + exts[ei]; }
+        function attempt() { img.src = dir + '/' + ('0' + n).slice(-2) + '.' + exts[ei]; }
         img.onload = function() {
-          if (gen !== galleryGen) return;            // stale load — drop it
+          if (gen !== galleryGen) return;
           img.classList.add('loaded');
           img.style.cssText = 'width:100%;height:auto;display:block;';
-          const item = document.createElement('div');
-          item.className = 'po-gallery-item';
-          item.appendChild(img);
-          galleryEl.appendChild(item);
-          observeGallery();
-          tryIndex(n + 1);
+          addItem(img);
+          tryVideo(n + 1);
         };
         img.onerror = function() { if (++ei < exts.length) attempt(); }; // missing in all exts → stop
         attempt();
       }
-      tryIndex(1);
+      tryVideo(1);
     }
 
     // ── Mofid overlay helpers ──────────────────────────────────────────
@@ -3466,6 +3498,8 @@
       // after the overlay is closed (otherwise it plays on until a refresh).
       var heroVid = overlay.querySelector('.po-hero video');
       if (heroVid) { heroVid.pause(); heroVid.removeAttribute('src'); heroVid.load(); heroVid.remove(); }
+      overlay.querySelectorAll('.po-gallery video').forEach(function(v) { v.pause(); });
+      if (galleryVidObserver) galleryVidObserver.disconnect();
       if (galleryObserver) galleryObserver.disconnect();
       document.body.style.overflow = '';
       if (lastFocused && lastFocused.focus) lastFocused.focus({preventScroll: true});
