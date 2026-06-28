@@ -170,7 +170,7 @@
     .hero-title{font-family:var(--font-display);font-size:clamp(80px,10vw,140px);font-weight:800;line-height:0.9;color:#fff;letter-spacing:-.02em;margin-left:-0.065em}
     .hero-subtitle{font-family:var(--font-display);font-size:clamp(18px,2.2vw,28px);font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:0.15em;margin-top:2px;line-height:1;margin-left:-0.07em}
     .hero-author{font-family:var(--font-mono);font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.82);text-transform:uppercase;margin-top:4px;margin-left:-0.07em;text-shadow:0 1px 16px rgba(0,0,0,0.5)}
-    .scroll-pill{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:lowercase;color:#fff;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);border-radius:100px;padding:6px 20px;z-index:50;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
+    .scroll-pill{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:lowercase;color:#fff;background:#0d1fd4;border:1px solid #0d1fd4;border-radius:100px;padding:6px 20px;z-index:50;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
     .scroll-pill.pill-visible{opacity:1!important}
 
     .about-marquee-wrap{overflow:hidden;height:auto;padding:16px 0}
@@ -622,7 +622,7 @@
     #services.svc-active .service-card:not(.svc-hovered) .service-desc{color:rgba(0,0,0,0.65)}
     /* Dark image variant — keep yellow */
     #services.svc-img-dark .service-card:not(.svc-hovered){border-color:rgba(245,217,78,0.6)}
-    #services.svc-img-dark h2.section-title{color:#f5d94e}
+    #services.svc-img-dark h2.section-title{color:#fff}
     #services.svc-img-dark .service-card:not(.svc-hovered) .service-title,
     #services.svc-img-dark .service-card:not(.svc-hovered) .service-desc{color:#f5d94e}
     /* Services bg transparent when image overlay is active */
@@ -761,10 +761,11 @@
 
     /* description — sits directly under the title in the left column */
     .po-desc{
-      margin:22px 0 0;padding:0;max-width:600px;
+      margin:22px 0 0;padding:0;max-width:880px;
       font-family:var(--font-display);font-size:clamp(18px,1.7vw,23px);
-      font-weight:400;color:rgba(255,255,255,0.62);line-height:1.6;
+      font-weight:400;color:rgba(255,255,255,0.62);line-height:1.55;
     }
+    .po-desc strong{color:var(--yellow);font-weight:400}
 
     /* ── project overlay entrance animations ─────────────────────────── */
     @keyframes poRevealUp{
@@ -826,26 +827,18 @@
       opacity:1;transform:translateY(0);
     }
 
-    /* sidebar scroll indicator */
+    /* scroll progress — a thick yellow bar that sits just below the hero video
+       and sticks to the top of the popup as you scroll */
     .po-scrollbar{
-      position:fixed;right:18px;top:50%;transform:translateY(-50%);
-      width:2px;height:120px;z-index:9991;
-      display:none;flex-direction:column;align-items:center;
+      position:sticky;top:0;z-index:9991;
+      display:none;width:100%;height:5px;
+      background:rgba(255,255,255,0.12);
     }
-    .po-scrollbar.visible{display:flex}
-    .po-scrollbar-track{
-      width:1px;height:100%;
-      background:rgba(255,255,255,0.12);border-radius:1px;
-      position:relative;overflow:hidden;
-    }
+    .po-scrollbar.visible{display:block}
     .po-scrollbar-fill{
-      position:absolute;top:0;left:0;width:100%;height:0%;
-      background:#fff;border-radius:1px;
-      transition:height 0.1s linear;
-    }
-    .po-scrollbar-dot{
-      width:4px;height:4px;border-radius:50%;background:#fff;
-      margin-bottom:8px;opacity:0.5;
+      height:100%;width:0%;
+      background:var(--yellow);
+      transition:width 0.1s linear;
     }
 
     .po-gallery-item img{
@@ -1296,12 +1289,6 @@
 </footer>
 
 <!-- Project detail overlay -->
-<div class="po-scrollbar" id="poScrollbar">
-  <div class="po-scrollbar-dot"></div>
-  <div class="po-scrollbar-track">
-    <div class="po-scrollbar-fill" id="poScrollFill"></div>
-  </div>
-</div>
 <button class="po-close" aria-label="Close project">
   <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   close
@@ -1317,6 +1304,7 @@
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
+    <div class="po-scrollbar" id="poScrollbar"><div class="po-scrollbar-fill" id="poScrollFill"></div></div>
     <div class="po-meta">
       <div class="po-meta-main">
         <h2 class="po-title"></h2>
@@ -1357,32 +1345,32 @@
   const ECCHO_PROJECTS = [
     { id:'amirkabir-hotel', title:'Amirkabir Hotel',   type:'2d-motion', tags:['Branding','Logo Animation','Client'], gallery:7, hasFull:true,
       credits:[{name:'Ehsan Abbasi', title:'Art Director & Graphic Designer', url:'https://www.behance.net/ehsanabbbbasi'},{name:'Roozbeh Ghanbarzadeh', title:'Motion Designer'}],
-      desc:'A 2D motion piece launching the rebrand of Amirkabir Hotel in Arak, Iran. The animation walks through the new identity — logo, type and motion language — and is among my strongest work to date: polished, rhythm-driven, and confident.' },
+      desc:'A 2D motion piece launching the <strong>rebrand of Amirkabir Hotel</strong> in Arak, Iran. It walks through the new identity — logo, type and motion language — with a <strong>polished, rhythm-driven</strong> hand. Among my <strong>strongest work to date</strong>.' },
     { id:'kerosene',        title:'Kerosene',           type:'3d-motion', tags:['Editorial','Client'],                 gallery:3, hasFull:true,
-      desc:'3D motion design for Kerosene, a podcast on oil and its grip on the economy and culture of Iran and the wider Middle East. Some of my strongest 3D motion work — turning a heavy, abstract subject into striking, oil-slicked visuals that give the show its on-screen identity.' },
+      desc:'<strong>3D motion design</strong> for Kerosene, a podcast on oil and its grip on the economy and culture of Iran and the Middle East. It turns a heavy, abstract subject into <strong>striking, oil-slicked visuals</strong>. Some of my strongest 3D work, and the show\'s on-screen identity.' },
     { id:'spad-foolad',     title:'Spad Foolad',        type:'2d-motion', tags:['Logo Animation','Branding','Client'], gallery:6, hasFull:true,
       credits:[{name:'Hossein Razaqnejad', title:'Art Director & Graphic Designer', url:'https://www.behance.net/hosseinrazaqne'},{name:'Roozbeh Ghanbarzadeh', title:'Motion Designer'}],
-      desc:'A 2D motion piece for Spad Foolad, a steel company. Working from a brand designed by a friend, I animated the story of the logo — how the mark is built and what it stands for — giving a heavy-industry identity a precise sense of movement.' },
+      desc:'A 2D motion piece for <strong>Spad Foolad</strong>, a steel company. Working from a brand designed by a friend, I animated the <strong>story of the logo</strong> — how the mark is built and what it stands for. It gives a heavy-industry identity a <strong>precise sense of movement</strong>.' },
     { id:'arya',            title:'Arya',               type:'2d-motion', tags:['Logo Animation','Concept'],           gallery:5,
-      desc:'A self-initiated brand concept for Arya, a maker of children\'s toys and art supplies — modelling clay, gouache, and creative kits made mostly for kids, and for the kid in every adult. The identity leans into colour, texture and play, built to feel as hands-on and joyful as the products themselves.' },
+      desc:'A self-initiated <strong>brand concept</strong> for Arya, a maker of children\'s toys and art supplies. The identity leans into <strong>colour, texture and play</strong>. Built to feel as <strong>hands-on and joyful</strong> as the products themselves.' },
     { id:'chillchasht',     title:'Chillchasht',        type:'2d-motion', tags:['Logo Animation','Client'],            gallery:3,
-      desc:'Motion work for Chillchasht, a small-batch sauce maker — giving an independent food business a bold, appetising piece of brand motion with enough character to stand out.' },
+      desc:'Motion work for <strong>Chillchasht</strong>, a small-batch sauce maker. It gives an independent food business a <strong>bold, appetising</strong> piece of brand motion. Plenty of character to stand out on a crowded shelf.' },
     { id:'ashianeh',        title:'Ashianeh',           type:'2d-motion', tags:['Branding','Concept'],                 gallery:5,
-      desc:'A concept identity for Ashianeh, an invented interior design studio. Ashianeh means "nest" in Persian, and the work builds on that idea of shelter and structure — a calm interior language of clean lines, considered space, and quiet confidence.' },
+      desc:'A <strong>concept identity</strong> for Ashianeh, an invented interior design studio. The name means "nest" in Persian, and the work builds on that idea of <strong>shelter and structure</strong>. A calm language of clean lines, considered space and <strong>quiet confidence</strong>.' },
     { id:'biotask',         title:'Biotask',            type:'2d-motion', tags:['Branding','App','Concept'],           gallery:5,
-      desc:'A concept for Biotask, an app that organises your to-do list around your biological clock — scheduling demanding work for your natural energy peaks and lighter tasks for the dips. The project shapes the product\'s identity around the idea of human rhythm.' },
+      desc:'A concept for <strong>Biotask</strong>, an app that organises your to-do list around your biological clock. It schedules demanding work for your <strong>energy peaks</strong> and lighter tasks for the dips. The identity is shaped around the idea of <strong>human rhythm</strong>.' },
     { id:'red-dot-cafe',    title:'Red Dot Cafe',       type:'2d-motion', tags:['Branding','Logo Animation','Concept'], gallery:5,
-      desc:'A concept identity for Red Dot Cafe, built around a single confident red dot. One minimal geometric mark stretches into a full system — and comes alive in motion — proving how far a strong, simple idea can travel.' },
+      desc:'A concept identity for <strong>Red Dot Cafe</strong>, built around a single confident red dot. One minimal geometric mark stretches into a <strong>full system</strong> and comes alive in motion. Proof of how far a <strong>strong, simple idea</strong> can travel.' },
     { id:'dream-catcher',   title:'Dream Catcher',      type:'2d-motion', tags:['App','Concept'],                     gallery:4,
-      desc:'A concept for Dream Catcher, an app that teaches lucid dreaming — guiding users through the techniques to become aware, and take control, inside their dreams. The work wraps an atmospheric, dreamlike feel around a subject between science and the surreal.' },
+      desc:'A concept for <strong>Dream Catcher</strong>, an app that teaches lucid dreaming. It guides users to become aware, and take control, <strong>inside their dreams</strong>. The work wraps an <strong>atmospheric, dreamlike</strong> feel around a subject between science and the surreal.' },
     { id:'rotbeyar',        title:'Rotbeyar',           type:'2d-motion', tags:['Branding','Client'],                  gallery:5,
-      desc:'Identity and motion work for Rotbeyar, an Iranian institution preparing students for the Konkoor university-entrance exam. The aim: make a high-pressure academic brand feel supportive, modern and trustworthy.' },
+      desc:'Identity and motion work for <strong>Rotbeyar</strong>, an Iranian institution preparing students for the Konkoor entrance exam. The aim was to make a high-pressure academic brand feel <strong>supportive and modern</strong>. Trustworthy, without the usual exam-prep anxiety.' },
     { id:'carnaval',        title:'Carnaval',           type:'2d-motion', tags:['Branding','Logo Animation','Concept'],gallery:5,
       desc:'A self-initiated project for Carnaval, a concept travel agency: an identity plus a short, celebratory logo animation built to capture the movement and energy of travel.' },
     { id:'daal-campaign',  title:'Daal — Campaign',    type:'3d-design', tags:['Product/Campaign','Client'],           gallery:3, noMotion:true,
-      desc:'3D campaign visuals for Daal, an insurance company — a set of high-finish 3D designs created for their marketing campaigns.' },
+      desc:'<strong>3D campaign visuals</strong> for Daal, an insurance company. A set of <strong>high-finish 3D designs</strong> created for their marketing pushes. Built to make a dry industry feel premium.' },
     { id:'daal-sales-report', title:'Daal — Sales Report', type:'2d-motion', tags:['Infographics','Explainer','Client'], gallery:2, hasFull:true,
-      desc:'A 2D motion piece for Daal, an insurance company, built from their annual sales report — turning dry figures into clear, animated storytelling.' },
+      desc:'A 2D motion piece for <strong>Daal</strong>, an insurance company, built from their annual sales report. It turns <strong>dry figures</strong> into clear, animated storytelling. Infographics with rhythm and clarity.' },
   ];
 
   // LOCK SCROLL AND HIDE EVERYTHING IMMEDIATELY
@@ -3108,7 +3096,7 @@
     function onOverlayScroll() {
       const max = overlay.scrollHeight - overlay.clientHeight;
       const pct = max > 0 ? (overlay.scrollTop / max) * 100 : 0;
-      scrollFill.style.height = pct.toFixed(1) + '%';
+      scrollFill.style.width = pct.toFixed(1) + '%';
     }
     overlay.addEventListener('scroll', onOverlayScroll, {passive: true});
 
@@ -3149,7 +3137,7 @@
       // ── Normal overlay ───────────────────────────────────────────────
       restoreNormalOverlay();
       titleEl.textContent = p.title;
-      descEl.textContent  = p.desc;
+      descEl.innerHTML  = p.desc;
       overlay.querySelectorAll('[data-field]').forEach(el => {
         el.textContent = p[el.dataset.field] || '—';
       });
@@ -3385,7 +3373,7 @@
       closeBtn.classList.add('visible');
       scrollbar.classList.add('visible');
       overlay.scrollTop = 0;
-      scrollFill.style.height = '0%';
+      scrollFill.style.width = '0%';
       document.body.style.overflow = 'hidden';
       triggerAnimate();
       closeBtn.focus({preventScroll: true});
