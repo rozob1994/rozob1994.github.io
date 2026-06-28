@@ -3092,6 +3092,7 @@
 
     let currentIdx = 0;
     let galleryObserver = null;
+    let galleryGen = 0;   // bumped each populate() so stale async gallery loads are dropped
     let mode = 'personal';                 // 'personal' | 'mofid'
     function activeArr() { return mode === 'mofid' ? MOFID_PROJECTS : projects; }
 
@@ -3228,11 +3229,15 @@
         });
       })();
 
-      // Gallery — media/{id}/01.jpg … {gallery}.jpg (0 = no gallery)
+      // Gallery — either a fixed count (media/{id}/01.jpg …) or, for projects
+      // with a galleryDir, auto-probe NN.jpg/png/gif sequentially until missing
+      // (so dropping numbered files into the folder is all that's needed).
       (function buildGallery() {
         const galleryEl = innerEl.querySelector('.po-gallery');
         if (!galleryEl) return;
         galleryEl.innerHTML = '';
+        const gen = ++galleryGen;
+        if (p.galleryDir) { probeGallery(galleryEl, p.galleryDir, gen); return; }
         if (!p.gallery) return;
         for (let i = 1; i <= p.gallery; i++) {
           const item = document.createElement('div');
@@ -3245,6 +3250,33 @@
           galleryEl.appendChild(item);
         }
       })();
+    }
+
+    // Sequentially load NN.jpg / .png / .gif (NN = 01, 02, …) from a folder,
+    // stopping at the first index that has no file in any of those extensions.
+    function probeGallery(galleryEl, dir, gen) {
+      const exts = ['jpg', 'png', 'gif'];
+      function tryIndex(n) {
+        if (gen !== galleryGen) return;              // a newer project is open — abandon
+        const nn = ('0' + n).slice(-2);
+        let ei = 0;
+        const img = new Image();
+        function attempt() { img.src = dir + '/' + nn + '.' + exts[ei]; }
+        img.onload = function() {
+          if (gen !== galleryGen) return;            // stale load — drop it
+          img.classList.add('loaded');
+          img.style.cssText = 'width:100%;height:auto;display:block;';
+          const item = document.createElement('div');
+          item.className = 'po-gallery-item';
+          item.appendChild(img);
+          galleryEl.appendChild(item);
+          observeGallery();
+          tryIndex(n + 1);
+        };
+        img.onerror = function() { if (++ei < exts.length) attempt(); }; // missing in all exts → stop
+        attempt();
+      }
+      tryIndex(1);
     }
 
     // ── Mofid overlay helpers ──────────────────────────────────────────
@@ -3272,7 +3304,9 @@
           poster: 'media/mofid/' + sec.key + '/' + slug + '.jpg',
           video: 'media/mofid/' + sec.key + '/' + slug + '.mp4',
           hasFull: false,
-          gallery: 0
+          gallery: 0,
+          // auto-loads any numbered files dropped into this folder
+          galleryDir: 'media/mofid/' + sec.key + '/' + slug
         });
       });
     });
