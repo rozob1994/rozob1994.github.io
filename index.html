@@ -1867,12 +1867,14 @@
     'aix-3d-loop-pollished-glitched-edited-2-4k': 'AIX Exhibition Identity',
     'negah-logomotion-final': 'Negah Annual Event',
     'jahat-1403-teaser': 'Jahat 1403',
+    'jahat-1404-teaser': 'Jahat 1404',
     'safe-motion-expo-ready': 'Mofid Funds Explainer',
     'main-version-2-fixed-loop': 'Tavan'
   };
   const MOFID_FEATURED = [
     { slug:'main',                                  catKey:'mofid-card-concept-motion' },
     { slug:'mofid-4-9-glass-motion',                catKey:'mofid-ident-r-d' },
+    { slug:'jahat-1404-teaser',                     catKey:'annual-jahat-festival' },
     { slug:'jahat-1403-teaser',                     catKey:'annual-jahat-festival' },
     { slug:'aix-3d-loop-pollished-glitched-edited-2-4k', catKey:'aix-exhibitions' }
   ];
@@ -2314,7 +2316,7 @@
   }
 
   // ── Mofid videos (grouped by category) ───────────────────────────────────
-  const MOFID_SECTIONS_DATA = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
+  const MOFID_SECTIONS_DATA = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1404-teaser","jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
 
   function mofidSlugToTitle(s) {
     if (MOFID_TITLES[s]) return MOFID_TITLES[s];
@@ -2421,6 +2423,7 @@
     // Per-video descriptions (written from the actual frames). Falls back to the
     // category copy above, then a generic line, for anything not listed here.
     var MOFID_DESC_BY_SLUG = {
+      'jahat-1404-teaser': 'The 1404 edition of <strong>Jahat</strong>, Mofid\'s annual event. Each person in the firm is drawn as a single cube, and together they <strong>assemble into one giant arrow</strong> — "jahat" meaning direction. The arrow locks into place and <strong>sets off toward a shared goal</strong>.',
       'aram-pre-roll': 'The brief was to make a low-risk, steady fund feel desirable rather than dull. I answered it with pure restraint, letting one calm, upward gesture carry everything so the steadiness itself becomes the selling point instead of hype.',
       'atlas-pre-roll-edited-2': 'Atlas needed to read as a fixed, profitable benchmark you can trust. My move was to anchor the whole piece on a single monumental form that holds steady while the market churns around it, turning reliability into the hero.',
       'ayar-new-campaign-test-3-with-sound': 'The relaunch asked for the gold fund to feel premium and timeless. I deliberately avoided the usual flashy gold cliches and reached for warm, sculptural light, so the asset comes across as solid and reassuring rather than greedy.',
@@ -3245,7 +3248,7 @@
     }
 
     // ── Mofid overlay helpers ──────────────────────────────────────────
-    const MOFID_SECTIONS = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
+    const MOFID_SECTIONS = [{"key":"pre-rolls","label":"Pre-rolls","slugs":["aram-pre-roll","atlas-pre-roll-edited-2","ayar-new-campaign-test-3-with-sound","ayar-pre-roll-edited-2","ayar-pre-roll-red-cloth-7","bakhshi-pre-roll-edited","cemano-pre-roll-edited-2","daroono-pre-roll-with-sound","khodran-pre-roll-edited-2","main-version-2-fixed-loop","octane-kv-test-6","sahami-motion-design-edited-1","tavan-motion-edited-pre-roll-with-sound"]},{"key":"mofid-ident-r-d","label":"Identity R&D","slugs":["intro-motion-version-2","mofid-4-9-glass-motion","safes-ident-loop-2-edited","safes-ident-loop-variety-concept","safes-ident-loop","test-1","test-2","test-3"]},{"key":"logomotions","label":"Logomotions","slugs":["atieh-motion-edited","hakemiat-serkati-motion-graphics-test-8-with-sound","logo-shapes-precomp","negah-1403-branded","negah-logomotion-final","test-1-with-sound"]},{"key":"aix-exhibitions","label":"AIX Exhibitions","slugs":["aix-3d-loop-4k","aix-3d-loop-pollished-glitched-edited-2-4k","aix-motion-graphics-with-sound"]},{"key":"annual-jahat-festival","label":"Jahat Festival","slugs":["jahat-1404-teaser","jahat-1403-teaser","jahat-logomotion-final"]},{"key":"exhibition-explainer-motion","label":"Exhibition Explainer","slugs":["safe-motion-expo-ready","safes-promo-on-logo-edited-2"]},{"key":"mofid-card-concept-motion","label":"Card Concept","slugs":["main"]}];
 
     // Each Mofid work becomes a "project" so it opens in the exact same overlay
     // as the personal projects (hero video, description, credits, prev/next).
