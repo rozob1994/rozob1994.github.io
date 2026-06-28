@@ -1113,11 +1113,11 @@
 
     /* 3D Designs: rhythm of overlapping clusters and clean grids */
     .stills-flow{position:relative;display:flex;flex-direction:column;padding-bottom:40px}
-    /* clusters cascade diagonally across the full row: large images (~the size
-       of the 3-up grid cells) zigzag and overlap at the corners, with varied
-       crops. Sizes + positions are all set in JS. */
-    .still-cluster{position:relative;display:block;width:100%;margin:clamp(30px,4vw,72px) 0}
-    .still-cluster .sc{position:relative;display:block;overflow:hidden;background:var(--surface)}
+    /* clusters arrange 3 equal images into one of four overlapping modules
+       (two-up + centre, descending/ascending staircase, centre + two-below).
+       The container height and each image's position are set in JS. */
+    .still-cluster{position:relative;display:block;width:100%;margin:clamp(34px,4.5vw,80px) 0}
+    .still-cluster .sc{position:absolute;overflow:hidden;background:var(--surface)}
     .still-cluster .sc img{width:100%;height:100%;object-fit:cover;display:block}
     .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.2vw,20px);margin:clamp(40px,5vw,90px) 0}
     .still-grid .sg{overflow:hidden;background:var(--surface)}
@@ -2183,7 +2183,7 @@
   // ever left alone at the end (a tiny tail group merges into the previous one).
   function buildStillsFlow(container, count) {
     if (!container || container.childElementCount) return;
-    const CLUSTER = [3, 4, 2], GRID = 6;
+    const CLUSTER = [3], GRID = 6;
     // 1) plan the groups
     const groups = [];
     let gi = 1, ci = 0, cluster = true;
@@ -2197,36 +2197,52 @@
       groups[groups.length - 2].n += groups[groups.length - 1].n;
       groups.pop();
     }
-    // 2) render — clusters cascade diagonally with overlapping, cropped images
-    function rand(s) { const x = Math.sin(s * 127.1 + 311.7) * 43758.5; return x - Math.floor(x); }
+    // 2) render. Each cluster is one of four overlapping 3-image modules,
+    //    cycled in order. l/w are % of the row width; t is % of the row width
+    //    too (converted to % of the cluster's height when positioned); h is the
+    //    cluster height as % of width. Images are a uniform 3:2 crop.
+    const IMG_W = 37, IMG_H = IMG_W * 2 / 3;
+    const MODULES = [
+      // 1 — two on top, one centred below (in front)
+      { h: IMG_H + 15, boxes: [ { l: 8, t: 0, z: 1 }, { l: 55, t: 0, z: 1 }, { l: 31.5, t: 15, z: 2 } ] },
+      // 2 — descending staircase (down-right)
+      { h: IMG_H + 36, boxes: [ { l: 2, t: 0, z: 1 }, { l: 31, t: 18, z: 2 }, { l: 61, t: 36, z: 3 } ] },
+      // 3 — ascending staircase (up-right)
+      { h: IMG_H + 36, boxes: [ { l: 2, t: 36, z: 1 }, { l: 31, t: 18, z: 2 }, { l: 61, t: 0, z: 3 } ] },
+      // 4 — one centred on top (in front), two below
+      { h: IMG_H + 15, boxes: [ { l: 31.5, t: 0, z: 2 }, { l: 8, t: 15, z: 1 }, { l: 55, t: 15, z: 1 } ] }
+    ];
     function img(n) {
       const im = document.createElement('img');
       im.loading = 'lazy'; im.alt = '3D design ' + n;
       im.src = 'media/mofid/3d-designs/' + ('0' + n).slice(-2) + '.jpg';
       return im;
     }
-    groups.forEach(function (g, gIdx) {
+    let clusterCount = 0;
+    groups.forEach(function (g) {
       let k, n = g.start;
       const block = document.createElement('div');
       block.className = g.cluster ? 'still-cluster' : 'still-grid';
-      for (k = 0; k < g.n; k++, n++) {
-        const cell = document.createElement('div');
-        cell.className = (g.cluster ? 'sc' : 'sg') + ' sreveal';
-        if (g.cluster) {
-          // diagonal zigzag: large images (~3-up grid size) that march down the
-          // row, alternating left/right and overlapping the previous image at a
-          // corner, each cropped to a varied aspect ratio.
-          var ar = ['4 / 3', '3 / 2', '16 / 9', '1 / 1', '5 / 4'][(g.start + k) % 5];
-          var W = 36 + Math.round(rand(gIdx * 13 + k * 5 + 2) * 6);   // 36–42% of the row (a touch over a 3-up cell)
-          cell.style.width = W + '%';
-          cell.style.aspectRatio = ar;
-          var jit = Math.round(rand(gIdx * 5 + k * 3 + 9) * 6);       // 0–6
-          var left = (k % 2 === 0) ? (4 + jit) : (100 - W - 4 - 26 - jit); // pull right images inward so corners overlap
-          cell.style.marginLeft = Math.max(0, left) + '%';
-          if (k > 0) cell.style.marginTop = '-' + (8 + Math.round(rand(gIdx * 7 + k) * 6)) + '%'; // vertical corner overlap
-          cell.style.zIndex = String(k + 1);                          // later images sit in front
+      if (g.cluster) {
+        const mod = MODULES[clusterCount % MODULES.length]; clusterCount++;
+        block.style.paddingBottom = mod.h + '%';
+        for (k = 0; k < g.n && k < mod.boxes.length; k++, n++) {
+          const box = mod.boxes[k];
+          const cell = document.createElement('div');
+          cell.className = 'sc sreveal';
+          cell.style.left = box.l + '%';
+          cell.style.width = IMG_W + '%';
+          cell.style.top = (box.t / mod.h * 100) + '%';   // box.t (% width) → % of cluster height
+          cell.style.aspectRatio = '3 / 2';
+          cell.style.zIndex = String(box.z);
+          cell.appendChild(img(n)); block.appendChild(cell);
         }
-        cell.appendChild(img(n)); block.appendChild(cell);
+      } else {
+        for (k = 0; k < g.n; k++, n++) {
+          const cell = document.createElement('div');
+          cell.className = 'sg sreveal';
+          cell.appendChild(img(n)); block.appendChild(cell);
+        }
       }
       container.appendChild(block);
     });
