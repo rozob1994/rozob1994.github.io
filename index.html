@@ -192,7 +192,7 @@
 
     /* top padding = base + the 15% reel reduction, so the empty space above the
        intro is part of THIS section (continuous with the rest of the work bg). */
-    #work{padding:calc(40px + (100vh - 420px) * 0.05) 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
     /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
     #work .work-intro{color:#15161d}
     #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
@@ -2149,12 +2149,15 @@
     var cards = Array.prototype.slice.call(document.querySelectorAll('#work .wreveal:not(.in)'))
       .filter(function(el) { return el.offsetParent; });            // active (visible) panel only
     cards.sort(function(a, b) { return a.getBoundingClientRect().top - b.getBoundingClientRect().top; });
+    if (firstOnly === true) {
+      // Tab just opened: the top card always shows, regardless of scroll position.
+      // The rest stay hidden and reveal in order as the user scrolls.
+      if (cards.length) cards[0].classList.add('in');
+      return;
+    }
     for (var i = 0; i < cards.length; i++) {
       var r = cards[i].getBoundingClientRect();
-      if (r.top < vh * 0.9 && r.bottom > 0) {
-        cards[i].classList.add('in');
-        if (firstOnly === true) break;                              // fresh panel: reveal only the top card
-      }
+      if (r.top < vh * 0.9 && r.bottom > 0) cards[i].classList.add('in');
     }
   }
   window.revealWork = revealWork;
