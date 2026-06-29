@@ -2371,7 +2371,7 @@
     const allVids = MOFID_GRID_ORDER
       .filter(function(slug) { return slug === '__ident__' || (slugMeta[slug] && MOFID_HIDDEN.indexOf(slug) < 0); })
       .map(function(slug) {
-        if (slug === '__ident__') return { slug: '__ident__', catKey: 'mofid-ident-r-d', catLabel: 'Identity R&D', title: 'Identity R&D', poster: 'media/mofid/mofid-ident-r-d/test-2.jpg' };
+        if (slug === '__ident__') return { slug: '__ident__', catKey: 'mofid-ident-r-d', catLabel: 'Identity R&D', title: 'Identity R&D', poster: 'media/mofid/mofid-ident-r-d/gallery/05.jpg' };
         return { slug: slug, catKey: slugMeta[slug].catKey, catLabel: slugMeta[slug].catLabel };
       });
     const featKey = function(slug, catKey) { return catKey + '/' + slug; };
@@ -2827,7 +2827,7 @@
       } else {
         glowDot.style.transition = 'opacity 0.3s var(--ease)';
         glowDot.style.opacity = '0';
-        const pct = Math.min(150, progress * 160);   // fully open by ~94% of the scroll
+        const pct = Math.min(150, progress * 74);   // iris reaches full coverage (~71%) right at the bottom — no dead scroll after
         const cp = 'circle(' + pct.toFixed(1) + '% at 50% 50%)';
         reveal.style.clipPath = cp;
         // Sync content clip-path so content is only visible inside the expanding iris
