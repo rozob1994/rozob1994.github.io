@@ -1977,7 +1977,7 @@
       }
       requestAnimationFrame(function() {
         if (typeof window.balanceWorkGrids === 'function') window.balanceWorkGrids();
-        if (typeof window.revealWork === 'function') window.revealWork();
+        if (typeof window.revealWork === 'function') window.revealWork(true);
       });
     }
 
@@ -2142,17 +2142,22 @@
   // Reveal work cards as they enter the viewport. Runs on scroll/resize and on
   // every tab switch so the first visible card always shows immediately (the
   // IntersectionObserver alone can miss it when a panel is freshly displayed).
-  function revealWork() {
+  function revealWork(firstOnly) {
     var vh = window.innerHeight || document.documentElement.clientHeight;
-    document.querySelectorAll('#work .wreveal:not(.in)').forEach(function(el) {
-      if (!el.offsetParent) return;                       // inside a hidden panel/card
-      var r = el.getBoundingClientRect();
-      if (r.top < vh * 0.9 && r.bottom > 0) el.classList.add('in');
-    });
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#work .wreveal:not(.in)'))
+      .filter(function(el) { return el.offsetParent; });            // active (visible) panel only
+    cards.sort(function(a, b) { return a.getBoundingClientRect().top - b.getBoundingClientRect().top; });
+    for (var i = 0; i < cards.length; i++) {
+      var r = cards[i].getBoundingClientRect();
+      if (r.top < vh * 0.9 && r.bottom > 0) {
+        cards[i].classList.add('in');
+        if (firstOnly === true) break;                              // fresh panel: reveal only the top card
+      }
+    }
   }
   window.revealWork = revealWork;
-  window.addEventListener('scroll', revealWork, { passive: true });
-  window.addEventListener('resize', revealWork);
+  window.addEventListener('scroll', function() { revealWork(false); }, { passive: true });
+  window.addEventListener('resize', function() { revealWork(false); });
   // Build one work card (16:9, title overlaid inside). Used by featured + grid.
   function makeWCard(posterSrc, motionSrc, title, cat, data) {
     const card = document.createElement('div');
@@ -2330,7 +2335,7 @@
       balanceGrid(grid);
     };
     rebuildCarousel('all');
-    requestAnimationFrame(function () { balanceGrid(grid); if (window.revealWork) window.revealWork(); });
+    requestAnimationFrame(function () { balanceGrid(grid); if (window.revealWork) window.revealWork(true); });
   }
 
   // ── Mofid videos (grouped by category) ───────────────────────────────────
@@ -2404,7 +2409,7 @@
       balanceGrid(grid);
     };
     mofidRebuild('all');
-    requestAnimationFrame(function () { balanceGrid(grid); if (window.revealWork) window.revealWork(); });
+    requestAnimationFrame(function () { balanceGrid(grid); if (window.revealWork) window.revealWork(true); });
   }
 
   // Mofid cards (featured + grid) open the SAME overlay as personal projects.
