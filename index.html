@@ -192,7 +192,7 @@
 
     /* top padding = base + the 15% reel reduction, so the empty space above the
        intro is part of THIS section (continuous with the rest of the work bg). */
-    #work{padding:calc(64px + (100vh - 420px) * 0.15) 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    #work{padding:calc(40px + (100vh - 420px) * 0.05) 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
     /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
     #work .work-intro{color:#15161d}
     #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
@@ -1368,8 +1368,8 @@
       desc:'Identity and motion work for <strong>Rotbeyar</strong>, an Iranian institution preparing students for the Konkoor entrance exam. The aim was to make a high-pressure academic brand feel <strong>supportive and modern</strong>. Trustworthy, without the usual exam-prep anxiety.' },
     { id:'carnaval',        title:'Carnaval',           type:'2d-motion', tags:['Branding','Logo Animation','Concept'],gallery:5,
       desc:'A self-initiated project for Carnaval, a concept travel agency: an identity plus a short, celebratory logo animation built to capture the movement and energy of travel.' },
-    { id:'daal-campaign',  title:'Daal — Campaign',    type:'3d-design', tags:['Product/Campaign','Client'],           gallery:3, noMotion:true,
-      desc:'<strong>3D campaign visuals</strong> for Daal, an insurance company. A set of <strong>high-finish 3D designs</strong> created for their marketing pushes. Built to make a dry industry feel premium.' },
+    { id:'daal-campaign',  title:'Daal Campaigns',     type:'3d-design', tags:['Product/Campaign','Infographics','Client'], gallery:5, hasFull:true,
+      desc:'<strong>Campaign work</strong> for Daal, an insurance company. A <strong>2D motion piece</strong> built from their annual sales report leads the way — turning <strong>dry figures</strong> into clear, animated storytelling — backed by a set of <strong>high-finish 3D campaign visuals</strong> that make a dry industry feel premium.' },
     { id:'daal-sales-report', title:'Daal — Sales Report', type:'2d-motion', tags:['Infographics','Explainer','Client'], gallery:2, hasFull:true,
       desc:'A 2D motion piece for <strong>Daal</strong>, an insurance company, built from their annual sales report. It turns <strong>dry figures</strong> into clear, animated storytelling. Infographics with rhythm and clarity.' },
   ];
@@ -1858,7 +1858,7 @@
   // ── Featured selections: the big alternating cards at the top of each tab.
   //    The rest of each list falls into the grid below automatically.
   //    (Owner can re-order / swap these freely.)
-  const PERSONAL_FEATURED = ['amirkabir-hotel','kerosene','spad-foolad','daal-campaign','arya','daal-sales-report'];
+  const PERSONAL_FEATURED = ['amirkabir-hotel','kerosene','spad-foolad','daal-campaign','arya'];
   // Display-name overrides for Mofid videos (slug → title). Anything not listed
   // falls back to a prettified version of the slug. Used by cards + the popup.
   const MOFID_TITLES = {
@@ -1883,9 +1883,11 @@
   const MOFID_HIDDEN = [
     'ayar-new-campaign-test-3-with-sound', 'sahami-motion-design-edited-1',
     'tavan-motion-edited-pre-roll-with-sound', 'negah-1403-branded',
-    'safes-promo-on-logo-edited-2', 'logo-shapes-precomp', 'intro-motion-version-2'
+    'safes-promo-on-logo-edited-2', 'logo-shapes-precomp', 'intro-motion-version-2',
+    'atieh-motion-edited', 'test-1-with-sound', 'negah-logomotion-final', 'aix-3d-loop-4k',
+    'cemano-pre-roll-edited-2'
   ];
-  const PERSONAL_HIDDEN = ['carnaval'];
+  const PERSONAL_HIDDEN = ['carnaval','daal-sales-report'];
   // Explicit order for the "More from Mofid" grid (featured 4 excluded).
   const MOFID_GRID_ORDER = [
     // — 3D / motion —
@@ -2249,9 +2251,9 @@
     // Mofid Card, gold bar, gold+red, gold coins, gold vault, vault wheels,
     // teal-cube vaults, banknotes, cars, phones/apps, keypads, glass cubes, …).
     const STILLS_ORDER = [
-      2, 3, 4, 27, 34, 1, 6, 14, 43, 5, 9, 17, 10, 28, 36, 45, 46, 48,
+      2, 3, 4, 27, 34, 1, 14, 43, 5, 9, 17, 10, 28, 36, 45, 46, 48,
       8, 11, 29, 33, 24, 18, 23, 41, 42, 12, 13, 31, 30, 35, 37, 19, 21, 38,
-      39, 15, 16, 20, 7, 44, 47, 25, 26, 32, 40, 22
+      16, 39, 15, 20, 7, 44, 47, 25, 26, 32, 40, 22
     ];
     function img(n) {
       const idx = STILLS_ORDER[n - 1] || n;
@@ -2984,7 +2986,7 @@
       navbar.classList.toggle('on-light', onLight || isScrolled);
       navbar.classList.toggle('on-blue', onBlue && !isScrolled);
       navbar.classList.toggle('scrolled', isScrolled);
-      navbar.classList.toggle('hidden', cw.getBoundingClientRect().top < window.innerHeight * 0.5);
+      navbar.classList.remove('hidden'); // header stays visible at all scroll positions
     }
     window.addEventListener('scroll', updateNav, {passive:true});
     updateNav();
@@ -3488,6 +3490,20 @@
       if (!skipHistory && mode === 'personal') tryHistory('pushState', { project: projects[idx].id }, '', '#' + projects[idx].id);
     }
     // Merged "Identity R&D" card: one popup with a 3-video hero carousel.
+    const AIX_PROJECT = {
+      id: 'mofid/aix-exhibitions/aix-exhibition-identity',
+      slug: 'aix-3d-loop-pollished-glitched-edited-2-4k', catKey: 'aix-exhibitions',
+      title: 'AIX Exhibition Identity',
+      type: 'AIX Exhibitions',
+      desc: '<strong>Large-format motion</strong> for the AIX exhibition floor. Built to <strong>read instantly from a distance</strong> and pull a moving crowd into the story. The identity in two loops — a clean 4K cut and a <strong>polished, glitched</strong> variation.',
+      heroes: [
+        { video: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.mp4', poster: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.jpg' },
+        { video: 'media/mofid/aix-exhibitions/aix-3d-loop-4k.mp4',                              poster: 'media/mofid/aix-exhibitions/aix-3d-loop-4k.jpg' }
+      ],
+      poster: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.jpg',
+      galleryDir: 'media/mofid/aix-exhibitions/aix-exhibition-identity',
+      gallery: 0
+    };
     const IDENT_PROJECT = {
       id: 'mofid/mofid-ident-r-d/identity-r-d',
       slug: '__ident__', catKey: 'mofid-ident-r-d',
@@ -3506,6 +3522,7 @@
     // Open a specific Mofid work in the same overlay as the personal projects.
     window.openMofidProject = function (slug, catKey) {
       if (slug === '__ident__') { mode = 'mofid'; openObject(IDENT_PROJECT); return; }
+      if (slug === 'aix-3d-loop-pollished-glitched-edited-2-4k') { mode = 'mofid'; openObject(AIX_PROJECT); return; }
       var idx = MOFID_PROJECTS.findIndex(function (m) { return m.slug === slug && (!catKey || m.catKey === catKey); });
       if (idx < 0) idx = MOFID_PROJECTS.findIndex(function (m) { return m.slug === slug; });
       if (idx >= 0) { mode = 'mofid'; open(idx, true); }
