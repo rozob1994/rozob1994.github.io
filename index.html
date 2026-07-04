@@ -438,6 +438,7 @@
 
       /* Hero */
       #hero.hero-settled{padding:0 28px 28px}
+      .hero-content{left:28px!important}
       .hero-title{font-size:clamp(56px,11vw,120px)}
       .hero-author{font-size:13px}
 
@@ -455,8 +456,16 @@
       .services-grid{grid-template-columns:1fr 1fr}
 
       /* Contact */
+      #contact-wrapper{min-height:112vh}            /* shorter so the iris reveal completes sooner */
       .contact-inner{grid-template-columns:1fr;gap:40px}
       #contactContent{padding:0 28px}
+      .contact-photo{max-width:280px;max-height:none;margin:0 auto;justify-self:center}
+
+      /* Gallery collage: uniform 2-col grid instead of the overlapping desktop
+         modules (applies to phones + tablets; desktop keeps the overlap) */
+      .still-cluster{padding-bottom:0!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px;margin:10px 0}
+      .still-cluster .sc{position:static!important;left:auto!important;top:auto!important;width:auto!important;aspect-ratio:4/3!important;z-index:auto!important}
+      .still-grid{margin:10px 0;gap:10px}
 
       /* Footer */
       footer{padding:20px 28px}
@@ -479,9 +488,15 @@
       .nav-links.open{display:flex}
       .nav-links li{border-bottom:1px solid rgba(255,255,255,0.06)}
       .nav-links a{display:block;padding:16px 4px;font-size:13px}
+      /* Open menu always sits on a dark panel — force light text regardless of
+         the nav's on-light/on-blue state so links stay visible */
+      #navLinks.open a{color:rgba(255,255,255,0.82)!important}
+      #navLinks.open a:hover{color:#fff!important}
+      .nav-toggle.open span{background:#fff!important}
 
       /* Hero */
       #hero.hero-settled{padding:0 20px 24px}
+      .hero-content{left:20px!important}
       .hero-title{font-size:clamp(44px,13vw,90px);letter-spacing:-0.03em}
       .hero-subtitle{font-size:clamp(13px,3.5vw,18px)}
       .hero-author{font-size:12px}
@@ -501,9 +516,11 @@
       .services-grid{grid-template-columns:1fr}
       .service-card{padding:28px 24px}
 
-      /* Contact */
-      #contactContent{padding:0 20px}
-      .contact-inner{gap:32px}
+      /* Contact — phone: smaller photo + more breathing room (collage/min-height
+         inherited from the ≤900 block above) */
+      #contactContent{padding:40px 24px}
+      .contact-inner{gap:28px}
+      .contact-photo{max-width:180px}   /* ~50% smaller than desktop, centred */
       .contact-socials{gap:16px}
 
       /* Footer */
@@ -2835,7 +2852,9 @@
       } else {
         glowDot.style.transition = 'opacity 0.3s var(--ease)';
         glowDot.style.opacity = '0';
-        const pct = Math.min(150, progress * 74);   // iris reaches full coverage (~71%) right at the bottom — no dead scroll after
+        // Iris reaches full coverage (~71%) near the end of the section. On phones
+        // the section is shorter and we open faster so the photo is revealed sooner.
+        const pct = Math.min(150, progress * (window.innerWidth <= 900 ? 118 : 74));
         const cp = 'circle(' + pct.toFixed(1) + '% at 50% 50%)';
         reveal.style.clipPath = cp;
         // Sync content clip-path so content is only visible inside the expanding iris
