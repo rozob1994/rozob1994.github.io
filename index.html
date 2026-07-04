@@ -460,12 +460,17 @@
       .contact-inner{grid-template-columns:1fr;gap:40px}
       #contactContent{padding:0 28px}
       .contact-photo{max-width:280px;max-height:none;margin:0 auto;justify-self:center}
+      /* Centre everything under the photo so it all aligns down the middle */
+      .contact-info{align-items:center;text-align:center}
+      .contact-info > div{align-items:center}
+      .contact-socials{justify-content:center}
+      .contact-cta{align-self:center}
 
-      /* Gallery collage: uniform 2-col grid instead of the overlapping desktop
-         modules (applies to phones + tablets; desktop keeps the overlap) */
-      .still-cluster{padding-bottom:0!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px;margin:10px 0}
-      .still-cluster .sc{position:static!important;left:auto!important;top:auto!important;width:auto!important;aspect-ratio:4/3!important;z-index:auto!important}
-      .still-grid{margin:10px 0;gap:10px}
+      /* Gallery collage: one continuous 2-col grid so there are no empty slots
+         (display:contents lets every still pack straight into .stills-flow) */
+      .stills-flow{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px}
+      .still-cluster,.still-grid{display:contents!important}
+      .still-cluster .sc,.still-grid .sg{position:static!important;left:auto!important;top:auto!important;width:auto!important;aspect-ratio:4/3!important;z-index:auto!important;margin:0!important}
 
       /* Footer */
       footer{padding:20px 28px}
@@ -502,7 +507,10 @@
       .hero-author{font-size:12px}
 
       /* Work */
-      #work{padding-left:20px;padding-right:20px}
+      #work{padding-left:20px;padding-right:20px;padding-top:28px}   /* close the big gap under the reel */
+      /* Smaller intro so each line fits on one row and breaks only at the
+         intended points, like desktop (no mid-phrase wraps) */
+      .work-intro{font-size:clamp(14px,4.3vw,18px);margin-bottom:clamp(48px,9vw,84px)}
       .work-header{padding:0;margin-bottom:10px}
       .work-item{width:240px;height:310px}
       #carouselOuter{min-height:310px}
