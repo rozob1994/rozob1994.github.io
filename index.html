@@ -3397,6 +3397,11 @@
       if (typeof MOFID_TITLES !== 'undefined' && MOFID_TITLES[s]) return MOFID_TITLES[s];
       return s.replace(/[-_]/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
     }
+    // All Mofid Securities work: created by Roozbeh, art directed by Ehsan Abbasi.
+    const MOFID_CREDITS = [
+      {name:'Ehsan Abbasi', title:'Art Director', url:'https://www.behance.net/ehsanabbbbasi'},
+      {name:'Roozbeh Ghanbarzadeh', title:'3D & Motion Designer'}
+    ];
     const MOFID_PROJECTS = [];
     MOFID_SECTIONS.forEach(function (sec) {
       sec.slugs.forEach(function (slug) {
@@ -3409,6 +3414,7 @@
             ? window.mofidDescFor(slug, sec.key)
             : 'In-house motion design for Mofid Securities.',
           type: sec.label,
+          credits: MOFID_CREDITS,
           poster: 'media/mofid/' + sec.key + '/' + slug + '.jpg',
           video: 'media/mofid/' + sec.key + '/' + slug + '.mp4',
           hasFull: false,
@@ -3541,7 +3547,7 @@
       ],
       poster: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.jpg',
       galleryDir: 'media/mofid/aix-exhibitions/aix-exhibition-identity',
-      gallery: 0
+      gallery: 0, credits: MOFID_CREDITS
     };
     const IDENT_PROJECT = {
       id: 'mofid/mofid-ident-r-d/identity-r-d',
@@ -3556,7 +3562,7 @@
       ],
       poster: 'media/mofid/mofid-ident-r-d/test-2.jpg',
       galleryDir: 'media/mofid/mofid-ident-r-d/gallery',
-      gallery: 0
+      gallery: 0, credits: MOFID_CREDITS
     };
     // Open a specific Mofid work in the same overlay as the personal projects.
     window.openMofidProject = function (slug, catKey) {
