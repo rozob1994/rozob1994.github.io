@@ -315,7 +315,7 @@
     .work-cat{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--yellow);transform:translateY(10px);transition:transform 0.55s var(--ease) 0.05s,opacity 0.4s 0.05s;opacity:0}
     .work-item:hover .work-cat{transform:translateY(0);opacity:1}
 
-    #about{background:#0d1fd4;position:relative;overflow:visible;padding:0;z-index:23}
+    #about{background:#0d1fd4;position:relative;overflow:visible;padding:0}
 
     /* Two-column about layout */
     .about-center{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,7vw,120px);align-items:start;padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1400px;margin:0 auto}
@@ -2972,30 +2972,18 @@
     let inView = true;
     new IntersectionObserver(function (es) { inView = es[0].isIntersecting; }, {rootMargin:'300px'}).observe(work);
 
-    function drawBall(x, y, R, t) {
-      // soft contact shadow so it reads as floating above the light surface
-      const sh = ctx.createRadialGradient(x, y + R*0.9, R*0.1, x, y + R*0.95, R*1.2);
-      sh.addColorStop(0, 'rgba(20,22,29,0.14)');
-      sh.addColorStop(1, 'rgba(20,22,29,0)');
-      ctx.fillStyle = sh;
-      ctx.beginPath(); ctx.ellipse(x, y + R*0.95, R*1.02, R*0.26, 0, 0, Math.PI*2); ctx.fill();
-      // matte sphere: warm highlight (upper-left) → base yellow → shadow (lower-right)
-      const hx = x - R*0.34, hy = y - R*0.36;
-      const g = ctx.createRadialGradient(hx, hy, R*0.05, x, y, R*1.12);
-      g.addColorStop(0,    '#fff6cf');
-      g.addColorStop(0.22, '#fbe775');
-      g.addColorStop(0.5,  '#f2d347');
-      g.addColorStop(0.82, '#d8b52f');
-      g.addColorStop(1,    '#a9851c');
+    function drawBall(x, y, R) {
+      // Matte sphere lit from the upper-right, matching the About-section balls
+      // (soft Lambert falloff toward the lower-left; warm ambient keeps the
+      // shadow side yellow, not brown). No cast shadow — it floats in the air.
+      const lx = x + R * 0.42, ly = y - R * 0.42;
+      const g = ctx.createRadialGradient(lx, ly, R * 0.1, x, y, R * 1.35);
+      g.addColorStop(0,    '#fdeea0');
+      g.addColorStop(0.30, '#f5d94e');
+      g.addColorStop(0.66, '#ddc043');
+      g.addColorStop(1,    '#b89f38');
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
-      // faint warm rim on the shadow side for form
-      const rim = ctx.createRadialGradient(x + R*0.45, y + R*0.5, R*0.2, x + R*0.45, y + R*0.5, R*0.95);
-      rim.addColorStop(0, 'rgba(255,244,200,0)');
-      rim.addColorStop(0.86, 'rgba(255,244,200,0)');
-      rim.addColorStop(1, 'rgba(255,244,200,0.30)');
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = rim;
-      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill(); ctx.restore();
+      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
     }
 
     let t = 0;
@@ -3011,16 +2999,22 @@
         canvas.style.transform = 'translateY(' + translateY + 'px)';
         const canvasTopVY = translateY + rect.top;               // viewport y of canvas top
         const p = Math.max(0, Math.min(1, (vh - rect.top) / (vh + workH)));  // 0=entering … 1=left
-        const R = Math.min(vw, vh) * 0.26;
+        const R = Math.min(vw, vh) * 0.13;                      // 50% smaller
         const driftX = Math.sin(t * 0.5) * vw * 0.03;
-        const driftY = Math.cos(t * 0.42) * R * 0.16;
+        const driftY = Math.cos(t * 0.42) * R * 0.22;
         const vx = vw / 2 + Math.sin(p * Math.PI * 3) * (vw * 0.33) + driftX; // left↔right zig-zag
-        // Swipe in from the top, then ride roughly mid-viewport (with a gentle
-        // descent + drift). The exit is the rising blue #about occluding it.
+        // Swipe in from the top, then ride roughly mid-viewport (gentle descent + drift).
         const centerY = (0.34 + p * 0.18) * vh + driftY;
         const enter = Math.min(1, p / 0.12);
         const vy = -2 * R + enter * (centerY + 2 * R);
-        drawBall(vx, vy - canvasTopVY, R, t);
+        // Clip to the work section's box so the ball is cut off cleanly at the
+        // blue boundary and never leaks over #about / #services below it.
+        const clipTop = Math.max(0, rect.top - canvasTopVY);
+        const clipBottom = rect.bottom - canvasTopVY;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(0, clipTop, vw, Math.max(0, clipBottom - clipTop)); ctx.clip();
+        drawBall(vx, vy - canvasTopVY, R);
+        ctx.restore();
       }
       if (!RM) t += 0.016;
       requestAnimationFrame(frame);
