@@ -224,7 +224,7 @@
     .work-intro .wi-blue{color:#0d1fd4}
     .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
     @media(max-width:600px){.work-intro{max-width:none}}
-    #workBgCanvas{display:none}
+    #workBgCanvas{position:absolute;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;opacity:0;transition:opacity .8s ease;will-change:transform}
     .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
     #work .work-header{position:relative;z-index:6}
     #work #carouselOuter{position:relative;z-index:1}
@@ -315,7 +315,7 @@
     .work-cat{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--yellow);transform:translateY(10px);transition:transform 0.55s var(--ease) 0.05s,opacity 0.4s 0.05s;opacity:0}
     .work-item:hover .work-cat{transform:translateY(0);opacity:1}
 
-    #about{background:#0d1fd4;position:relative;overflow:visible;padding:0}
+    #about{background:#0d1fd4;position:relative;overflow:visible;padding:0;z-index:23}
 
     /* Two-column about layout */
     .about-center{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,7vw,120px);align-items:start;padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1400px;margin:0 auto}
@@ -1809,6 +1809,7 @@
       initContactScroll();
       initContactIcons();
       initNavSection();
+      initGalleryBall();
       initAboutDot();
       initHeroReelScroll();
       initServiceCardHover();
@@ -2946,58 +2947,86 @@
     fade();
   }
 
-  // ── Work section canvas blob background (disabled — section is now light) ──
-  function initWorkBgCanvas() {
+  // ── Gallery ball: one big matte-yellow sphere (echoing the About balls) that
+  //    swipes in from the top of the work section, drifts left/right behind the
+  //    cards as you scroll, and slips out the bottom behind the blue About
+  //    section. The canvas is viewport-sized and follows the scroll (cheap), and
+  //    #about (z-index 23) paints over its overflow to create the "behind blue".
+  function initGalleryBall() {
     const canvas = document.getElementById('workBgCanvas');
     const work = document.getElementById('work');
     if (!canvas || !work) return;
     const ctx = canvas.getContext('2d');
-    // Vibrant blue blobs that mix and drift — main blue + darker navy variants
-    const blobs = [
-      {r:[13,31,212],  cx:0.18, cy:0.30, sx:0.20, sy:0.24, sp:18, ph:0,   a:0.39}, // #0d1fd4 main blue
-      {r:[26,59,189],  cx:0.75, cy:0.55, sx:0.24, sy:0.20, sp:22, ph:2.1, a:0.35}, // #1a3bbd mid blue
-      {r:[5,  12, 90], cx:0.50, cy:0.75, sx:0.18, sy:0.22, sp:16, ph:4.5, a:0.42}, // #050c5a deep navy
-      {r:[41, 75,220], cx:0.30, cy:0.60, sx:0.22, sy:0.16, sp:25, ph:1.3, a:0.28}, // #294bdc bright blue
-    ];
+    const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let vw = 0, vh = 0, dpr = 1;
     function resize() {
-      canvas.width = work.offsetWidth || window.innerWidth;
-      canvas.height = work.offsetHeight || 800;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      vw = window.innerWidth; vh = window.innerHeight;
+      canvas.width = vw * dpr; canvas.height = vh * dpr;
+      canvas.style.width = vw + 'px'; canvas.style.height = vh + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resize();
     window.addEventListener('resize', resize, {passive:true});
-    // Only render while the section is on screen
-    let blobVisible = true;
-    new IntersectionObserver(es => { blobVisible = es[0].isIntersecting; }, {rootMargin: '100px'}).observe(work);
-    let t = 0;
-    function draw() {
-      if (!blobVisible) { requestAnimationFrame(draw); return; }
-      const w = canvas.width, h = canvas.height;
-      // Base dark background
-      ctx.fillStyle = '#05060e';
-      ctx.fillRect(0, 0, w, h);
-      blobs.forEach(b => {
-        const x = (b.cx + Math.sin(t / b.sp + b.ph) * b.sx) * w;
-        const y = (b.cy + Math.cos(t / (b.sp * 0.8) + b.ph) * b.sy) * h;
-        const rad = w * 0.52;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
-        g.addColorStop(0,    `rgba(${b.r[0]},${b.r[1]},${b.r[2]},${b.a})`);
-        g.addColorStop(0.40, `rgba(${b.r[0]},${b.r[1]},${b.r[2]},${b.a * 0.5})`);
-        g.addColorStop(1,    'rgba(0,0,0,0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
-      });
-      // Subtle frosted glass vignette — darkens edges so carousel feels elevated
-      const vg = ctx.createRadialGradient(w*0.5, h*0.5, h*0.1, w*0.5, h*0.5, w*0.8);
-      vg.addColorStop(0, 'rgba(0,0,0,0)');
-      vg.addColorStop(1, 'rgba(0,0,0,0.45)');
-      ctx.fillStyle = vg;
-      ctx.fillRect(0, 0, w, h);
-      t += 0.008;
-      // Reduced motion: render one static frame, no animation loop
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(draw);
+
+    let inView = true;
+    new IntersectionObserver(function (es) { inView = es[0].isIntersecting; }, {rootMargin:'300px'}).observe(work);
+
+    function drawBall(x, y, R, t) {
+      // soft contact shadow so it reads as floating above the light surface
+      const sh = ctx.createRadialGradient(x, y + R*0.9, R*0.1, x, y + R*0.95, R*1.2);
+      sh.addColorStop(0, 'rgba(20,22,29,0.14)');
+      sh.addColorStop(1, 'rgba(20,22,29,0)');
+      ctx.fillStyle = sh;
+      ctx.beginPath(); ctx.ellipse(x, y + R*0.95, R*1.02, R*0.26, 0, 0, Math.PI*2); ctx.fill();
+      // matte sphere: warm highlight (upper-left) → base yellow → shadow (lower-right)
+      const hx = x - R*0.34, hy = y - R*0.36;
+      const g = ctx.createRadialGradient(hx, hy, R*0.05, x, y, R*1.12);
+      g.addColorStop(0,    '#fff6cf');
+      g.addColorStop(0.22, '#fbe775');
+      g.addColorStop(0.5,  '#f2d347');
+      g.addColorStop(0.82, '#d8b52f');
+      g.addColorStop(1,    '#a9851c');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+      // faint warm rim on the shadow side for form
+      const rim = ctx.createRadialGradient(x + R*0.45, y + R*0.5, R*0.2, x + R*0.45, y + R*0.5, R*0.95);
+      rim.addColorStop(0, 'rgba(255,244,200,0)');
+      rim.addColorStop(0.86, 'rgba(255,244,200,0)');
+      rim.addColorStop(1, 'rgba(255,244,200,0.30)');
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = rim;
+      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill(); ctx.restore();
     }
-    requestAnimationFrame(draw);
-    setTimeout(() => { canvas.style.opacity = '1'; }, 60);
+
+    let t = 0;
+    function frame() {
+      if (!inView) { requestAnimationFrame(frame); return; }
+      const rect = work.getBoundingClientRect();
+      const workH = work.offsetHeight;
+      ctx.clearRect(0, 0, vw, vh);
+      if (rect.bottom > -vh && rect.top < vh * 1.5) {
+        // keep the canvas aligned to the viewport slice of #work; allow it to
+        // overflow into #about at the bottom (occluded there by the blue).
+        const translateY = Math.min(Math.max(-rect.top, 0), workH);
+        canvas.style.transform = 'translateY(' + translateY + 'px)';
+        const canvasTopVY = translateY + rect.top;               // viewport y of canvas top
+        const p = Math.max(0, Math.min(1, (vh - rect.top) / (vh + workH)));  // 0=entering … 1=left
+        const R = Math.min(vw, vh) * 0.26;
+        const driftX = Math.sin(t * 0.5) * vw * 0.03;
+        const driftY = Math.cos(t * 0.42) * R * 0.16;
+        const vx = vw / 2 + Math.sin(p * Math.PI * 3) * (vw * 0.33) + driftX; // left↔right zig-zag
+        // Swipe in from the top, then ride roughly mid-viewport (with a gentle
+        // descent + drift). The exit is the rising blue #about occluding it.
+        const centerY = (0.34 + p * 0.18) * vh + driftY;
+        const enter = Math.min(1, p / 0.12);
+        const vy = -2 * R + enter * (centerY + 2 * R);
+        drawBall(vx, vy - canvasTopVY, R, t);
+      }
+      if (!RM) t += 0.016;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    canvas.style.opacity = '1';
   }
 
   // ── Nav section detection (white on blue) ─────────────────────────────────
