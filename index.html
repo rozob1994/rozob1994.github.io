@@ -225,6 +225,7 @@
     .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
     @media(max-width:600px){.work-intro{max-width:none}}
     #workBgCanvas{position:absolute;top:0;left:0;width:100%;height:100vh;z-index:0;pointer-events:none;opacity:0;transition:opacity .8s ease;will-change:transform}
+    #workFgCanvas{position:absolute;top:0;left:0;width:100%;height:100vh;z-index:4;pointer-events:none;opacity:0;transition:opacity .8s ease;will-change:transform}
     .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
     #work .work-header{position:relative;z-index:6}
     #work #carouselOuter{position:relative;z-index:1}
@@ -1203,6 +1204,7 @@
 
 <section id="work">
   <canvas id="workBgCanvas" aria-hidden="true"></canvas>
+  <canvas id="workFgCanvas" aria-hidden="true"></canvas>
   <h2 class="work-intro">Eccho is a creative studio<br><span class="wi-soft">We craft visuals that make<br>brands <span class="wi-blue">resonate</span></span></h2>
   <div class="work-header">
     <div class="work-tabs" role="tablist" aria-label="Work section">
@@ -1809,7 +1811,7 @@
       initContactScroll();
       initContactIcons();
       initNavSection();
-      initGalleryBall();
+      initWorkBalls();
       initAboutDot();
       initHeroReelScroll();
       initServiceCardHover();
@@ -2947,80 +2949,140 @@
     fade();
   }
 
-  // ── Gallery ball: one big matte-yellow sphere (echoing the About balls) that
-  //    swipes in from the top of the work section, drifts left/right behind the
-  //    cards as you scroll, and slips out the bottom behind the blue About
-  //    section. The canvas is viewport-sized and follows the scroll (cheap), and
-  //    #about (z-index 23) paints over its overflow to create the "behind blue".
-  function initGalleryBall() {
-    const canvas = document.getElementById('workBgCanvas');
+  // ── Work-section balls (matte yellow, echoing the About spheres). Two modes:
+  //    • Mofid tab: a hero ball appears at the "3D DESIGNS" gallery and four
+  //      smaller balls lag behind and orbit it (gravity feel), never clustering;
+  //      it slips out behind the blue at the bottom and swipes back out the top.
+  //    • Personal tab: a few balls drift in from the sides and float subtly, some
+  //      over the cards (front canvas) and some behind (back canvas).
+  //    Two viewport-sized canvases follow the scroll and are clipped to #work.
+  function initWorkBalls() {
+    const back = document.getElementById('workBgCanvas');
+    const front = document.getElementById('workFgCanvas');
     const work = document.getElementById('work');
-    if (!canvas || !work) return;
-    const ctx = canvas.getContext('2d');
+    const gallery = document.getElementById('mofid3dGallery');
+    const personalPanel = document.getElementById('personalPanel');
+    if (!back || !front || !work) return;
+    const bctx = back.getContext('2d'), fctx = front.getContext('2d');
     const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let vw = 0, vh = 0, dpr = 1;
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       vw = window.innerWidth; vh = window.innerHeight;
-      canvas.width = vw * dpr; canvas.height = vh * dpr;
-      canvas.style.width = vw + 'px'; canvas.style.height = vh + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      [back, front].forEach(function (c) {
+        c.width = vw * dpr; c.height = vh * dpr;
+        c.style.width = vw + 'px'; c.style.height = vh + 'px';
+        c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+      });
     }
     resize();
-    window.addEventListener('resize', resize, {passive:true});
+    window.addEventListener('resize', resize, { passive: true });
 
     let inView = true;
-    new IntersectionObserver(function (es) { inView = es[0].isIntersecting; }, {rootMargin:'300px'}).observe(work);
+    new IntersectionObserver(function (es) { inView = es[0].isIntersecting; }, { rootMargin: '300px' }).observe(work);
 
-    function drawBall(x, y, R) {
-      // Matte sphere lit from the upper-right, matching the About-section balls
-      // (soft Lambert falloff toward the lower-left; warm ambient keeps the
-      // shadow side yellow, not brown). No cast shadow — it floats in the air.
+    // Matte yellow sphere lit from the upper-right (matches the About balls).
+    function ball(ctx, x, y, R, alpha) {
+      ctx.save();
+      if (alpha != null) ctx.globalAlpha = alpha;
       const lx = x + R * 0.42, ly = y - R * 0.42;
       const g = ctx.createRadialGradient(lx, ly, R * 0.1, x, y, R * 1.35);
-      g.addColorStop(0,    '#fdeea0');
+      g.addColorStop(0, '#fdeea0');
       g.addColorStop(0.30, '#f5d94e');
       g.addColorStop(0.66, '#ddc043');
-      g.addColorStop(1,    '#b89f38');
+      g.addColorStop(1, '#b89f38');
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     }
 
-    let t = 0;
-    function frame() {
+    // Mofid: hero + four lagging satellites (eased-follow = gravity/lag, plus an
+    // elliptical orbit at a distinct radius/speed each so they never clump).
+    const sats = [
+      { rMul: 0.60, orbit: 2.1, speed: 0.55, phase: 0.0, ell: 0.55, lag: 0.055 },
+      { rMul: 0.42, orbit: 2.9, speed: -0.40, phase: 1.7, ell: 0.72, lag: 0.040 },
+      { rMul: 0.52, orbit: 2.4, speed: 0.46, phase: 3.1, ell: 0.50, lag: 0.062 },
+      { rMul: 0.35, orbit: 3.3, speed: -0.32, phase: 4.6, ell: 0.80, lag: 0.034 }
+    ];
+    sats.forEach(function (s) { s.cx = vw / 2; s.cy = -vh; });
+
+    function drawMofid(topVY, t) {
+      if (!gallery) return;
+      const gr = gallery.getBoundingClientRect();
+      if (gr.height < 1) return;                       // collage not shown yet
+      const p = Math.max(0, Math.min(1, (vh - gr.top) / (vh + gr.height)));
+      const R = Math.min(vw, vh) * 0.065;              // hero (another 50% smaller)
+      const driftX = Math.sin(t * 0.5) * vw * 0.02;
+      const driftY = Math.cos(t * 0.42) * R * 0.3;
+      const hx = vw / 2 + Math.sin(p * Math.PI * 3) * (vw * 0.30) + driftX;
+      const centerY = (0.34 + p * 0.20) * vh + driftY;
+      const enter = Math.max(0, Math.min(1, p / 0.10));
+      const hy = -2.4 * R + enter * (centerY + 2.4 * R);   // swipe in/out the top with scroll
+      sats.forEach(function (s) {
+        s.cx += (hx - s.cx) * s.lag;
+        s.cy += (hy - s.cy) * s.lag;
+        const a = s.phase + t * s.speed;
+        const sx = s.cx + Math.cos(a) * R * s.orbit;
+        const sy = s.cy + Math.sin(a) * R * s.orbit * s.ell;
+        ball(bctx, sx, sy - topVY, R * s.rMul);
+      });
+      ball(bctx, hx, hy - topVY, R);
+    }
+
+    // Personal: subtle, smooth drifters that slide in from the sides.
+    const amb = [
+      { bx: 0.22, by: 0.34, ax: 0.09, ay: 0.12, fx: 0.16, fy: 0.11, px: 0.0, py: 1.3, rMul: 0.9, layer: 'back', side: -1, alpha: 0.85 },
+      { bx: 0.78, by: 0.60, ax: 0.11, ay: 0.09, fx: 0.13, fy: 0.17, px: 2.1, py: 0.4, rMul: 1.3, layer: 'front', side: 1, alpha: 0.5 },
+      { bx: 0.55, by: 0.72, ax: 0.13, ay: 0.08, fx: 0.19, fy: 0.10, px: 4.0, py: 3.1, rMul: 0.7, layer: 'back', side: 1, alpha: 0.85 },
+      { bx: 0.66, by: 0.26, ax: 0.10, ay: 0.11, fx: 0.11, fy: 0.15, px: 1.0, py: 5.0, rMul: 1.1, layer: 'front', side: -1, alpha: 0.5 },
+      { bx: 0.36, by: 0.55, ax: 0.12, ay: 0.10, fx: 0.15, fy: 0.13, px: 3.3, py: 2.2, rMul: 0.6, layer: 'back', side: -1, alpha: 0.85 }
+    ];
+    let pEnter = 0;
+    function drawPersonal(topVY, t, dt) {
+      pEnter = Math.min(1, pEnter + dt * 0.6);
+      const e = 1 - Math.pow(1 - pEnter, 3);            // easeOutCubic slide-in
+      const R0 = Math.min(vw, vh) * 0.06;
+      amb.forEach(function (b) {
+        const R = R0 * b.rMul;
+        let x = (b.bx + Math.sin(t * b.fx + b.px) * b.ax) * vw;
+        const y = (b.by + Math.cos(t * b.fy + b.py) * b.ay) * vh;
+        x += b.side * (1 - e) * (vw * 0.75 + R);        // start off its side, ease in
+        ball(b.layer === 'front' ? fctx : bctx, x, y - topVY, R, b.alpha * e);
+      });
+    }
+
+    let t = 0, lastPersonal = false, lastTs = 0;
+    function personalActive() { return personalPanel && personalPanel.style.display !== 'none'; }
+
+    function frame(ts) {
+      const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+      lastTs = ts;
       if (!inView) { requestAnimationFrame(frame); return; }
       const rect = work.getBoundingClientRect();
       const workH = work.offsetHeight;
-      ctx.clearRect(0, 0, vw, vh);
+      bctx.clearRect(0, 0, vw, vh); fctx.clearRect(0, 0, vw, vh);
       if (rect.bottom > -vh && rect.top < vh * 1.5) {
-        // keep the canvas aligned to the viewport slice of #work; allow it to
-        // overflow into #about at the bottom (occluded there by the blue).
         const translateY = Math.min(Math.max(-rect.top, 0), workH);
-        canvas.style.transform = 'translateY(' + translateY + 'px)';
-        const canvasTopVY = translateY + rect.top;               // viewport y of canvas top
-        const p = Math.max(0, Math.min(1, (vh - rect.top) / (vh + workH)));  // 0=entering … 1=left
-        const R = Math.min(vw, vh) * 0.13;                      // 50% smaller
-        const driftX = Math.sin(t * 0.5) * vw * 0.03;
-        const driftY = Math.cos(t * 0.42) * R * 0.22;
-        const vx = vw / 2 + Math.sin(p * Math.PI * 3) * (vw * 0.33) + driftX; // left↔right zig-zag
-        // Swipe in from the top, then ride roughly mid-viewport (gentle descent + drift).
-        const centerY = (0.34 + p * 0.18) * vh + driftY;
-        const enter = Math.min(1, p / 0.12);
-        const vy = -2 * R + enter * (centerY + 2 * R);
-        // Clip to the work section's box so the ball is cut off cleanly at the
-        // blue boundary and never leaks over #about / #services below it.
-        const clipTop = Math.max(0, rect.top - canvasTopVY);
-        const clipBottom = rect.bottom - canvasTopVY;
-        ctx.save();
-        ctx.beginPath(); ctx.rect(0, clipTop, vw, Math.max(0, clipBottom - clipTop)); ctx.clip();
-        drawBall(vx, vy - canvasTopVY, R);
-        ctx.restore();
+        const tf = 'translateY(' + translateY + 'px)';
+        back.style.transform = tf; front.style.transform = tf;
+        const topVY = translateY + rect.top;
+        const clipTop = Math.max(0, rect.top - topVY);
+        const clipBottom = rect.bottom - topVY;
+        [bctx, fctx].forEach(function (c) {
+          c.save(); c.beginPath(); c.rect(0, clipTop, vw, Math.max(0, clipBottom - clipTop)); c.clip();
+        });
+        const personal = personalActive();
+        if (personal && !lastPersonal) pEnter = 0;      // retrigger slide-in on tab switch
+        lastPersonal = personal;
+        if (personal) drawPersonal(topVY, t, dt);
+        else drawMofid(topVY, t);
+        bctx.restore(); fctx.restore();
       }
-      if (!RM) t += 0.016;
+      if (!RM) t += dt;
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-    canvas.style.opacity = '1';
+    back.style.opacity = '1'; front.style.opacity = '1';
   }
 
   // ── Nav section detection (white on blue) ─────────────────────────────────
