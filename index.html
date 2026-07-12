@@ -1147,30 +1147,34 @@
        releases to the next. Right / left (mirror) / bottom (horizontal) ── */
     .pcar-section{position:relative}                 /* height set by JS for the scroll-through */
     .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center}
-    .pcar-stage{position:relative;width:100%;max-width:1760px;height:100%;margin:0 auto;
-      opacity:0;transform:scale(.965);transition:opacity 1.1s var(--ease),transform 1.1s var(--ease)}
-    .pcar-in .pcar-stage{opacity:1;transform:none}
+    .pcar-stage{position:relative;width:100%;max-width:1840px;height:100%;margin:0 auto}
+    /* Entrance: each piece eases in (standard ease) when the section is reached,
+       then plain scrolling rolls the stack. */
     .pcar-text{position:absolute;top:50%;transform:translateY(-50%);z-index:6;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4vw,64px);line-height:1.02;letter-spacing:-.02em;color:#15161d;max-width:8ch}
+      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4vw,64px);line-height:1.02;letter-spacing:-.02em;color:#15161d;max-width:8ch;
+      opacity:0;transition:opacity .9s var(--ease) .12s}
+    .pcar-in .pcar-text{opacity:1}
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar-ball{position:absolute;top:50%;z-index:7;width:clamp(28px,2.4vw,42px);height:clamp(28px,2.4vw,42px);border-radius:50%;
       background:radial-gradient(circle at 64% 32%, #fdeea0, #f5d94e 40%, #ddc043 68%, #b89f38);
-      box-shadow:0 10px 26px -8px rgba(0,0,0,.35)}
-    .pcar{position:absolute;top:50%;width:0;height:0}
-    .pcar-card{position:absolute;top:0;left:0;width:min(42vw,64vh);aspect-ratio:4/3;border-radius:10px;overflow:hidden;
+      box-shadow:0 10px 26px -8px rgba(0,0,0,.35);opacity:0;transition:opacity .8s var(--ease) .3s}
+    .pcar-in .pcar-ball{opacity:1}
+    .pcar{position:absolute;top:50%;width:0;height:0;opacity:0;transition:opacity 1s var(--ease),transform 1s var(--ease)}
+    .pcar-in .pcar{opacity:1;transform:none!important}
+    .pcar-card{position:absolute;top:0;left:0;width:min(42vw,58vh);aspect-ratio:4/3;border-radius:10px;overflow:hidden;
       background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;transform:translate(-50%,-50%)}
     .pcar-card img{width:100%;height:100%;object-fit:cover;display:block}
 
-    /* right-side (#1): hero (leftmost of the fan) centre-right, cards fan up/down-right */
-    .side-right .pcar{left:52%}
+    /* right-side (#1): pushed to the right, nudged down; cards fan up/down-right */
+    .side-right .pcar{left:60%;top:55%;transform:translate(70px,44px)}
     .side-right .pcar-text{left:3%;text-align:left}
-    .side-right .pcar-ball{left:calc(52% - min(19vw,250px) - 34px)}
-    /* left-side (#2): mirror — hero rightmost of the fan, cards fan left */
-    .side-left .pcar{left:48%}
+    .side-right .pcar-ball{left:calc(60% - min(21vw,290px) - 30px)}
+    /* left-side (#2): mirror, pushed left */
+    .side-left .pcar{left:40%;top:55%;transform:translate(-70px,44px)}
     .side-left .pcar-text{right:3%;text-align:right}
-    .side-left .pcar-ball{left:calc(48% + min(19vw,250px) + 8px)}
+    .side-left .pcar-ball{left:calc(40% + min(21vw,290px) + 4px)}
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
-    .side-bottom .pcar{left:50%;top:46%}
+    .side-bottom .pcar{left:50%;top:46%;transform:translateY(60px)}
     .side-bottom .pcar-text{left:50%;top:13%;transform:translate(-50%,0);text-align:center;max-width:none}
     .side-bottom .pcar-ball{left:calc(50% - 19px);top:calc(46% - 19px)}
 
@@ -2462,8 +2466,8 @@
     let SPY, BVX, SPX, BVY, STEP;     // spacing/bulge (side) · spacing/drop (dome) · scroll-per-card
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
-      SPY = Math.round(vh * 0.085); BVX = Math.round(vw * 0.006);
-      SPX = Math.round(vw * 0.072); BVY = Math.round(vh * 0.014);
+      SPY = Math.round(vh * 0.13); BVX = Math.round(vw * 0.013);   // more spread / more bend
+      SPX = Math.round(vw * 0.078); BVY = Math.round(vh * 0.016);
       STEP = Math.max(80, Math.round(vh * 0.16));
       host.style.height = (vh + (N - 1) * STEP) + 'px';
     }
@@ -2499,8 +2503,11 @@
     // Scroll-driven: the section pins (sticky) and the scroll position maps to the
     // hero index; when it reaches the last card the section releases to the next.
     function onScroll() {
-      const top = host.getBoundingClientRect().top;
-      target = Math.max(0, Math.min(N - 1, -top / STEP));
+      const rect = host.getBoundingClientRect();
+      const vh = window.innerHeight;
+      target = Math.max(0, Math.min(N - 1, -rect.top / STEP));
+      // crossfade the boundary: fade the stack out as the section releases upward
+      sticky.style.opacity = rect.bottom < vh ? Math.max(0, Math.min(1, rect.bottom / (vh * 0.55))) : 1;
       if (!raf) raf = requestAnimationFrame(place);
     }
     window.addEventListener('scroll', onScroll, { passive: true });
