@@ -2482,17 +2482,6 @@
 
     const N = cars[0].cards.length;
     const M = cars.length;
-
-    // ── Published state so an optional WebGL renderer can take over carousel #1
-    //    (real 3D). Until it calls __pcarTakeover, the DOM/CSS cards render as
-    //    normal — that's also the fallback for weak devices / no WebGL. ──
-    const D0 = { srcs: configs[0].imgs.slice(), n: N, side: cars[0].side,
-      vw: 0, vh: 0, anchorX: 0, anchorY: 0, cardW: 0, cardH: 0, trackY: 0,
-      visible: false, glReady: false, card: [] };
-    for (let i = 0; i < N; i++) D0.card.push({ x: 0, y: 0, z: 0, ry: 0, rot: 0, s: 1, o: 0 });
-    window.__pcarData = D0;
-    window.__pcarTakeover = function () { D0.glReady = true; cars[0].cards.forEach(function (c) { c.style.display = 'none'; }); };
-
     let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, STEP, CYCLE, SHIFT, PERIOD;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
@@ -2509,9 +2498,6 @@
       // + one leading SHIFT so carousel #1 has a slide/swipe-in zone it can also
       // reverse through on the way back up (like #2 and #3 do).
       host.style.height = (vh + M * CYCLE + M * SHIFT) + 'px';
-      D0.vw = vw; D0.vh = vh;
-      D0.anchorX = 0.60 * vw; D0.anchorY = 0.63 * vh;              // .side-right .pcar{left:60%;top:63%}
-      D0.cardW = Math.min(0.40 * vw, 0.54 * vh); D0.cardH = D0.cardW * 0.75;
     }
     dims();
 
@@ -2544,10 +2530,6 @@
         const s = 0.92 + 0.12 * Math.exp(-a * a * 0.7);        // small hero bump; perspective does most of the shrink
         const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));   // fade cards out sooner → none stacked over the top edge
         const shade = Math.min(0.6, a * 0.08 + Math.abs(ry) / 78);   // face darkens as it turns/recedes
-        if (c === cars[0]) {                            // publish for the WebGL renderer
-          const cd = D0.card[i]; cd.x = x; cd.y = y; cd.z = z; cd.ry = ry; cd.rot = rot; cd.s = s; cd.o = o;
-          if (D0.glReady) continue;                     // WebGL draws #1 — skip the DOM writes
-        }
         const card = c.cards[i];
         card.style.opacity = o;
         card.style.setProperty('--shade', shade.toFixed(3));
@@ -2596,8 +2578,6 @@
       if (!started) return;
       curG = Math.max(0, -host.getBoundingClientRect().top);
       track.style.transform = 'translateY(' + (-trackUnits(curG) * vhPx).toFixed(1) + 'px)';
-      D0.trackY = -trackUnits(curG) * vhPx;                 // for the WebGL renderer
-      D0.visible = curG <= SHIFT + PERIOD + 40;             // carousel #1 on screen (lead-in → cycle → exit)
       for (let k = 0; k < M; k++) cars[k].target = carTarget(k, curG);
       kick();
     }
@@ -4126,125 +4106,6 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   // if the animation loop is paused (e.g. a backgrounded tab freezes rAF).
   renderer.render(scene, camera);
   tick();
-})();
-</script>
-
-<script type="module">
-// ── Gallery carousel #1 rendered in REAL 3D (Option A hybrid) ─────────────────
-// Cards become actual 3D box meshes: the hero is refractive glass (the front is
-// glassy, the edges see-through), the rest are solid lit slabs — all under one
-// perspective camera lit by the HDR environment. Positions/turns are driven by
-// the exact same scroll math as the CSS carousel (window.__pcarData). On weak
-// devices / no-WebGL / touch, this never takes over and the CSS cards remain.
-import * as THREE from 'three';
-import { RGBELoader } from './vendor/RGBELoader.js';
-(() => {
-  const getD = () => window.__pcarData;
-  const weak = window.matchMedia('(pointer:coarse)').matches
-    || (navigator.deviceMemory && navigator.deviceMemory < 4)
-    || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (weak) return;                                   // leave the CSS cards (fallback)
-
-  function whenReady(cb) {
-    const d = getD();
-    if (d && d.srcs && d.srcs.length && d.vw) return cb();
-    const t = setInterval(() => { const dd = getD(); if (dd && dd.srcs && dd.srcs.length && dd.vw) { clearInterval(t); cb(); } }, 120);
-  }
-  whenReady(init);
-
-  function init() {
-    const sticky = document.querySelector('.pcar-sticky');
-    if (!sticky) return;
-    const data = getD();
-    const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
-    sticky.insertBefore(canvas, sticky.firstChild);    // below the track → text stays on top
-
-    let renderer;
-    try { renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true }); }
-    catch (e) { canvas.remove(); return; }             // no WebGL → CSS fallback
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    const scene = new THREE.Scene();
-    const CAMZ = 1250;                                 // matches the CSS perspective distance
-    const camera = new THREE.PerspectiveCamera(45, 1, 1, 8000);
-    camera.position.set(0, 0, CAMZ);
-
-    new RGBELoader().load('./vendor/studio_small_09_1k.hdr', tex => {
-      tex.mapping = THREE.EquirectangularReflectionMapping; scene.environment = tex;
-    });
-    const key = new THREE.DirectionalLight(0xffffff, 1.3); key.position.set(-0.5, 0.7, 1); scene.add(key);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-
-    const N = data.n, THICK = 26;
-    const geo = new THREE.BoxGeometry(1, 1, THICK);    // unit box, scaled per card
-    const loader = new THREE.TextureLoader();
-    // shared glass materials (only the single hero uses them at a time)
-    const frontGlass = new THREE.MeshPhysicalMaterial({ transmission: 0.22, roughness: 0.14, thickness: THICK, ior: 1.45, metalness: 0, transparent: true, envMapIntensity: 1.3, clearcoat: 0.6, clearcoatRoughness: 0.12, color: 0xffffff });
-    const sideGlass = new THREE.MeshPhysicalMaterial({ transmission: 1.0, roughness: 0.16, thickness: THICK, ior: 1.45, metalness: 0, transparent: true, envMapIntensity: 1.5, color: 0xeaf0ff });
-
-    const cards = [];
-    for (let i = 0; i < N; i++) {
-      const tex = loader.load(data.srcs[i]); tex.colorSpace = THREE.SRGBColorSpace;
-      const frontStd = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5, metalness: 0.0, envMapIntensity: 0.9, transparent: true });
-      const sideStd = new THREE.MeshStandardMaterial({ color: 0x0e1120, roughness: 0.5, metalness: 0.15, envMapIntensity: 0.8, transparent: true });
-      const mesh = new THREE.Mesh(geo, [sideStd, sideStd, sideStd, sideStd, frontStd, sideStd]);
-      mesh.userData = { tex, frontStd, sideStd };
-      scene.add(mesh); cards.push(mesh);
-    }
-
-    let curHero = -1;
-    function setHero(idx) {
-      for (let i = 0; i < N; i++) {
-        const m = cards[i], ud = m.userData;
-        if (i === idx) { frontGlass.map = ud.tex; frontGlass.needsUpdate = true; m.material = [sideGlass, sideGlass, sideGlass, sideGlass, frontGlass, sideGlass]; }
-        else m.material = [ud.sideStd, ud.sideStd, ud.sideStd, ud.sideStd, ud.frontStd, ud.sideStd];
-      }
-    }
-
-    let lastW = 0, lastH = 0;
-    function resize() {
-      const d = getD();
-      renderer.setSize(d.vw, d.vh, false);
-      camera.aspect = d.vw / d.vh;
-      camera.fov = 2 * Math.atan((d.vh / 2) / CAMZ) * 180 / Math.PI;   // world units == CSS px at z=0
-      camera.updateProjectionMatrix();
-      lastW = d.vw; lastH = d.vh;
-    }
-    resize();
-
-    const DEG = Math.PI / 180;
-    function frame() {
-      requestAnimationFrame(frame);
-      const d = getD();
-      if (!d || !d.glReady) return;
-      if (d.vw !== lastW || d.vh !== lastH) resize();
-      if (!d.visible) { renderer.clear(); return; }
-      let hero = 0, best = -1;
-      for (let i = 0; i < N; i++) if (d.card[i].o > best) { best = d.card[i].o; hero = i; }
-      if (hero !== curHero) { setHero(hero); curHero = hero; }
-      const halfW = d.vw / 2, halfH = d.vh / 2;
-      for (let i = 0; i < N; i++) {
-        const cd = d.card[i], m = cards[i];
-        if (cd.o <= 0.02) { m.visible = false; continue; }
-        m.visible = true;
-        const sx = d.anchorX + cd.x, sy = d.anchorY + cd.y + d.trackY;
-        m.position.set(sx - halfW, halfH - sy, cd.z);
-        m.scale.set(d.cardW * cd.s, d.cardH * cd.s, 1);
-        m.rotation.set(0, -cd.ry * DEG, -cd.rot * DEG);
-        if (i !== hero) { m.userData.frontStd.opacity = cd.o; m.userData.sideStd.opacity = cd.o; }
-      }
-      renderer.render(scene, camera);
-    }
-    window.__pcarTakeover();                            // hide the DOM cards — we own #1 now
-    frame();
-    window.addEventListener('resize', resize);
-    window.__pcarGLProbe = { renderer };               // for perf measurement
-  }
 })();
 </script>
 </body>
