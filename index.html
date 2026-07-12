@@ -1156,13 +1156,9 @@
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar-balls{position:absolute;inset:0;z-index:9;pointer-events:none}   /* matte-blue floating balls, pushed by the cards */
     .pcar{position:absolute;top:50%;left:50%;width:0;height:0}
-    .pcar-card{position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;border-radius:10px;overflow:hidden;
-      background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;transform:translate(-50%,-50%);
-      transition:box-shadow .35s var(--ease)}
+    .pcar-card{position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;border-radius:5px;overflow:hidden;
+      background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;transform:translate(-50%,-50%)}
     .pcar-card img{width:100%;height:100%;object-fit:cover;display:block}
-    /* Hero card: a very thin minimal frame (blue or yellow, set per card) hugging
-       the rounded corners via a spread shadow — no layout shift. */
-    .pcar-card.hero{box-shadow:0 52px 100px -30px rgba(0,0,0,.55),0 0 0 2.5px var(--frame,#0d1fd4)}
 
     /* right-side (#1): pushed to the right, nudged down; cards fan up/down-right */
     .side-right .pcar{left:60%;top:63%}
@@ -2569,7 +2565,7 @@
     }
     function initBalls() {
       sizeBalls();
-      const NB = Math.round(Math.min(BW, BH) / 78);      // a light scatter
+      const NB = 12;      // a light scatter (~4 per carousel)
       const rBase = Math.min(BW, BH);
       balls = [];
       for (let i = 0; i < NB; i++) {
