@@ -1155,16 +1155,21 @@
       font-family:var(--font-display);font-weight:800;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar{position:absolute;top:50%;left:50%;width:0;height:0;perspective:1700px}   /* perspective → cards can turn in 3D */
-    .pcar-card{position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;border-radius:5px;overflow:hidden;
-      background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;transform:translate(-50%,-50%)}
-    .pcar-card img{width:100%;height:100%;object-fit:cover;display:block}
+    .pcar-card{position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;
+      background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;
+      transform:translate(-50%,-50%);transform-style:preserve-3d}
+    .pcar-card img{width:100%;height:100%;object-fit:cover;display:block;border-radius:5px;position:relative;z-index:1}
+    /* Extruded thickness: a back panel sitting behind the face; when a card turns
+       (rotateY) this offset slab shows as the card's visible edge/depth. */
+    .pcar-card::after{content:'';position:absolute;inset:0;border-radius:5px;background:#0f1220;
+      transform:translateZ(-22px);box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 
     /* right-side (#1): pushed to the right, nudged down; cards fan up/down-right */
-    .side-right .pcar{left:56%;top:52%}
-    .side-right .pcar-text{left:12%;top:22%;transform:none;text-align:left}
+    .side-right .pcar{left:60%;top:63%}
+    .side-right .pcar-text{left:9%;text-align:left}
     /* left-side (#2): mirror, pushed left */
-    .side-left .pcar{left:44%;top:52%}
-    .side-left .pcar-text{right:12%;top:22%;transform:none;text-align:right}
+    .side-left .pcar{left:40%;top:63%}
+    .side-left .pcar-text{right:9%;text-align:right}
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
     .side-bottom .pcar{left:50%;top:53%}
     .side-bottom .pcar-text{left:50%;top:10%;transform:translate(-50%,0);text-align:center}
@@ -2460,11 +2465,11 @@
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SDX, SYA, SPX, BVY, PULLX, PULLY, STEP, CYCLE, SHIFT, PERIOD;
+    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, STEP, CYCLE, SHIFT, PERIOD;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
-      SDX = Math.round(vw * 0.034); SYA = Math.round(vh * 0.30);    // side S-curve: horizontal drift per card / vertical amplitude
+      SPY = Math.round(vh * 0.128); BVX = Math.round(vw * 0.026);   // side arc: vertical spacing / rightward bend
       SPX = Math.round(vw * 0.088); BVY = Math.round(vh * 0.011);   // dome: spacing / bend (curve softened ~45%)
       PULLX = Math.round(vw * 0.05); PULLY = Math.round(vh * 0.075);  // how far the hero pops out, away from the arc
       STEP = Math.max(90, Math.round(vh * 0.21));   // more scroll per card → smoother, no snap
@@ -2493,14 +2498,14 @@
           x = u * SPX;
           y = a * a * BVY - PULLY * pop;   // pull the hero further UP, away from the dome
           rot = (u < 0 ? -1 : 1) * a * 1.2;
-        } else {                          // S-curve: cards travel lower-left → upper-right (mirror for #2)
-          x = c.dir * (u * SDX) - c.dir * PULLX * pop;    // horizontal drift + hero pop out to the free side
-          y = -SYA * Math.tanh(u / 3.4);                  // sigmoid rise: steep past the hero, flattening at the ends
-          rot = c.dir * u * 0.5;
+        } else {                          // vertical arc: hero leftmost-middle, cards fan toward dir
+          x = c.dir * (a * a * BVX) - c.dir * PULLX * pop;   // pull the hero away from the arc (out to the free side)
+          y = -u * SPY;
+          rot = c.dir * u * 0.6;
         }
-        // Subtle 3D: cards turn on their Y axis as they travel out toward the edges,
-        // revealing a little depth (perspective comes from .pcar). Hero stays flat.
-        const ry = Math.max(-17, Math.min(17, -c.dir * u * 3.0));
+        // 3D: cards turn on their Y axis as they travel out toward the edges, so their
+        // extruded side (see .pcar-card::after) shows — real visible depth. Hero flat.
+        const ry = Math.max(-24, Math.min(24, -c.dir * u * 3.6));
         const s = 0.84 + 0.22 * Math.exp(-a * a * 0.7);   // hero clearly LARGER, grows in gradually (no snap)
         const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));   // fade cards out sooner → none stacked over the top edge
         const card = c.cards[i];
