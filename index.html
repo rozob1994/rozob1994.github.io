@@ -2482,7 +2482,7 @@
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, PERIOD;
+    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, LEADIN, PERIOD;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
@@ -2494,11 +2494,12 @@
       STEP = Math.max(90, Math.round(vh * 0.21));   // more scroll per card → smoother, no snap
       CYCLE = (N - 1) * STEP;     // scroll to cycle one carousel's hero end-to-end
       SHIFT = Math.round(vh * 1.3);   // longer slide → the next carousel sits further down
+      LEADIN = Math.round(vh * 0.45); // carousel #1's own entrance — short, so it appears quickly
       PERIOD = CYCLE + SHIFT;
       cars.forEach(function (c, k) { c.stage.style.top = (k * 100) + 'vh'; });
-      // + one leading SHIFT so carousel #1 has a slide/swipe-in zone it can also
-      // reverse through on the way back up (like #2 and #3 do).
-      host.style.height = (vh + M * CYCLE + M * SHIFT) + 'px';
+      // one short LEADIN (so #1 swipes in fast + can reverse out on the way up),
+      // then M cycles and (M-1) inter-carousel transitions.
+      host.style.height = (vh + LEADIN + M * CYCLE + (M - 1) * SHIFT) + 'px';
     }
     dims();
 
@@ -2547,18 +2548,19 @@
     // Where is the track (in carousel units) and what should each carousel's hero
     // index (cur) be, purely as a function of scroll depth g.
     function trackUnits(g) {
-      if (g <= SHIFT) return 0;                     // lead-in: carousel 0 stays centered (cards+text swipe in, no empty gap)
-      const gg = g - SHIFT;
+      if (g <= LEADIN) return 0;                    // lead-in: carousel 0 stays centered (cards+text swipe in, no empty gap)
+      const gg = g - LEADIN;
       const j = Math.floor(gg / PERIOD);
       if (j >= M - 1) return M - 1;
       const local = gg - j * PERIOD;
       return local <= CYCLE ? j : j + (local - CYCLE) / SHIFT;   // parked, then sliding to next
     }
     function carTarget(k, g) {
-      const cyc = SHIFT + k * PERIOD;               // scroll where carousel k begins cycling
-      if (g < cyc - SHIFT) return -ENTRANCE;        // not reached yet — fanned out below
-      if (g < cyc) {                                 // incoming shift: swipe in along the arc as it rises (also #0 now)
-        return -ENTRANCE * (1 - easeIO((g - (cyc - SHIFT)) / SHIFT));
+      const cyc = LEADIN + k * PERIOD;              // scroll where carousel k begins cycling
+      const inLen = k === 0 ? LEADIN : SHIFT;       // #1 has a short entrance; the rest use the full transition
+      if (g < cyc - inLen) return -ENTRANCE;        // not reached yet — fanned out below
+      if (g < cyc) {                                 // entrance: swipe in along the arc
+        return -ENTRANCE * (1 - easeIO((g - (cyc - inLen)) / inLen));
       }
       if (g <= cyc + CYCLE) return clamp((g - cyc) / STEP, 0, N - 1);  // cycling
       return N - 1;                                  // done — held at the last card
