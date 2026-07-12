@@ -1142,56 +1142,43 @@
     .still-grid .sg{overflow:hidden;background:var(--surface)}
     .still-grid .sg img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 
-    /* ── Portfolio carousels (3D Designs) — hero-stack fanned on a circular arc,
-       swaps on hover-scroll. Right / left (mirror) / bottom (horizontal) ── */
-    .pcar-section{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
-    .pcar-stage{position:relative;width:100%;max-width:1500px;height:78vh;margin:0 auto}
-    .pcar-text{position:absolute;top:50%;transform:translateY(-50%);z-index:6;opacity:0;
+    /* ── Portfolio carousels (3D Designs) — scroll-driven hero-stack fanned on an
+       arc. Each section is tall and pins; scrolling cycles the cards, then
+       releases to the next. Right / left (mirror) / bottom (horizontal) ── */
+    .pcar-section{position:relative}                 /* height set by JS for the scroll-through */
+    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center}
+    .pcar-stage{position:relative;width:100%;max-width:1500px;height:100%;margin:0 auto;
+      opacity:0;transform:translateY(34px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+    .pcar-in .pcar-stage{opacity:1;transform:none}
+    .pcar-text{position:absolute;top:50%;transform:translateY(-50%);z-index:6;
       font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4vw,60px);line-height:1.02;letter-spacing:-.02em;color:#15161d;max-width:8ch}
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar-ball{position:absolute;top:50%;z-index:7;width:clamp(26px,2.4vw,38px);height:clamp(26px,2.4vw,38px);border-radius:50%;
       background:radial-gradient(circle at 64% 32%, #fdeea0, #f5d94e 40%, #ddc043 68%, #b89f38);
-      box-shadow:0 10px 26px -8px rgba(0,0,0,.35);opacity:0}
+      box-shadow:0 10px 26px -8px rgba(0,0,0,.35)}
     .pcar{position:absolute;top:50%;width:0;height:0}
-    .pcar-card{position:absolute;top:0;left:0;width:min(40vw,540px);aspect-ratio:4/3;border-radius:8px;overflow:hidden;
+    .pcar-card{position:absolute;top:0;left:0;width:min(38vw,500px);aspect-ratio:4/3;border-radius:8px;overflow:hidden;
       background:var(--surface);box-shadow:0 40px 80px -30px rgba(0,0,0,.45);will-change:transform,opacity;transform:translate(-50%,-50%)}
     .pcar-card img{width:100%;height:100%;object-fit:cover;display:block}
 
-    /* right-side (carousel #1): carousel right, text left, ball just left of hero */
-    .side-right .pcar{right:19%}
+    /* right-side (#1): hero (leftmost of the fan) centre-right, cards fan up/down-right */
+    .side-right .pcar{left:52%}
     .side-right .pcar-text{left:3%;text-align:left}
-    .side-right .pcar-ball{left:calc(81% - min(20vw,270px) - 34px)}
-    /* left-side (carousel #2): mirror */
-    .side-left .pcar{left:19%}
+    .side-right .pcar-ball{left:calc(52% - min(19vw,250px) - 34px)}
+    /* left-side (#2): mirror — hero rightmost of the fan, cards fan left */
+    .side-left .pcar{left:48%}
     .side-left .pcar-text{right:3%;text-align:right}
-    .side-left .pcar-ball{left:calc(19% + min(20vw,270px) + 8px)}
-    /* bottom (carousel #3): centred lower, text above, ball on the hero */
-    .side-bottom .pcar{left:50%;top:52%}
-    .side-bottom .pcar-text{left:50%;top:14%;transform:translate(-50%,0);text-align:center;max-width:none}
-    .side-bottom .pcar-ball{left:calc(50% - 19px);top:calc(52% - 19px)}
+    .side-left .pcar-ball{left:calc(48% + min(19vw,250px) + 8px)}
+    /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
+    .side-bottom .pcar{left:50%;top:46%}
+    .side-bottom .pcar-text{left:50%;top:13%;transform:translate(-50%,0);text-align:center;max-width:none}
+    .side-bottom .pcar-ball{left:calc(50% - 19px);top:calc(46% - 19px)}
 
-    /* entrance — curved path in, good easing */
-    .pcar-in .pcar-text{opacity:1;transition:opacity .9s var(--ease) .3s}
-    .pcar-in.side-right .pcar{animation:pcarInR 1.2s cubic-bezier(.16,1,.3,1) forwards}
-    .pcar-in.side-left .pcar{animation:pcarInL 1.2s cubic-bezier(.16,1,.3,1) forwards}
-    .pcar-in.side-bottom .pcar{animation:pcarInB 1.2s cubic-bezier(.16,1,.3,1) forwards}
-    .pcar-in.side-right .pcar-ball{animation:pcarBallR 1.3s cubic-bezier(.34,1.25,.5,1) .4s forwards}
-    .pcar-in.side-left .pcar-ball{animation:pcarBallL 1.3s cubic-bezier(.34,1.25,.5,1) .4s forwards}
-    .pcar-in.side-bottom .pcar-ball{animation:pcarBallB .9s cubic-bezier(.34,1.4,.5,1) .5s forwards}
-    @keyframes pcarInR{0%{transform:translate(16vw,-70vh) scale(.9);opacity:0}55%{transform:translate(4vw,6vh) scale(1.02);opacity:1}100%{transform:translate(0,0) scale(1);opacity:1}}
-    @keyframes pcarInL{0%{transform:translate(-16vw,-70vh) scale(.9);opacity:0}55%{transform:translate(-4vw,6vh) scale(1.02);opacity:1}100%{transform:translate(0,0) scale(1);opacity:1}}
-    @keyframes pcarInB{0%{transform:translate(-72vw,0) scale(.94);opacity:0}100%{transform:translate(0,0) scale(1);opacity:1}}
-    @keyframes pcarBallR{0%{transform:translate(-42vw,10vh) scale(.5);opacity:0}30%{transform:translate(-24vw,-8vh) scale(1);opacity:1}55%{transform:translate(-11vw,7vh)}78%{transform:translate(-3vw,-3vh)}100%{transform:translate(0,0);opacity:1}}
-    @keyframes pcarBallL{0%{transform:translate(42vw,10vh) scale(.5);opacity:0}30%{transform:translate(24vw,-8vh) scale(1);opacity:1}55%{transform:translate(11vw,7vh)}78%{transform:translate(3vw,-3vh)}100%{transform:translate(0,0);opacity:1}}
-    @keyframes pcarBallB{0%{transform:translate(0,-42vh) scale(.5);opacity:0}100%{transform:translate(0,0);opacity:1}}
     @media(max-width:760px){
-      .pcar-stage{height:auto;min-height:88vh}
-      .pcar-text{position:static;transform:none;text-align:center!important;left:auto;right:auto;max-width:none;font-size:clamp(24px,7vw,40px);padding-top:48px;opacity:1}
-      .side-right .pcar,.side-left .pcar,.side-bottom .pcar{left:50%;right:auto;top:58%}
       .pcar-card{width:min(74vw,420px)}
-    }
-    @media(prefers-reduced-motion:reduce){
-      .pcar,.pcar-ball,.pcar-text{opacity:1!important;transform:none!important;animation:none!important}
+      .pcar-text{font-size:clamp(24px,7vw,40px)}
+      .side-right .pcar,.side-left .pcar{left:50%;right:auto}
+      .side-right .pcar-text,.side-left .pcar-text{left:50%;right:auto;top:14%;transform:translate(-50%,0);text-align:center;max-width:none}
     }
 
     /* Back-to-top button at the bottom of the work section (light theme) */
@@ -2455,9 +2442,10 @@
     if (!host) return;
     host.innerHTML = '';
     host.classList.add('side-' + opts.side);
-    const dir = opts.side === 'left' ? -1 : 1;
+    const dir = opts.side === 'left' ? -1 : 1;        // +1 fan right, -1 fan left
     const horizontal = opts.side === 'bottom';
 
+    const sticky = document.createElement('div'); sticky.className = 'pcar-sticky';
     const stage = document.createElement('div'); stage.className = 'pcar-stage';
     const text = document.createElement('div'); text.className = 'pcar-text'; text.innerHTML = opts.text;
     const ball = document.createElement('div'); ball.className = 'pcar-ball';
@@ -2468,60 +2456,59 @@
       c.appendChild(im); car.appendChild(c); return c;
     });
     stage.appendChild(text); stage.appendChild(ball); stage.appendChild(car);
-    host.appendChild(stage);
+    sticky.appendChild(stage); host.appendChild(sticky);
 
     const N = cards.length;
+    const SPY = 82, BVX = 12;         // vertical spacing / rightward bulge (side stacks)
+    const SPX = 150, BVY = 8;         // horizontal spacing / downward drop (bottom dome)
+    let STEP = Math.max(80, Math.round(window.innerHeight * 0.16)); // scroll px per card
+    function sizeSection() {
+      STEP = Math.max(80, Math.round(window.innerHeight * 0.16));
+      host.style.height = (window.innerHeight + (N - 1) * STEP) + 'px';
+    }
+    sizeSection();
+
     let cur = 0, target = 0, raf = 0;
     function place() {
-      cur += (target - cur) * 0.14;
-      if (Math.abs(target - cur) < 0.0015) cur = target;
+      cur += (target - cur) * 0.18;
+      if (Math.abs(target - cur) < 0.001) cur = target;
       for (let i = 0; i < N; i++) {
-        const u = i - cur, a = Math.abs(u), sgn = u < 0 ? -1 : 1;
-        let x, y, s, o, z, rot;
-        if (horizontal) {                    // bottom: fan left/right on a gentle up-arc
-          x = sgn * (a * 132 + a * a * 6);
-          y = -(a * a * 4.5);
-          s = 1 - a * 0.05; o = a > 4.6 ? 0 : 1; z = 300 - Math.round(a * 4); rot = sgn * a * 2.4;
-        } else if (u >= 0) {                  // hero + upcoming recede UP, bending toward `dir` (arc)
-          x = dir * (u * u * 7);
-          y = -u * 50;
-          s = 1 - u * 0.05; o = u > 4.6 ? 0 : 1; z = 300 - Math.round(u * 4); rot = dir * u * 2.4;
-        } else {                              // already-seen swipe down and fade out
-          x = dir * (-a * 30);
-          y = a * 110;
-          s = 1 - a * 0.04; o = a > 1.4 ? 0 : 1 - a * 0.7; z = 300 - Math.round(a * 4); rot = dir * (-a * 4);
+        const u = i - cur, a = Math.abs(u);
+        let x, y, rot;
+        if (horizontal) {                 // dome bulging up: hero at the top peak
+          x = u * SPX;
+          y = a * a * BVY;
+          rot = (u < 0 ? -1 : 1) * a * 1.4;
+        } else {                          // vertical arc: hero leftmost-middle, cards fan toward dir
+          x = dir * (a * a * BVX);
+          y = -u * SPY;
+          rot = dir * u * 1.2;
         }
+        const s = 1 - a * 0.055;
+        const o = Math.max(0, Math.min(1, (5.4 - a) / 1.4));
         const c = cards[i];
         c.style.opacity = o;
-        c.style.zIndex = z;
+        c.style.zIndex = 300 - Math.round(a * 4);
         c.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotate(' + rot.toFixed(2) + 'deg)';
       }
       raf = (cur !== target) ? requestAnimationFrame(place) : 0;
     }
-    function kick() { if (!raf) raf = requestAnimationFrame(place); }
-    function go(delta) { target = Math.max(0, Math.min(N - 1, target + delta)); kick(); }
     place();
 
-    // hover-gated wheel; auto-releases to page scroll at the ends
-    car.addEventListener('wheel', function (e) {
-      const down = e.deltaY > 0;
-      if ((down && target >= N - 1) || (!down && target <= 0)) return;
-      e.preventDefault();
-      go(down ? 1 : -1);
-    }, { passive: false });
-    let s0 = null;
-    car.addEventListener('touchstart', function (e) { s0 = horizontal ? e.touches[0].clientX : e.touches[0].clientY; }, { passive: true });
-    car.addEventListener('touchmove', function (e) {
-      if (s0 == null) return;
-      const pp = horizontal ? e.touches[0].clientX : e.touches[0].clientY;
-      if (Math.abs(pp - s0) > 44) { go(pp < s0 ? 1 : -1); s0 = pp; }
-    }, { passive: true });
-    car.addEventListener('touchend', function () { s0 = null; });
+    // Scroll-driven: the section pins (sticky) and the scroll position maps to the
+    // hero index; when it reaches the last card the section releases to the next.
+    function onScroll() {
+      const top = host.getBoundingClientRect().top;
+      target = Math.max(0, Math.min(N - 1, -top / STEP));
+      if (!raf) raf = requestAnimationFrame(place);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () { sizeSection(); onScroll(); });
+    onScroll();
 
-    const io = new IntersectionObserver(function (es) {
-      es.forEach(function (x) { if (x.isIntersecting) { host.classList.add('pcar-in'); io.disconnect(); } });
-    }, { threshold: 0.3 });
-    io.observe(host);
+    new IntersectionObserver(function (es) {
+      es.forEach(function (x) { if (x.isIntersecting) host.classList.add('pcar-in'); });
+    }, { threshold: 0.02 }).observe(sticky);
   }
 
   function buildMofidPanel() {
