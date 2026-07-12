@@ -1154,18 +1154,17 @@
     .pcar-text{position:absolute;top:50%;transform:translateY(-50%);z-index:6;white-space:nowrap;
       font-family:var(--font-display);font-weight:800;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
     .pcar-text em{font-style:normal;color:#0d1fd4}
-    .pcar-balls{position:absolute;inset:0;z-index:9;pointer-events:none}   /* matte-blue floating balls, pushed by the cards */
-    .pcar{position:absolute;top:50%;left:50%;width:0;height:0}
+    .pcar{position:absolute;top:50%;left:50%;width:0;height:0;perspective:1700px}   /* perspective → cards can turn in 3D */
     .pcar-card{position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;border-radius:5px;overflow:hidden;
       background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;transform:translate(-50%,-50%)}
     .pcar-card img{width:100%;height:100%;object-fit:cover;display:block}
 
     /* right-side (#1): pushed to the right, nudged down; cards fan up/down-right */
-    .side-right .pcar{left:60%;top:63%}
-    .side-right .pcar-text{left:9%;text-align:left}
+    .side-right .pcar{left:56%;top:52%}
+    .side-right .pcar-text{left:12%;top:22%;transform:none;text-align:left}
     /* left-side (#2): mirror, pushed left */
-    .side-left .pcar{left:40%;top:63%}
-    .side-left .pcar-text{right:9%;text-align:right}
+    .side-left .pcar{left:44%;top:52%}
+    .side-left .pcar-text{right:12%;top:22%;transform:none;text-align:right}
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
     .side-bottom .pcar{left:50%;top:53%}
     .side-bottom .pcar-text{left:50%;top:10%;transform:translate(-50%,0);text-align:center}
@@ -2439,8 +2438,7 @@
     host.innerHTML = '';
     const sticky = document.createElement('div'); sticky.className = 'pcar-sticky';
     const track = document.createElement('div'); track.className = 'pcar-track';
-    const ballsCv = document.createElement('canvas'); ballsCv.className = 'pcar-balls';
-    sticky.appendChild(track); sticky.appendChild(ballsCv); host.appendChild(sticky);
+    sticky.appendChild(track); host.appendChild(sticky);
 
     const cars = configs.map(function (cfg, k) {
       const stage = document.createElement('div'); stage.className = 'pcar-stage side-' + cfg.side;
@@ -2462,13 +2460,13 @@
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, STEP, CYCLE, SHIFT, PERIOD;
+    let vhPx, SDX, SYA, SPX, BVY, PULLX, PULLY, STEP, CYCLE, SHIFT, PERIOD;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
-      SPY = Math.round(vh * 0.128); BVX = Math.round(vw * 0.026);   // side: less vertical stack (clears the top), more sideways bend
+      SDX = Math.round(vw * 0.034); SYA = Math.round(vh * 0.30);    // side S-curve: horizontal drift per card / vertical amplitude
       SPX = Math.round(vw * 0.088); BVY = Math.round(vh * 0.011);   // dome: spacing / bend (curve softened ~45%)
-      PULLX = Math.round(vw * 0.055); PULLY = Math.round(vh * 0.075);  // how far the hero pops out, away from the arc
+      PULLX = Math.round(vw * 0.05); PULLY = Math.round(vh * 0.075);  // how far the hero pops out, away from the arc
       STEP = Math.max(90, Math.round(vh * 0.21));   // more scroll per card → smoother, no snap
       CYCLE = (N - 1) * STEP;     // scroll to cycle one carousel's hero end-to-end
       SHIFT = Math.round(vh * 1.3);   // longer slide → the next carousel sits further down
@@ -2495,17 +2493,20 @@
           x = u * SPX;
           y = a * a * BVY - PULLY * pop;   // pull the hero further UP, away from the dome
           rot = (u < 0 ? -1 : 1) * a * 1.2;
-        } else {                          // vertical arc: hero leftmost-middle, cards fan toward dir
-          x = c.dir * (a * a * BVX) - c.dir * PULLX * pop;   // pull the hero away from the arc (out to the free side)
-          y = -u * SPY;
-          rot = c.dir * u * 1.2;
+        } else {                          // S-curve: cards travel lower-left → upper-right (mirror for #2)
+          x = c.dir * (u * SDX) - c.dir * PULLX * pop;    // horizontal drift + hero pop out to the free side
+          y = -SYA * Math.tanh(u / 3.4);                  // sigmoid rise: steep past the hero, flattening at the ends
+          rot = c.dir * u * 0.5;
         }
+        // Subtle 3D: cards turn on their Y axis as they travel out toward the edges,
+        // revealing a little depth (perspective comes from .pcar). Hero stays flat.
+        const ry = Math.max(-17, Math.min(17, -c.dir * u * 3.0));
         const s = 0.84 + 0.22 * Math.exp(-a * a * 0.7);   // hero clearly LARGER, grows in gradually (no snap)
         const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));   // fade cards out sooner → none stacked over the top edge
         const card = c.cards[i];
         card.style.opacity = o;
         card.style.zIndex = 300 - Math.round(a * 6);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotate(' + rot.toFixed(2) + 'deg)';
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ry.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
       }
     }
 
@@ -2554,76 +2555,11 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', function () { dims(); onScroll(); cars.forEach(placeCar); });
 
-    // ── Matte-blue balls: a calm field of spheres already floating in the air
-    //    (no fly-in). They drift slowly and the cards shove them aside on contact.
-    const bctx = ballsCv.getContext('2d');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let BW = 0, BH = 0, balls = [], ballRaf = 0, ballsInit = false;
-    function sizeBalls() {
-      BW = window.innerWidth; BH = window.innerHeight;
-      ballsCv.width = BW * dpr; ballsCv.height = BH * dpr; bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    function initBalls() {
-      sizeBalls();
-      const NB = 12;      // a light scatter (~4 per carousel)
-      const rBase = Math.min(BW, BH);
-      balls = [];
-      for (let i = 0; i < NB; i++) {
-        balls.push({ x: Math.random() * BW, y: Math.random() * BH,
-          vx: (Math.random() - 0.5) * 0.28, vy: (Math.random() - 0.5) * 0.28,
-          r: rBase * (0.014 + Math.random() * 0.02) });
-      }
-      ballsInit = true;
-    }
-    function ballFrame() {
-      ballRaf = requestAnimationFrame(ballFrame);
-      bctx.clearRect(0, 0, BW, BH);
-      // colliders = the prominent (near-hero) cards currently on screen
-      const rects = [];
-      for (let k = 0; k < M; k++) for (let i = 0; i < N; i++) {
-        const card = cars[k].cards[i];
-        if ((+card.style.opacity) < 0.72) continue;
-        const rr = card.getBoundingClientRect();
-        if (rr.bottom < -40 || rr.top > BH + 40) continue;
-        rects.push(rr);
-      }
-      for (const b of balls) {
-        b.x += b.vx; b.y += b.vy;
-        b.vx *= 0.992; b.vy *= 0.992;
-        // idle wander so they never fully stop
-        b.vx += (Math.random() - 0.5) * 0.02; b.vy += (Math.random() - 0.5) * 0.02;
-        // soft bounds
-        if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); }
-        if (b.x > BW - b.r) { b.x = BW - b.r; b.vx = -Math.abs(b.vx); }
-        if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); }
-        if (b.y > BH - b.r) { b.y = BH - b.r; b.vy = -Math.abs(b.vy); }
-        // cards shove the ball out of their box (nearest edge)
-        for (const rr of rects) {
-          if (b.x > rr.left - b.r && b.x < rr.right + b.r && b.y > rr.top - b.r && b.y < rr.bottom + b.r) {
-            const dl = b.x - (rr.left - b.r), dr = (rr.right + b.r) - b.x;
-            const dt = b.y - (rr.top - b.r), db = (rr.bottom + b.r) - b.y;
-            const m = Math.min(dl, dr, dt, db);
-            if (m === dl) { b.x = rr.left - b.r; b.vx = -Math.abs(b.vx) - 0.4; }
-            else if (m === dr) { b.x = rr.right + b.r; b.vx = Math.abs(b.vx) + 0.4; }
-            else if (m === dt) { b.y = rr.top - b.r; b.vy = -Math.abs(b.vy) - 0.4; }
-            else { b.y = rr.bottom + b.r; b.vy = Math.abs(b.vy) + 0.4; }
-          }
-        }
-        const g = bctx.createRadialGradient(b.x - b.r * 0.32, b.y - b.r * 0.4, b.r * 0.2, b.x, b.y, b.r);
-        g.addColorStop(0, '#4a5fd0'); g.addColorStop(0.5, '#2b3a9e'); g.addColorStop(1, '#1a2568');  // matte blue
-        bctx.fillStyle = g; bctx.beginPath(); bctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); bctx.fill();
-      }
-    }
-    window.addEventListener('resize', function () { if (ballsInit) sizeBalls(); });
-
     // Hold everything until the canvas is first reached, so carousel #1 actually
     // swipes in (from -ENTRANCE) when the user gets here — not silently on load.
     new IntersectionObserver(function (es) {
       es.forEach(function (x) {
-        if (x.isIntersecting) {
-          if (!started) { started = true; cars.forEach(placeCar); onScroll(); }
-          if (!ballRaf) { if (!ballsInit) initBalls(); ballFrame(); }
-        } else if (ballRaf) { cancelAnimationFrame(ballRaf); ballRaf = 0; }
+        if (x.isIntersecting && !started) { started = true; cars.forEach(placeCar); onScroll(); }
       });
     }, { threshold: 0 }).observe(sticky);
   }
