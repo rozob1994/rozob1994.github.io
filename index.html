@@ -1150,29 +1150,37 @@
     .pcar-all{position:relative;width:100vw;margin-left:calc(50% - 50vw)}  /* full-bleed past #work padding; height set by JS */
     .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
     .pcar-track{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
-    .pcar-stage{position:absolute;left:0;width:100%;height:100vh}     /* top set by JS (k * 100vh) */
+    .pcar-stage{position:absolute;left:0;width:100%;height:100vh;overflow:hidden}   /* top set by JS; clip so neighbours don't bleed in */
     .pcar-text{position:absolute;top:50%;transform:translateY(-50%);z-index:6;white-space:nowrap;
       font-family:var(--font-display);font-weight:800;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar{position:absolute;top:50%;left:50%;width:0;height:0;perspective:1700px}   /* perspective → cards can turn in 3D */
-    .pcar-card{position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;
-      background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;
+    /* Cards are real 3D slabs: a front face (the image), a back panel, and four
+       translucent glass side walls extruded back by --t. As a card turns on its Y
+       axis the glass edge catches the light — genuine depth from any angle. */
+    .pcar-card{--t:24px;position:absolute;top:0;left:0;width:min(40vw,54vh);aspect-ratio:4/3;
+      box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;
       transform:translate(-50%,-50%);transform-style:preserve-3d}
-    .pcar-card img{width:100%;height:100%;object-fit:cover;display:block;border-radius:5px;position:relative;z-index:1}
-    /* Extruded thickness: a back panel sitting behind the face; when a card turns
-       (rotateY) this offset slab shows as the card's visible edge/depth. */
-    .pcar-card::after{content:'';position:absolute;inset:0;border-radius:5px;background:#0f1220;
-      transform:translateZ(-22px);box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+    .pcar-face{position:absolute;inset:0;border-radius:4px;overflow:hidden;background:var(--surface);backface-visibility:hidden}
+    .pcar-face img{width:100%;height:100%;object-fit:cover;display:block}
+    .pcar-back{position:absolute;inset:0;border-radius:4px;background:#0e1120;transform:translateZ(calc(-1 * var(--t)))}
+    .pcar-edge{position:absolute;
+      background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(206,222,255,.5) 45%,rgba(150,176,230,.42));
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+    .pe-r{top:0;right:0;height:100%;width:var(--t);transform-origin:right center;transform:rotateY(90deg)}
+    .pe-l{top:0;left:0;height:100%;width:var(--t);transform-origin:left center;transform:rotateY(-90deg)}
+    .pe-t{top:0;left:0;width:100%;height:var(--t);transform-origin:center top;transform:rotateX(-90deg)}
+    .pe-b{bottom:0;left:0;width:100%;height:var(--t);transform-origin:center bottom;transform:rotateX(90deg)}
 
     /* right-side (#1): pushed to the right, nudged down; cards fan up/down-right */
     .side-right .pcar{left:60%;top:63%}
-    .side-right .pcar-text{left:9%;text-align:left}
+    .side-right .pcar-text{left:21%;top:56%;text-align:left}
     /* left-side (#2): mirror, pushed left */
     .side-left .pcar{left:40%;top:63%}
-    .side-left .pcar-text{right:9%;text-align:right}
+    .side-left .pcar-text{right:21%;top:56%;text-align:right}
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
-    .side-bottom .pcar{left:50%;top:53%}
-    .side-bottom .pcar-text{left:50%;top:10%;transform:translate(-50%,0);text-align:center}
+    .side-bottom .pcar{left:50%;top:63%}
+    .side-bottom .pcar-text{left:50%;top:22%;transform:translate(-50%,0);text-align:center}
 
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
@@ -2451,9 +2459,14 @@
       const car = document.createElement('div'); car.className = 'pcar';
       const cards = cfg.imgs.map(function (src, i) {
         const c = document.createElement('div'); c.className = 'pcar-card';
-        c.style.setProperty('--frame', i % 2 ? '#f5d94e' : '#0d1fd4');   // hero frame: alternating yellow / blue
-        const im = new Image(); im.loading = 'lazy'; im.alt = '3D design'; im.src = src;
-        c.appendChild(im); car.appendChild(c); return c;
+        const face = document.createElement('div'); face.className = 'pcar-face';
+        const im = new Image(); im.loading = 'lazy'; im.alt = '3D design'; im.src = src; face.appendChild(im);
+        const back = document.createElement('div'); back.className = 'pcar-back';
+        c.appendChild(back);
+        ['pe-l', 'pe-r', 'pe-t', 'pe-b'].forEach(function (cls) {
+          const e = document.createElement('div'); e.className = 'pcar-edge ' + cls; c.appendChild(e);
+        });
+        c.appendChild(face); car.appendChild(c); return c;
       });
       stage.appendChild(text); stage.appendChild(car);
       track.appendChild(stage);
