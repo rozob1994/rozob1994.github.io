@@ -1142,39 +1142,35 @@
     .still-grid .sg{overflow:hidden;background:var(--surface)}
     .still-grid .sg img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 
-    /* ── Portfolio carousels (3D Designs) — scroll-driven hero-stack fanned on an
-       arc. Each section is tall and pins; scrolling cycles the cards, then
-       releases to the next. Right / left (mirror) / bottom (horizontal) ── */
-    .pcar-section{position:relative}                 /* height set by JS for the scroll-through */
-    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center}
-    .pcar-stage{position:relative;width:100%;max-width:1840px;height:100%;margin:0 auto}
-    /* Entrance: each piece eases in (standard ease) when the section is reached,
-       then plain scrolling rolls the stack. */
+    /* ── Portfolio carousels (3D Designs) — one single pinned canvas holding all
+       three hero-stacks (right / left-mirror / bottom-dome). The parent is tall;
+       one sticky layer pins for the whole run. Scrolling swipes each carousel in
+       along its arc, cycles the hero, then cross-fades to the next stage. ── */
+    .pcar-all{position:relative}                      /* height set by JS for the full scroll-through */
+    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
+    .pcar-stage{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .55s var(--ease);will-change:opacity}
+    .pcar-stage.on{opacity:1;pointer-events:auto}
     .pcar-text{position:absolute;top:50%;transform:translateY(-50%);z-index:6;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4vw,64px);line-height:1.02;letter-spacing:-.02em;color:#15161d;max-width:8ch;
-      opacity:0;transition:opacity .9s var(--ease) .12s}
-    .pcar-in .pcar-text{opacity:1}
+      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,4vw,64px);line-height:1.02;letter-spacing:-.02em;color:#15161d;max-width:8ch}
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar-ball{position:absolute;top:50%;z-index:7;width:clamp(28px,2.4vw,42px);height:clamp(28px,2.4vw,42px);border-radius:50%;
       background:radial-gradient(circle at 64% 32%, #fdeea0, #f5d94e 40%, #ddc043 68%, #b89f38);
-      box-shadow:0 10px 26px -8px rgba(0,0,0,.35);opacity:0;transition:opacity .8s var(--ease) .3s}
-    .pcar-in .pcar-ball{opacity:1}
-    .pcar{position:absolute;top:50%;width:0;height:0;opacity:0;transition:opacity 1s var(--ease),transform 1s var(--ease)}
-    .pcar-in .pcar{opacity:1;transform:none!important}
+      box-shadow:0 10px 26px -8px rgba(0,0,0,.35)}
+    .pcar{position:absolute;top:50%;left:50%;width:0;height:0}
     .pcar-card{position:absolute;top:0;left:0;width:min(42vw,58vh);aspect-ratio:4/3;border-radius:10px;overflow:hidden;
       background:var(--surface);box-shadow:0 46px 90px -32px rgba(0,0,0,.5);will-change:transform,opacity;transform:translate(-50%,-50%)}
     .pcar-card img{width:100%;height:100%;object-fit:cover;display:block}
 
     /* right-side (#1): pushed to the right, nudged down; cards fan up/down-right */
-    .side-right .pcar{left:60%;top:55%;transform:translate(70px,44px)}
+    .side-right .pcar{left:60%;top:55%}
     .side-right .pcar-text{left:3%;text-align:left}
     .side-right .pcar-ball{left:calc(60% - min(21vw,290px) - 30px)}
     /* left-side (#2): mirror, pushed left */
-    .side-left .pcar{left:40%;top:55%;transform:translate(-70px,44px)}
+    .side-left .pcar{left:40%;top:55%}
     .side-left .pcar-text{right:3%;text-align:right}
     .side-left .pcar-ball{left:calc(40% + min(21vw,290px) + 4px)}
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
-    .side-bottom .pcar{left:50%;top:46%;transform:translateY(60px)}
+    .side-bottom .pcar{left:50%;top:46%}
     .side-bottom .pcar-text{left:50%;top:13%;transform:translate(-50%,0);text-align:center;max-width:none}
     .side-bottom .pcar-ball{left:calc(50% - 19px);top:calc(46% - 19px)}
 
@@ -1274,9 +1270,7 @@
     </div>
     <div class="rest-block" id="mofid3dBlock">
       <div class="rest-label">3D Designs</div>
-      <div class="pcar-section" id="pcar1"></div>
-      <div class="pcar-section" id="pcar2"></div>
-      <div class="pcar-section" id="pcar3"></div>
+      <div class="pcar-all" id="pcarAll"></div>
     </div>
   </div><!-- end mofidPanel -->
   <!-- ═══ PERSONAL PANEL ═══ -->
@@ -2438,85 +2432,116 @@
     return a;
   }
 
-  // ── Portfolio carousel: a hero-stack of stills. The front (hero) card is
-  //    always on top; scrolling while hovering the stack swaps the hero (next
-  //    rises from below, the old hero recedes up-and-behind). Off the stack,
-  //    the wheel scrolls the page. Touch: vertical swipe cycles.
-  function buildCarousel(host, imgs, opts) {
+  // ── Portfolio carousels: ONE pinned canvas holds all three hero-stacks. A
+  //    single sticky layer pins for the whole run; scrolling drives which
+  //    carousel is active and its hero index. Each carousel first SWIPES IN
+  //    along its arc (cur eases from -ENTRANCE to 0) the first time you descend
+  //    into it, then further scrolling rolls the hero. Only the active stage is
+  //    shown; stages cross-fade so there are no section boundaries / cutoffs.
+  const ENTRANCE = 6;      // how many "cards" back the stack starts, for the swipe-in
+  const EASE = 0.09;       // easing toward target — the "standard ease"
+  function buildCarousels(host, configs) {
     if (!host) return;
     host.innerHTML = '';
-    host.classList.add('side-' + opts.side);
-    const dir = opts.side === 'left' ? -1 : 1;        // +1 fan right, -1 fan left
-    const horizontal = opts.side === 'bottom';
-
     const sticky = document.createElement('div'); sticky.className = 'pcar-sticky';
-    const stage = document.createElement('div'); stage.className = 'pcar-stage';
-    const text = document.createElement('div'); text.className = 'pcar-text'; text.innerHTML = opts.text;
-    const ball = document.createElement('div'); ball.className = 'pcar-ball';
-    const car = document.createElement('div'); car.className = 'pcar';
-    const cards = imgs.map(function (src, i) {
-      const c = document.createElement('div'); c.className = 'pcar-card';
-      const im = new Image(); im.loading = 'lazy'; im.alt = '3D design ' + (i + 1); im.src = src;
-      c.appendChild(im); car.appendChild(c); return c;
-    });
-    stage.appendChild(text); stage.appendChild(ball); stage.appendChild(car);
-    sticky.appendChild(stage); host.appendChild(sticky);
+    host.appendChild(sticky);
 
-    const N = cards.length;
-    let SPY, BVX, SPX, BVY, STEP;     // spacing/bulge (side) · spacing/drop (dome) · scroll-per-card
+    const cars = configs.map(function (cfg) {
+      const stage = document.createElement('div'); stage.className = 'pcar-stage side-' + cfg.side;
+      const text = document.createElement('div'); text.className = 'pcar-text'; text.innerHTML = cfg.text;
+      const ball = document.createElement('div'); ball.className = 'pcar-ball';
+      const car = document.createElement('div'); car.className = 'pcar';
+      const cards = cfg.imgs.map(function (src, i) {
+        const c = document.createElement('div'); c.className = 'pcar-card';
+        const im = new Image(); im.loading = 'lazy'; im.alt = '3D design'; im.src = src;
+        c.appendChild(im); car.appendChild(c); return c;
+      });
+      stage.appendChild(text); stage.appendChild(ball); stage.appendChild(car);
+      sticky.appendChild(stage);
+      return {
+        side: cfg.side, dir: cfg.side === 'left' ? -1 : 1, horizontal: cfg.side === 'bottom',
+        stage: stage, cards: cards, cur: -ENTRANCE, target: 0
+      };
+    });
+
+    const N = cars[0].cards.length;
+    const M = cars.length;
+    let SPY, BVX, SPX, BVY, STEP, SEG;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
-      SPY = Math.round(vh * 0.13); BVX = Math.round(vw * 0.013);   // more spread / more bend
-      SPX = Math.round(vw * 0.078); BVY = Math.round(vh * 0.016);
+      SPY = Math.round(vh * 0.155); BVX = Math.round(vw * 0.020);   // side: spacing / bend (bent more)
+      SPX = Math.round(vw * 0.088); BVY = Math.round(vh * 0.020);   // dome: spacing / bend
       STEP = Math.max(80, Math.round(vh * 0.16));
-      host.style.height = (vh + (N - 1) * STEP) + 'px';
+      SEG = (N - 1) * STEP;                       // scroll distance to cycle one carousel
+      host.style.height = (vh + M * SEG) + 'px';
     }
     dims();
 
-    let cur = 0, target = 0, raf = 0;
-    function place() {
-      cur += (target - cur) * 0.11;
-      if (Math.abs(target - cur) < 0.001) cur = target;
+    function placeCar(c) {
       for (let i = 0; i < N; i++) {
-        const u = i - cur, a = Math.abs(u);
+        const u = i - c.cur, a = Math.abs(u);
         let x, y, rot;
-        if (horizontal) {                 // dome bulging up: hero at the top peak
+        if (c.horizontal) {               // dome bulging up: hero at the top peak
           x = u * SPX;
           y = a * a * BVY;
           rot = (u < 0 ? -1 : 1) * a * 1.4;
         } else {                          // vertical arc: hero leftmost-middle, cards fan toward dir
-          x = dir * (a * a * BVX);
+          x = c.dir * (a * a * BVX);
           y = -u * SPY;
-          rot = dir * u * 1.2;
+          rot = c.dir * u * 1.2;
         }
-        const s = 1 - a * 0.055;
-        const o = Math.max(0, Math.min(1, (5.4 - a) / 1.4));
-        const c = cards[i];
-        c.style.opacity = o;
-        c.style.zIndex = 300 - Math.round(a * 4);
-        c.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotate(' + rot.toFixed(2) + 'deg)';
+        const s = 1 - a * 0.085;          // hero dominant, neighbours drop off faster
+        const o = Math.max(0, Math.min(1, (5.2 - a) / 1.3));
+        const card = c.cards[i];
+        card.style.opacity = o;
+        card.style.zIndex = 300 - Math.round(a * 6);
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotate(' + rot.toFixed(2) + 'deg)';
       }
-      raf = (cur !== target) ? requestAnimationFrame(place) : 0;
     }
-    place();
 
-    // Scroll-driven: the section pins (sticky) and the scroll position maps to the
-    // hero index; when it reaches the last card the section releases to the next.
+    let activeK = -1, started = false, raf = 0;
+    function tick() {
+      raf = 0;
+      let moving = false;
+      for (let k = 0; k < M; k++) {
+        const c = cars[k];
+        if (k !== activeK) continue;               // only the active carousel animates
+        c.cur += (c.target - c.cur) * EASE;
+        if (Math.abs(c.target - c.cur) < 0.001) c.cur = c.target; else moving = true;
+        placeCar(c);
+      }
+      if (moving) raf = requestAnimationFrame(tick);
+    }
+    function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+
+    function activate(k, lp, descending) {
+      if (k === activeK) return;
+      for (let j = 0; j < M; j++) cars[j].stage.classList.toggle('on', j === k);
+      const c = cars[k];
+      c.cur = descending ? -ENTRANCE : Math.max(0, Math.min(N - 1, lp));  // swipe in only when descending
+      placeCar(c);
+      activeK = k;
+    }
+
     function onScroll() {
-      const rect = host.getBoundingClientRect();
-      const vh = window.innerHeight;
-      target = Math.max(0, Math.min(N - 1, -rect.top / STEP));
-      // crossfade the boundary: fade the stack out as the section releases upward
-      sticky.style.opacity = rect.bottom < vh ? Math.max(0, Math.min(1, rect.bottom / (vh * 0.55))) : 1;
-      if (!raf) raf = requestAnimationFrame(place);
+      if (!started) return;
+      const g = -host.getBoundingClientRect().top;                       // scroll depth into the canvas
+      const k = Math.max(0, Math.min(M - 1, Math.floor(g / SEG)));
+      const lp = Math.max(0, Math.min(N - 1, (g - k * SEG) / STEP));
+      if (k !== activeK) activate(k, lp, k > activeK);
+      cars[k].target = lp;
+      kick();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', function () { dims(); onScroll(); });
-    onScroll();
+    window.addEventListener('resize', function () { dims(); if (activeK >= 0) placeCar(cars[activeK]); onScroll(); });
 
+    // Hold every carousel off-screen until the canvas is first reached, so the
+    // swipe-in actually plays when the user gets here (not silently on load).
     new IntersectionObserver(function (es) {
-      es.forEach(function (x) { if (x.isIntersecting) host.classList.add('pcar-in'); });
-    }, { threshold: 0.02 }).observe(sticky);
+      es.forEach(function (x) {
+        if (x.isIntersecting && !started) { started = true; activate(0, 0, true); kick(); onScroll(); }
+      });
+    }, { threshold: 0 }).observe(sticky);
   }
 
   function buildMofidPanel() {
@@ -2524,7 +2549,6 @@
     mofidPanelBuilt = true;
     const featWrap = document.getElementById('mofidFeatured');
     const grid = document.getElementById('mofidGrid');
-    const gallery = document.getElementById('pcar1');
     if (!featWrap || !grid) return;
 
     const labelByKey = {};
@@ -2561,9 +2585,11 @@
       );
     }));
 
-    buildCarousel(document.getElementById('pcar1'), galleryImgs(1, 16),  { side: 'right',  text: 'be&nbsp;<em>bold</em>' });
-    buildCarousel(document.getElementById('pcar2'), galleryImgs(17, 16), { side: 'left',   text: 'tell your&nbsp;<em>story</em>' });
-    buildCarousel(document.getElementById('pcar3'), galleryImgs(33, 16), { side: 'bottom', text: 'make your brand&nbsp;<em>Resonate</em>' });
+    buildCarousels(document.getElementById('pcarAll'), [
+      { side: 'right',  text: 'be&nbsp;<em>bold</em>',                   imgs: galleryImgs(1, 16)  },
+      { side: 'left',   text: 'tell your&nbsp;<em>story</em>',          imgs: galleryImgs(17, 16) },
+      { side: 'bottom', text: 'make your brand&nbsp;<em>Resonate</em>', imgs: galleryImgs(33, 16) }
+    ]);
 
     const rev = makeRevealObserver();
     featWrap.querySelectorAll('.wreveal').forEach(function(el) { rev.observe(el); });
