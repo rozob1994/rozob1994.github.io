@@ -366,7 +366,28 @@
     .stat{display:none}
 
     #services{padding:120px 56px;background:transparent;position:relative}
-    .services-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+    /* ── Services: clickable list + a slideshow, on one frosted-glass card. The
+       loose balls + pulse rings drift behind it and are blurred by the backdrop. ── */
+    .svc-panel{position:relative;z-index:1;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;
+      -webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1)}
+    .svc-list{list-style:none;margin:0;padding:clamp(24px,3vw,52px)}
+    .svc-item{border-bottom:1px solid rgba(255,255,255,0.1);padding:clamp(13px,1.6vw,24px) 0}
+    .svc-item:last-child{border-bottom:none}
+    .svc-name{display:block;width:100%;text-align:left;background:none;border:none;cursor:none;padding:0;
+      font-family:var(--font-display);font-weight:800;font-size:clamp(21px,2.5vw,38px);line-height:1.05;letter-spacing:-.01em;
+      color:rgba(255,255,255,0.4);transition:color .35s var(--ease)}
+    .svc-item:hover .svc-name{color:rgba(255,255,255,0.72)}
+    .svc-item.active .svc-name,.svc-item.active:hover .svc-name{color:#f5d94e}
+    .svc-sub{margin:0;max-height:0;overflow:hidden;opacity:0;font-size:clamp(13px,1vw,15px);line-height:1.6;
+      color:rgba(255,255,255,0.62);transition:max-height .5s var(--ease),opacity .4s var(--ease),margin-top .5s var(--ease)}
+    .svc-item.active .svc-sub{max-height:240px;opacity:1;margin-top:12px}
+    .svc-media{position:relative;overflow:hidden;background:rgba(3,6,26,0.35);min-height:clamp(320px,44vh,560px)}
+    .svc-slide{position:absolute;inset:0;opacity:0;transition:opacity .6s var(--ease);pointer-events:none}
+    .svc-slide.on{opacity:1}
+    .svc-slide img,.svc-slide video{width:100%;height:100%;object-fit:cover;display:block}
+    .svc-media-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.35)}
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
     .service-card{background:rgba(255,255,255,0.06);padding:48px 32px;border:1px solid rgba(255,255,255,0.1);position:relative;overflow:hidden;transition:background 0.5s var(--ease),border-color 0.5s var(--ease),transform 0.5s var(--ease),box-shadow 0.5s var(--ease),filter 0.5s var(--ease),opacity 0.5s var(--ease)}
@@ -468,7 +489,9 @@
 
       /* Services */
       #services{padding-left:28px;padding-right:28px}
-      .services-grid{grid-template-columns:1fr 1fr}
+      .svc-panel{grid-template-columns:1fr}
+      .svc-media{min-height:clamp(220px,40vh,360px);order:2}
+      .svc-list{order:1}
 
       /* Contact */
       #contact-wrapper{min-height:112vh}            /* shorter so the iris reveal completes sooner */
@@ -1385,13 +1408,27 @@
 </section>
 
 <section id="services">
-  <div id="serviceImageOverlay" aria-hidden="true"><img id="serviceOverlayImg" src="" alt="" /></div>
   <h2 class="section-title">Services<span class="round-dot"></span></h2>
-  <div class="services-grid">
-    <div class="service-card reveal"><div class="service-num-bg">01</div><div class="service-title">Product Visualization</div><div class="service-desc">High-fidelity 3D renders that make your product the hero — packshots, lifestyle scenes, and hero shots built for e-commerce, advertising, and brand campaigns.</div></div>
-    <div class="service-card reveal"><div class="service-num-bg">02</div><div class="service-title">3D Motion Design</div><div class="service-desc">Product-focused 3D animation that brings objects to life — launch videos, social content, and dynamic brand moments with physicality and depth.</div></div>
-    <div class="service-card reveal"><div class="service-num-bg">03</div><div class="service-title">2D Motion Design</div><div class="service-desc">Clean, modern 2D animation for explainers, brand stories, and social media — motion that communicates quickly and stays visually memorable.</div></div>
-    <div class="service-card reveal"><div class="service-num-bg">04</div><div class="service-title">Logo Animation</div><div class="service-desc">Bringing brand marks to life with purposeful motion — intro sequences, stingers, and looping animations that give your identity a distinctive on-screen presence.</div></div>
+  <div class="svc-panel" id="svcPanel">
+    <ul class="svc-list" id="svcList" role="tablist" aria-label="Services">
+      <li class="svc-item" data-svc="product-viz">
+        <button class="svc-name" role="tab">Product Visualization</button>
+        <p class="svc-sub">High-fidelity 3D renders that make your product the hero — packshots, lifestyle scenes, and hero shots built for e-commerce, advertising, and brand campaigns.</p>
+      </li>
+      <li class="svc-item" data-svc="3d-motion">
+        <button class="svc-name" role="tab">3D Motion Design</button>
+        <p class="svc-sub">Product-focused 3D animation that brings objects to life — launch videos, social content, and dynamic brand moments with physicality and depth.</p>
+      </li>
+      <li class="svc-item" data-svc="2d-motion">
+        <button class="svc-name" role="tab">2D Motion Design</button>
+        <p class="svc-sub">Clean, modern 2D animation for explainers, brand stories, and social media — motion that communicates quickly and stays visually memorable.</p>
+      </li>
+      <li class="svc-item" data-svc="logo-animation">
+        <button class="svc-name" role="tab">Logo Animation</button>
+        <p class="svc-sub">Bringing brand marks to life with purposeful motion — intro sequences, stingers, and looping animations that give your identity a distinctive on-screen presence.</p>
+      </li>
+    </ul>
+    <div class="svc-media" id="svcMedia" aria-live="polite"></div>
   </div>
 </section>
 </div><!-- end echoField -->
@@ -4154,7 +4191,78 @@
 })();
 </script>
 
+<!-- Services: click a service → highlight + reveal its subtext, and play its media
+     slideshow on the right. Images cross-fade; motion services play their reel clips
+     back-to-back. MEDIA is placeholder for now — swap in the real per-service lists. -->
+<script>
+(function initServices() {
+  var list = document.getElementById('svcList');
+  var mediaEl = document.getElementById('svcMedia');
+  var section = document.getElementById('services');
+  if (!list || !mediaEl) return;
 
+  // Placeholder media (3D-designs stills). Replace per service; use {type:'video', src}
+  // for reel clips (each ~4–5s) — they'll play one after another and loop.
+  var g = function (n) { return 'media/mofid/3d-designs/' + ('0' + n).slice(-2) + '.jpg'; };
+  var IMG = function (arr) { return arr.map(function (n) { return { type: 'image', src: g(n) }; }); };
+  var MEDIA = {
+    'product-viz':    IMG([1, 2, 3, 4, 5, 6]),
+    '3d-motion':      IMG([7, 8, 9, 10, 11]),
+    '2d-motion':      IMG([12, 13, 14, 15, 16]),
+    'logo-animation': IMG([17, 18, 19, 20])
+  };
+
+  var slides = [], curIdx = 0, timer = 0, token = 0, visible = true;
+  function clear() {
+    clearTimeout(timer);
+    slides.forEach(function (s) { var v = s.querySelector('video'); if (v) { v.pause(); v.onended = null; } });
+    slides = []; mediaEl.innerHTML = '';
+  }
+  function show(key) {
+    clear();
+    var items = MEDIA[key]; var my = ++token;
+    if (!items || !items.length) {
+      var e = document.createElement('div'); e.className = 'svc-media-empty'; e.textContent = 'Coming soon'; mediaEl.appendChild(e); return;
+    }
+    slides = items.map(function (it) {
+      var s = document.createElement('div'); s.className = 'svc-slide';
+      if (it.type === 'video') {
+        var v = document.createElement('video'); v.src = it.src; v.muted = true; v.playsInline = true; v.preload = 'auto'; s.appendChild(v);
+      } else {
+        var im = new Image(); im.src = it.src; im.alt = ''; s.appendChild(im);
+      }
+      mediaEl.appendChild(s); return s;
+    });
+    curIdx = 0; play(0, my);
+  }
+  function play(i, my) {
+    if (my !== token || !slides.length) return;
+    curIdx = i;
+    slides.forEach(function (s, j) { s.classList.toggle('on', j === i); });
+    var v = slides[i].querySelector('video');
+    var advanced = false;
+    var next = function () { if (advanced || my !== token) return; advanced = true; clearTimeout(timer); play((i + 1) % slides.length, my); };
+    if (v) { v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); v.onended = next; timer = setTimeout(next, 8000); }
+    else { timer = setTimeout(next, 3000); }   // images: 3s each
+  }
+  function activate(item) {
+    if (!item) return;
+    for (var i = 0; i < list.children.length; i++) list.children[i].classList.toggle('active', list.children[i] === item);
+    show(item.dataset.svc);
+  }
+  list.addEventListener('click', function (e) { var item = e.target.closest('.svc-item'); if (item) activate(item); });
+  activate(list.querySelector('.svc-item'));   // default to the first service
+
+  // Pause the slideshow (and any video) while Services is off-screen
+  if (section && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      visible = es[0].isIntersecting;
+      if (!visible) { clearTimeout(timer); slides.forEach(function (s) { var v = s.querySelector('video'); if (v) v.pause(); }); }
+      else if (slides.length) { play(curIdx, token); }
+    }, { threshold: 0.12 }).observe(section);
+  }
+})();
+</script>
 
 <!-- Lenis smooth scroll (desktop pointer only; touch keeps native momentum) -->
 <script src="./vendor/lenis.min.js"></script>
@@ -4356,7 +4464,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       speedCap = 0.13;                      // brief burst so they sweep in from the left
       for (const b of bodies) {
         b.vel.set(0.085 + Math.random() * 0.06, (Math.random() - 0.5) * 0.05, 0);
-        b.mesh.position.y = aboutCenterY + (Math.random() - 0.5) * (aboutTopY - aboutBotY) * 0.8;   // sweep in within the About band
+        b.mesh.position.y = -halfH + b.r + Math.random() * (2 * halfH - 2 * b.r);   // sweep in spread across the whole field (About + Services)
       }
     }
   }, {rootMargin: '100px'}).observe(section);
@@ -4413,8 +4521,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       const xLim = hw + b.r * 0.5;                    // may exit ~half-way sideways
       if (p.x >  xLim) b.vel.x -= (p.x - xLim) * 0.0012;
       if (p.x < -xLim) b.vel.x -= (p.x + xLim) * 0.0012;
-      // vertically: stay inside the About band (top of the field), never wander into Services
-      const yTop = aboutTopY - b.r - 0.35, yBot = aboutBotY + b.r + 0.35;
+      // vertically: free to roam the whole field — down through Services — but not past
+      // its bottom edge (Contact). They pass behind the frosted Services card, blurred.
+      const yTop = aboutTopY - b.r - 0.35, yBot = -halfH + b.r + 0.35;
       if (p.y > yTop) { p.y = yTop; if (b.vel.y > 0) b.vel.y *= -0.5; }
       if (p.y < yBot) { p.y = yBot; if (b.vel.y < 0) b.vel.y *= -0.5; }
     }
