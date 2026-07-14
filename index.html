@@ -1178,13 +1178,12 @@
       border-top:1px solid rgba(255,255,255,.85)}
     #mofid3dBlock .pcar-all{width:100%;margin-left:0}
     .pcar-all{position:relative;width:100vw;margin-left:calc(50% - 50vw)}  /* full-bleed past #work padding; height set by JS */
-    /* The grid lives on the pinned 100vh canvas (screen-sized → the 1px lines stay
-       crisp; on a multi-thousand-px element the browser drops every other line).
-       Since the canvas is pinned for the whole gallery it spans the section; its
-       background-position drifts with scroll (set in JS) so the grid moves. */
-    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;
-      background-image:repeating-linear-gradient(to right,rgba(255,255,255,.85) 0 1px,transparent 1px 156px),repeating-linear-gradient(to bottom,rgba(255,255,255,.85) 0 1px,transparent 1px 156px);
-      background-position:0 0}
+    /* The grid is painted on a real <canvas> at device-pixel resolution (a CSS
+       repeating-gradient gets rasterised to a low-res tile and, once scrolled or on
+       hi-DPI screens, drops/doubles the 1px lines → the seams). The canvas tiles by
+       modulo so it is perfectly seamless and drifts with scroll (set in JS). */
+    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
+    .pcar-grid{position:absolute;inset:0;z-index:0;pointer-events:none}
     .pcar-track{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
     .pcar-stage{position:absolute;left:0;width:100%;height:100vh}     /* top set by JS (k * 100vh) */
     .pcar-text{position:absolute;top:50%;opacity:0;transform:translateY(-50%) translateY(var(--ty,0));z-index:6;white-space:nowrap;
@@ -2512,8 +2511,27 @@
     if (!host) return;
     host.innerHTML = '';
     const sticky = document.createElement('div'); sticky.className = 'pcar-sticky';
+    const gridCanvas = document.createElement('canvas'); gridCanvas.className = 'pcar-grid'; gridCanvas.setAttribute('aria-hidden', 'true');
     const track = document.createElement('div'); track.className = 'pcar-track';
-    sticky.appendChild(track); host.appendChild(sticky);
+    sticky.appendChild(gridCanvas); sticky.appendChild(track); host.appendChild(sticky);
+    const gridCtx = gridCanvas.getContext('2d');
+    // Crisp, seamless grid painted in device pixels. GRID = 156 CSS px cells.
+    let gGRID = 0, gLW = 1, gW = 0, gH = 0, gDPR = 1;
+    function sizeGrid() {
+      gDPR = window.devicePixelRatio || 1;
+      const wCss = sticky.clientWidth, hCss = sticky.clientHeight;
+      gridCanvas.width = gW = Math.round(wCss * gDPR);
+      gridCanvas.height = gH = Math.round(hCss * gDPR);
+      gGRID = Math.round(156 * gDPR); gLW = Math.max(1, Math.round(gDPR));
+    }
+    function drawGrid(offsetCss) {
+      if (!gridCtx || !gW) return;
+      gridCtx.clearRect(0, 0, gW, gH);
+      gridCtx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let x = 0; x <= gW; x += gGRID) gridCtx.fillRect(x, 0, gLW, gH);   // vertical lines fixed
+      const oy = ((Math.round(offsetCss * gDPR) % gGRID) + gGRID) % gGRID;    // horizontal lines drift with scroll
+      for (let y = oy - gGRID; y <= gH; y += gGRID) gridCtx.fillRect(0, Math.round(y), gW, gLW);
+    }
 
     const ANCH = { right: [0.60, 0.63], left: [0.40, 0.63], bottom: [0.50, 0.71] };
     const cars = configs.map(function (cfg, k) {
@@ -2566,6 +2584,7 @@
       for (let k = 1; k < M; k++) cycStart[k] = cycStart[k - 1] + CYCLE + gaps[k];
       cars.forEach(function (c, k) { c.stage.style.top = (k * 100) + 'vh'; });
       host.style.height = (vh + cycStart[M - 1] + CYCLE) + 'px';
+      sizeGrid();
     }
     dims();
 
@@ -2709,7 +2728,7 @@
       const raw = -host.getBoundingClientRect().top;   // signed: negative while the section is still entering
       curG = Math.max(0, raw);
       track.style.transform = 'translateY(' + (-trackUnits(curG) * vhPx).toFixed(1) + 'px)';
-      sticky.style.backgroundPositionY = Math.round(-curG * 0.5) + 'px';   // grid drifts with the scroll (integer → no sub-pixel seam)
+      drawGrid(-curG * 0.5);   // grid drifts with the scroll (canvas → crisp, seamless)
       const activeK = clamp(Math.round(trackUnits(curG)), 0, M - 1);
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
       for (let k = 0; k < M; k++) { cars[k].target = carTarget(k, k === 0 ? raw : curG); setActiveCar(cars[k], k === activeK); }
@@ -2723,7 +2742,7 @@
     new IntersectionObserver(function (es) {
       es.forEach(function (x) {
         inView = x.isIntersecting;
-        if (inView && !started) { started = true; cars.forEach(placeCar); onScroll(); }
+        if (inView && !started) { started = true; sizeGrid(); cars.forEach(placeCar); onScroll(); }
         if (!inView) { cars.forEach(function (c) { c.panTX = 0; c.panTY = 0; }); kick(); }   // ease back to neutral when scrolled away
       });
     }, { threshold: 0 }).observe(sticky);
