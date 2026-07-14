@@ -184,7 +184,7 @@
     .about-marquee-right{animation:marqueeRight 80s linear infinite}
     @keyframes marqueeLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
     @keyframes marqueeRight{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-    .am-inner{display:inline-flex;align-items:center;font-family:var(--font-display);font-weight:800;font-size:clamp(24px,3vw,48px);padding:12px 0}
+    .am-inner{display:inline-flex;align-items:center;font-family:var(--font-display);font-weight:800;font-size:clamp(17px,2.1vw,34px);padding:12px 0}
     .am-sep{color:rgba(245,217,78,0.6);margin:0 16px}
     .am-o{color:rgba(255,255,255,0.75)}
     .am-e{color:rgba(255,255,255,0.45)}
@@ -526,7 +526,7 @@
 
       /* About */
       .about-center{padding:64px 20px;gap:32px}
-      .am-inner{font-size:clamp(20px,6vw,32px)}
+      .am-inner{font-size:clamp(14px,4.2vw,22px)}
 
       /* Services */
       #services{padding:0 20px}
@@ -1379,9 +1379,6 @@
       <p class="about-body">And make sure it stands out.</p>
     </div>
   </div><!-- end about-center -->
-  <div class="about-marquee-wrap" style="margin-top:48px">
-    <div class="about-marquee about-marquee-right"><span class="am-inner"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span><span class="am-inner" aria-hidden="true"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span></div>
-  </div>
 </section>
 
 <section id="services">
@@ -3386,6 +3383,7 @@
 
   // ── Service full-page image overlay ──────────────────────────────────────
   function initServiceCardHover() {
+    return;   // disabled — no image overlay on card hover (the card's own hover style stays)
     // Skip on touch — hover not reliable
     if (window.matchMedia('(pointer:coarse)').matches) return;
     const cards = Array.from(document.querySelectorAll('.service-card'));
@@ -4273,11 +4271,14 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const circPts = []; const RSEG = 100;
   for (let i = 0; i <= RSEG; i++) { const a = i / RSEG * Math.PI * 2; circPts.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0)); }
   const circGeo = new THREE.BufferGeometry().setFromPoints(circPts);
-  const ringMat = new THREE.LineBasicMaterial({ color: 0xf5d94e, transparent: true, opacity: 0.5 });
   const rings = [];
-  for (let i = 0; i < 5; i++) { const m = new THREE.LineLoop(circGeo, ringMat); m.visible = false; scene.add(m); rings.push({ mesh: m, rad: 0, active: false }); }
+  for (let i = 0; i < 6; i++) {
+    const mat = new THREE.LineBasicMaterial({ color: 0xf5d94e, transparent: true, opacity: 0.55 });  // own material → each ring fades independently
+    const m = new THREE.LineLoop(circGeo, mat); m.visible = false; scene.add(m);
+    rings.push({ mesh: m, mat: mat, rad: 0, active: false });
+  }
   let ringMaxR = 20, ringTimer = 1.0, lastT = performance.now();
-  const RING_INTERVAL = 1.7, RING_SPEED = 3.4;   // seconds between pulses / world-units per second
+  const RING_INTERVAL = 3.0, RING_SPEED = 3.4;   // seconds between pulses / world-units per second
   const tmpH = new THREE.Vector3();
 
   // Entrance: park each sphere off-screen to the LEFT. When the section first
@@ -4364,6 +4365,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       rg.mesh.visible = true;
       rg.mesh.position.copy(hero.position);
       rg.mesh.scale.setScalar(rg.rad);
+      rg.mat.opacity = 0.55 * (1 - rg.rad / ringMaxR);   // fade fainter toward the edges until it disappears
     }
     for (const b of bodies) {
       // gentle mouse repulsion
