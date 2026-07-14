@@ -4251,6 +4251,38 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     };
   });
 
+  // ── Hero ball: one FIXED sphere on the right — the brand, resonating. Same
+  //    matte material + lighting as the rest. A soft glow sits BEHIND it (a halo
+  //    that spills around the silhouette, never on top). It emits thin yellow
+  //    ring-pulses that expand outward without fading (the canvas is the section,
+  //    so anything past the edges is simply clipped → "confined"). The drifting
+  //    spheres feel each pulse and are held off by a keep-out field: they keep
+  //    approaching but can never quite touch it.
+  const heroR = 1.8, heroSpin = 0.0016;
+  const hero = new THREE.Mesh(new THREE.SphereGeometry(heroR, 64, 64), matte);
+  scene.add(hero);
+  // soft glow behind the hero (radial-gradient sprite, additive → a touch of glow)
+  const gcan = document.createElement('canvas'); gcan.width = gcan.height = 160;
+  const gctx = gcan.getContext('2d');
+  const grd = gctx.createRadialGradient(80, 80, 0, 80, 80, 80);
+  grd.addColorStop(0, 'rgba(245,217,78,0.85)');
+  grd.addColorStop(0.45, 'rgba(245,217,78,0.30)');
+  grd.addColorStop(1, 'rgba(245,217,78,0)');
+  gctx.fillStyle = grd; gctx.fillRect(0, 0, 160, 160);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gcan), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.75 }));
+  glow.scale.set(heroR * 5.2, heroR * 5.2, 1);
+  scene.add(glow);
+  // thin ring-pulses (constant-width lines → stay thin as they grow)
+  const circPts = []; const RSEG = 100;
+  for (let i = 0; i <= RSEG; i++) { const a = i / RSEG * Math.PI * 2; circPts.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0)); }
+  const circGeo = new THREE.BufferGeometry().setFromPoints(circPts);
+  const ringMat = new THREE.LineBasicMaterial({ color: 0xf5d94e, transparent: true, opacity: 0.5 });
+  const rings = [];
+  for (let i = 0; i < 5; i++) { const m = new THREE.LineLoop(circGeo, ringMat); m.visible = false; scene.add(m); rings.push({ mesh: m, rad: 0, active: false }); }
+  let ringMaxR = 20, ringTimer = 1.0, lastT = performance.now();
+  const RING_INTERVAL = 1.7, RING_SPEED = 3.4;   // seconds between pulses / world-units per second
+  const tmpH = new THREE.Vector3();
+
   // Entrance: park each sphere off-screen to the LEFT. When the section first
   // scrolls into view we kick them rightward and let the SAME drift physics
   // (walls + collisions) carry them in — one continuous simulation, so there is
@@ -4289,6 +4321,11 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     camera.updateProjectionMatrix();
     halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     halfW = halfH * camera.aspect;
+    // Hero fixed on the right, vertically centred; glow just behind it; rings reach
+    // the far corner then reset (the section canvas clips anything past the edges).
+    hero.position.set(halfW * 0.52, 0, 0);
+    glow.position.set(hero.position.x, hero.position.y, hero.position.z - heroR * 0.7);
+    ringMaxR = Math.hypot(hero.position.x + halfW, halfH) + heroR;
   }
   resize();
   new ResizeObserver(resize).observe(section);
@@ -4307,12 +4344,40 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   function tick() {
     requestAnimationFrame(tick);
     if (!visible) return;
+    const now = performance.now(); const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
     speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm — long, smooth tail
+    // Hero: slow spin + emit/expand the thin ring-pulses (constant opacity → no fade)
+    hero.rotation.y += heroSpin;
+    ringTimer += dt;
+    if (ringTimer >= RING_INTERVAL) { ringTimer = 0; const slot = rings.find(r => !r.active); if (slot) { slot.active = true; slot.rad = heroR; } }
+    for (const rg of rings) {
+      if (!rg.active) continue;
+      rg.rad += dt * RING_SPEED;
+      if (rg.rad > ringMaxR) { rg.active = false; rg.mesh.visible = false; continue; }
+      rg.mesh.visible = true;
+      rg.mesh.position.copy(hero.position);
+      rg.mesh.scale.setScalar(rg.rad);
+    }
     for (const b of bodies) {
       // gentle mouse repulsion
       tmp.subVectors(b.mesh.position, mouse); tmp.z = 0;
       const md = tmp.length();
       if (md < 4 && md > 0.001) b.vel.addScaledVector(tmp.normalize(), (4 - md) * 0.0011);
+      // hero: a keep-out field it can never breach + a sideways sling so approaching
+      // spheres curl around rather than pile up, and an outward nudge as each pulse
+      // ring sweeps past (every sphere is *slightly* pushed by the resonance — they
+      // keep drifting through the scene, never driven away or clustered onto it).
+      tmpH.subVectors(hero.position, b.mesh.position); tmpH.z = 0;
+      const dH = tmpH.length();
+      if (dH > 0.001) {
+        tmpH.multiplyScalar(1 / dH);                               // unit vector ball→hero
+        const keep = heroR + b.r + 1.7;
+        if (dH < keep + 1.4) {
+          if (dH < keep) b.vel.addScaledVector(tmpH, -(keep - dH) * 0.007);   // firm keep-out — can never touch
+          b.vel.x += -tmpH.y * 0.0016; b.vel.y += tmpH.x * 0.0016;            // tangential sling → curl around it
+        }
+        for (const rg of rings) { if (rg.active && Math.abs(rg.rad - dH) < 0.6) { b.vel.addScaledVector(tmpH, -0.0035); break; } }
+      }
       // drift + spin (capped slow speed)
       b.vel.clampLength(0, speedCap);
       b.mesh.position.add(b.vel);
