@@ -1218,6 +1218,12 @@
       .side-right .pcar-text{left:8%}
       .po-desc{font-size:16px;line-height:1.5;max-width:1040px}   /* smaller so descriptions fit ~3 lines */
     }
+    /* Short (13") screens: the taller reel pushed the title + tabs down — compact
+       them so the tabs (and a peek of the first card) sit in view. */
+    @media (min-width:901px) and (max-height:940px){
+      #work{padding-top:44px}
+      .work-intro{font-size:clamp(18px,2vw,28px);margin-bottom:clamp(34px,4.5vh,54px)}
+    }
 
     /* Back-to-top button at the bottom of the work section (light theme) */
     .back-to-top{display:flex;align-items:center;gap:10px;margin:clamp(48px,6vw,96px) auto 0;padding:13px 26px;background:transparent;border:1px solid rgba(0,0,0,0.24);color:#15161d;font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:none;transition:background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
