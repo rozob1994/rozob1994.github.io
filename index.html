@@ -2596,7 +2596,7 @@
     // Cursor pan: the scene shifts its perspective-origin (a subtle camera-angle
     // change → depth parallax) and translates a touch toward the cursor. Very gentle.
     const coarse = window.matchMedia('(pointer:coarse)').matches;
-    const PANO = 11, PANT = 10;     // perspective-origin % swing / whole-scene px swing
+    const PANO = 20, PANT = 20;     // perspective-origin % swing / whole-scene px swing
     let panX = 0, panY = 0, panTX = 0, panTY = 0;
     // Only the arc (hero cycling / swipe-in) eases; the vertical track follows the
     // scroll 1:1 so the slide between carousels feels like natural scrolling.
