@@ -327,11 +327,12 @@
     #about{background:transparent;position:relative;overflow:visible;padding:0}
 
     /* Two-column about layout */
-    .about-center{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,7vw,120px);align-items:start;padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1400px;margin:0 auto}
-    .about-col-left{display:flex;align-items:flex-start}
-    .about-col-right{display:flex;flex-direction:column;gap:26px}
-    .about-col-right p{margin:0}
-    .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff}
+    /* One centred row: heading, then the two taglines flanking the hero ball (the
+       ball itself is the 3D sphere, placed onto #aboutBallSlot by the WebGL code). */
+    .about-center{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
+      gap:clamp(22px,3.4vw,60px);padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1500px;margin:0 auto}
+    .about-ball-slot{flex:0 0 auto;width:clamp(110px,12vw,190px);height:clamp(110px,12vw,190px)}
+    .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
     .about-heading em{font-style:normal;color:var(--yellow)}
     /* word-by-word swipe animation */
     @keyframes aboutWordIn{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:translateX(0)}}
@@ -343,14 +344,16 @@
     /* right-column staggered fade-rise */
     @keyframes aboutFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     .about-intro,.about-body,.about-meta-row{opacity:1}
-    .about-col-right.ac-animate .about-intro{animation:aboutFadeUp 0.55s var(--ease) 0.5s both}
-    .about-col-right.ac-animate .about-body{animation:aboutFadeUp 0.55s var(--ease) 0.65s both}
-    .about-col-right.ac-animate .about-meta-row{animation:aboutFadeUp 0.55s var(--ease) 0.80s both}
+    .about-center.ac-animate .about-intro{animation:aboutFadeUp 0.55s var(--ease) 0.5s both}
+    .about-center.ac-animate .about-body{animation:aboutFadeUp 0.55s var(--ease) 0.65s both}
     @media(prefers-reduced-motion:reduce){
       .about-heading .aw,.about-intro,.about-body,.about-meta-row{animation:none!important;opacity:1!important;transform:none!important}
     }
-    .about-intro{font-size:clamp(17px,1.8vw,22px);color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:16px;font-family:var(--font-display);font-weight:500}
-    .about-body{font-size:16px;color:rgba(255,255,255,0.6);line-height:1.85;margin-bottom:20px}
+    /* Both taglines: identical size + weight; one hugs the ball from the left, the other from the right. */
+    .about-intro,.about-body{margin:0;flex:0 0 auto;font-family:var(--font-display);font-weight:500;
+      font-size:clamp(15px,1.5vw,20px);line-height:1.55;color:rgba(255,255,255,0.85);max-width:clamp(150px,15vw,220px)}
+    .about-intro{text-align:right}
+    .about-body{text-align:left}
     .about-meta-row{display:flex;flex-direction:column;gap:8px}
     .about-disciplines,.about-tools{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
     .about-disc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.4);flex-shrink:0}
@@ -458,7 +461,10 @@
       #carouselOuter{min-height:340px}
 
       /* About */
-      .about-center{grid-template-columns:1fr;padding:90px 28px;gap:40px}
+      .about-center{flex-direction:column;align-items:flex-start;padding:90px 28px;gap:26px}
+      .about-heading{width:auto}
+      .about-intro,.about-body{text-align:left;max-width:none}
+      .about-ball-slot{display:none}   /* 3D ball is skipped on touch */
 
       /* Services */
       #services{padding-left:28px;padding-right:28px}
@@ -1371,13 +1377,10 @@
     <div class="about-marquee about-marquee-left"><span class="am-inner"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span><span class="am-inner" aria-hidden="true"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span></div>
   </div>
   <div class="about-center" id="aboutCenter">
-    <div class="about-col-left">
-      <h2 class="about-heading" id="aboutHeading"><span class="aw">GOOD</span> <span class="aw">DESIGN</span> <span class="aw"><em>ECHOES</em></span></h2>
-    </div>
-    <div class="about-col-right" id="aboutColRight">
-      <p class="about-intro">We bring your vision to life.</p>
-      <p class="about-body">And make sure it stands out.</p>
-    </div>
+    <h2 class="about-heading" id="aboutHeading"><span class="aw">GOOD</span> <span class="aw">DESIGN</span> <span class="aw"><em>ECHOES</em></span></h2>
+    <p class="about-intro">We bring your vision to life.</p>
+    <div class="about-ball-slot" id="aboutBallSlot" aria-hidden="true"></div>
+    <p class="about-body">And make sure it stands out.</p>
   </div><!-- end about-center -->
 </section>
 
@@ -3364,8 +3367,8 @@
   // ── About section reveal animations ─────────────────────────────────────
   function initAboutReveal() {
     var heading = document.getElementById('aboutHeading');
-    var colRight = document.getElementById('aboutColRight');
-    if (!heading || !colRight) return;
+    var center = document.getElementById('aboutCenter');
+    if (!heading || !center) return;
     if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     var fired = false;
     var io = new IntersectionObserver(function(entries) {
@@ -3373,7 +3376,7 @@
         if (!fired && entry.isIntersecting) {
           fired = true;
           heading.classList.add('aw-animate');
-          colRight.classList.add('ac-animate');
+          center.classList.add('ac-animate');
           io.disconnect();
         }
       });
@@ -4327,10 +4330,20 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     aboutTopY = halfH;                                  // top of the field == top of About
     aboutBotY = halfH * (1 - 2 * aboutH / h);           // where About ends and Services begins
     aboutCenterY = (aboutTopY + aboutBotY) / 2;
-    // Hero fixed on the right, vertically centred in the ABOUT band. Rings reach the
-    // far (bottom-left) corner of the whole field then reset — clipped at Contact.
-    hero.position.set(halfW * 0.52, aboutCenterY, 0);
-    ringMaxR = Math.hypot(hero.position.x + halfW, hero.position.y + halfH) + heroR;
+    // Place the hero ball onto the HTML slot (#aboutBallSlot) so the taglines flank
+    // it exactly; fall back to the right side if the slot isn't laid out yet.
+    let hx = halfW * 0.52, hy = aboutCenterY;
+    const slotEl = document.getElementById('aboutBallSlot');
+    if (slotEl) {
+      const cr = canvas.getBoundingClientRect(), sr = slotEl.getBoundingClientRect();
+      if (sr.width && cr.width) {
+        hx = (((sr.left + sr.width / 2 - cr.left) / cr.width) * 2 - 1) * halfW;
+        hy = -((((sr.top + sr.height / 2 - cr.top) / cr.height) * 2 - 1)) * halfH;
+      }
+    }
+    hero.position.set(hx, hy, 0);
+    // Rings reach the far corner of the whole field then reset — clipped at Contact.
+    ringMaxR = Math.hypot(Math.max(hero.position.x + halfW, halfW - hero.position.x), hero.position.y + halfH) + heroR;
   }
   resize();
   new ResizeObserver(resize).observe(section);
