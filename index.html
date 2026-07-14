@@ -1168,7 +1168,12 @@
        each carousel rolls up and out and the next rises in from below — no fades,
        no section edges. Each carousel swipes in along its arc, then cycles. ── */
     .pcar-all{position:relative;width:100vw;margin-left:calc(50% - 50vw)}  /* full-bleed past #work padding; height set by JS */
-    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
+    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;
+      background-image:repeating-linear-gradient(to right,#fff 0 1px,transparent 1px 64px),repeating-linear-gradient(to bottom,#fff 0 1px,transparent 1px 64px);
+      background-position:center}
+    /* soft strip over the top so a neighbouring carousel can't poke past the nav */
+    .pcar-mask{position:absolute;top:0;left:0;width:100%;height:17vh;z-index:340;pointer-events:none;
+      background:linear-gradient(#e9e9ec 58%,rgba(233,233,236,0))}
     .pcar-track{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
     .pcar-stage{position:absolute;left:0;width:100%;height:100vh}     /* top set by JS (k * 100vh) */
     .pcar-text{position:absolute;top:50%;opacity:0;transform:translateY(-50%) translateY(var(--ty,0));z-index:6;white-space:nowrap;
@@ -1210,7 +1215,7 @@
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above.
        Whole carousel sits lower on screen; title/subtext-to-cards gap kept wide. */
     .side-bottom .pcar{left:50%;top:71%}
-    .side-bottom .pcar-text{left:50%;top:20%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
+    .side-bottom .pcar-text{left:50%;top:23%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
 
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
@@ -2493,8 +2498,10 @@
     host.innerHTML = '';
     const sticky = document.createElement('div'); sticky.className = 'pcar-sticky';
     const track = document.createElement('div'); track.className = 'pcar-track';
-    sticky.appendChild(track); host.appendChild(sticky);
+    const mask = document.createElement('div'); mask.className = 'pcar-mask';
+    sticky.appendChild(track); sticky.appendChild(mask); host.appendChild(sticky);
 
+    const ANCH = { right: [0.60, 0.63], left: [0.40, 0.63], bottom: [0.50, 0.71] };
     const cars = configs.map(function (cfg, k) {
       const stage = document.createElement('div'); stage.className = 'pcar-stage side-' + cfg.side;
       const text = document.createElement('div'); text.className = 'pcar-text'; text.innerHTML = cfg.text;
@@ -2516,7 +2523,8 @@
       return {
         side: cfg.side, dir: cfg.side === 'left' ? -1 : 1, horizontal: cfg.side === 'bottom',
         stage: stage, text: text, sub: sub, subFull: cfg.sub || '', subN: -1,
-        pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1
+        pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1,
+        ax: ANCH[cfg.side][0], ay: ANCH[cfg.side][1], panX: 0, panY: 0, panTX: 0, panTY: 0
       };
     });
 
@@ -2588,11 +2596,15 @@
         const s = 0.92 + 0.12 * Math.exp(-a * a * 0.7);        // small hero bump; perspective does most of the shrink
         const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));   // fade cards out sooner → none stacked over the top edge
         const shade = Math.min(0.6, a * 0.08 + Math.abs(ry) / 78);   // face darkens as it turns/recedes
+        // Cursor tilt: strongest on the hero, fading for cards further from it — subtle.
+        const hw = Math.exp(-a * a * 0.6);
+        const ty = ry + c.panX * 7 * hw;      // extra Y-tilt toward the cursor
+        const tx = -c.panY * 6 * hw;          // slight X-tilt
         const card = c.cards[i];
         card.style.opacity = o;
         card.style.setProperty('--shade', shade.toFixed(3));
         card.style.zIndex = 300 - Math.round(a * 6);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ry.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
       }
     }
 
@@ -2618,11 +2630,11 @@
     }
 
     let started = false, inView = false, raf = 0, curG = 0;
-    // Cursor pan: the scene shifts its perspective-origin (a subtle camera-angle
-    // change → depth parallax) and translates a touch toward the cursor. Very gentle.
+    // Cursor pan: each carousel shifts its perspective-origin (camera-angle change
+    // → depth parallax) + translates toward the cursor. Independent per carousel —
+    // the target is the cursor relative to THAT carousel's own anchor.
     const coarse = window.matchMedia('(pointer:coarse)').matches;
     const PANO = 20, PANT = 20;     // perspective-origin % swing / whole-scene px swing
-    let panX = 0, panY = 0, panTX = 0, panTY = 0;
     // Only the arc (hero cycling / swipe-in) eases; the vertical track follows the
     // scroll 1:1 so the slide between carousels feels like natural scrolling.
     function frame() {
@@ -2632,23 +2644,23 @@
         const c = cars[k];
         c.cur += (c.target - c.cur) * EASE;
         if (Math.abs(c.target - c.cur) < 0.001) c.cur = c.target; else moving = true;
-        placeCar(c);
-      }
-      panX += (panTX - panX) * 0.07; panY += (panTY - panY) * 0.07;
-      if (Math.abs(panTX - panX) > 0.001 || Math.abs(panTY - panY) > 0.001) moving = true;
-      const pox = (50 - panX * PANO).toFixed(2), poy = (50 - panY * PANO).toFixed(2);
-      const ptx = (-panX * PANT).toFixed(1), pty = (-panY * PANT).toFixed(1);
-      for (let k = 0; k < M; k++) {
-        cars[k].pcarEl.style.perspectiveOrigin = pox + '% ' + poy + '%';
-        cars[k].pcarEl.style.transform = 'translate(' + ptx + 'px,' + pty + 'px)';
+        c.panX += (c.panTX - c.panX) * 0.06; c.panY += (c.panTY - c.panY) * 0.06;
+        if (Math.abs(c.panTX - c.panX) > 0.001 || Math.abs(c.panTY - c.panY) > 0.001) moving = true;
+        c.pcarEl.style.perspectiveOrigin = (50 - c.panX * PANO).toFixed(2) + '% ' + (50 - c.panY * PANO).toFixed(2) + '%';
+        c.pcarEl.style.transform = 'translate(' + (-c.panX * PANT).toFixed(1) + 'px,' + (-c.panY * PANT).toFixed(1) + 'px)';
+        placeCar(c);            // placeCar also reads c.panX/panY for the per-card tilt
       }
       if (moving) raf = requestAnimationFrame(frame);
     }
     function kick() { if (!raf) raf = requestAnimationFrame(frame); }
     if (!coarse) window.addEventListener('pointermove', function (e) {
       if (!started || !inView) return;
-      panTX = (e.clientX / window.innerWidth - 0.5) * 2;   // −1 … 1
-      panTY = (e.clientY / window.innerHeight - 0.5) * 2;
+      const mxr = e.clientX / window.innerWidth, myr = e.clientY / window.innerHeight;
+      for (let k = 0; k < M; k++) {
+        const c = cars[k];
+        c.panTX = clamp((mxr - c.ax) * 1.7, -1, 1);   // relative to each carousel's own anchor → independent
+        c.panTY = clamp((myr - c.ay) * 1.7, -1, 1);
+      }
       kick();
     }, { passive: true });
 
@@ -2668,7 +2680,7 @@
       es.forEach(function (x) {
         inView = x.isIntersecting;
         if (inView && !started) { started = true; cars.forEach(placeCar); onScroll(); }
-        if (!inView) { panTX = 0; panTY = 0; kick(); }   // ease back to neutral when scrolled away
+        if (!inView) { cars.forEach(function (c) { c.panTX = 0; c.panTY = 0; }); kick(); }   // ease back to neutral when scrolled away
       });
     }, { threshold: 0 }).observe(sticky);
   }
@@ -4063,6 +4075,34 @@
 
 
 
+<script>
+// ── Smooth inertial page scrolling — eased start & stop on wheel/trackpad ──
+// Desktop pointer only (touch keeps its native momentum). Drives window.scrollTo
+// so every scroll-linked effect (the carousel pin, reveals) keeps working.
+(function () {
+  if (window.matchMedia('(pointer:coarse)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var target = window.scrollY, cur = target, raf = 0, running = false;
+  var EASE = 0.10;
+  function maxY() { return document.documentElement.scrollHeight - window.innerHeight; }
+  function frame() {
+    cur += (target - cur) * EASE;
+    if (Math.abs(target - cur) < 0.4) { cur = target; window.scrollTo(0, cur); raf = 0; running = false; return; }
+    window.scrollTo(0, cur);
+    raf = requestAnimationFrame(frame);
+  }
+  window.addEventListener('wheel', function (e) {
+    if (e.ctrlKey) return;                          // let pinch-zoom through
+    e.preventDefault();
+    if (!running) { cur = window.scrollY; running = true; }
+    var d = e.deltaMode === 1 ? e.deltaY * 16 : (e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY);
+    target = Math.max(0, Math.min(maxY(), target + d));
+    if (!raf) raf = requestAnimationFrame(frame);
+  }, { passive: false });
+  // resync if scrolled by other means (keyboard, scrollbar, anchor jump)
+  window.addEventListener('scroll', function () { if (!running) { target = cur = window.scrollY; } }, { passive: true });
+})();
+</script>
 <script type="importmap">{"imports": {"three": "./vendor/three.module.min.js"}}</script>
 <script type="module">
 // ── ALIVE: slow-floating 3D objects in About — drift, collide, dodge the mouse ──
