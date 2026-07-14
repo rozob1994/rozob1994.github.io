@@ -879,6 +879,26 @@
       font-size:11px;letter-spacing:0.15em;text-transform:uppercase;
     }
 
+    /* ── Gallery item → click to expand (lightbox) ── */
+    .po-gallery-item{cursor:zoom-in}
+    .po-gallery-item{transition:opacity 0.6s var(--ease), transform 0.6s var(--ease), filter .25s var(--ease)}
+    .po-gallery-item:hover{filter:brightness(1.06)}
+    #poLightbox{
+      position:fixed;inset:0;z-index:10000;display:none;
+      align-items:center;justify-content:center;padding:4vh 4vw;
+      background:rgba(6,7,13,0.92);opacity:0;transition:opacity .28s var(--ease);cursor:zoom-out}
+    #poLightbox.open{display:flex;opacity:1}
+    #poLightbox img,#poLightbox video{
+      max-width:92vw;max-height:92vh;width:auto;height:auto;display:block;
+      border-radius:4px;box-shadow:0 40px 120px -30px rgba(0,0,0,0.8);
+      transform:scale(0.96);transition:transform .28s var(--ease)}
+    #poLightbox.open img,#poLightbox.open video{transform:scale(1)}
+    #poLightboxClose{
+      position:absolute;top:22px;right:26px;width:40px;height:40px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;cursor:none;
+      background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff}
+    #poLightboxClose svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none}
+
     /* ── Full-film button (on overlay hero) ── */
     .po-full-btn{
       position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
@@ -1191,6 +1211,12 @@
       .pcar-text{font-size:clamp(24px,7vw,40px)}
       .side-right .pcar,.side-left .pcar{left:50%;right:auto}
       .side-right .pcar-text,.side-left .pcar-text{left:50%;right:auto;top:14%;transform:translate(-50%,0);text-align:center;max-width:none}
+    }
+    /* Laptops / 13" — narrower + shorter viewports than the 27" the layout was tuned on */
+    @media (min-width:901px) and (max-width:1600px){
+      .side-left .pcar-text{right:8%}    /* keep #2 text clear of the fanned cards */
+      .side-right .pcar-text{left:8%}
+      .po-desc{font-size:16px;line-height:1.5;max-width:1040px}   /* smaller so descriptions fit ~3 lines */
     }
 
     /* Back-to-top button at the bottom of the work section (light theme) */
@@ -1803,7 +1829,7 @@
     // Everything starts moving at t=0
     fCanvas.style.opacity          = '0';         // canvas dissolves
     canvasBg.style.opacity         = '0';         // blue cover fades — hero animation now visible
-    heroEl.style.height            = 'calc((100vh - 420px) * 0.85)';  // reel 15% shorter; freed space becomes the work section's top padding
+    heroEl.style.height            = 'max(55vh, calc((100vh - 420px) * 0.85))';  // reel; floored at 55vh so it stays tall enough on short (13") laptops
     heroContent.style.transform    = 'translateY(0)'; // text rises from below into position
     heroContent.style.pointerEvents = 'all';
 
@@ -1842,7 +1868,7 @@
       }
 
       // Strip transitions, switch to min-height so hero is flexible for content
-      heroEl.style.cssText      = 'min-height:calc((100vh - 420px) * 0.85);display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;';
+      heroEl.style.cssText      = 'min-height:max(55vh, calc((100vh - 420px) * 0.85));display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#e9e9ec;';
       heroEl.classList.add('hero-settled');
       heroContent.style.cssText = 'position:absolute;left:52px;bottom:8%;transform:none;opacity:1;z-index:4;pointer-events:all;top:auto;right:auto;';
 
@@ -2476,7 +2502,7 @@
       track.appendChild(stage);
       return {
         side: cfg.side, dir: cfg.side === 'left' ? -1 : 1, horizontal: cfg.side === 'bottom',
-        stage: stage, text: text, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1
+        stage: stage, text: text, pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1
       };
     });
 
@@ -2566,7 +2592,12 @@
       return N - 1;                                  // done — held at the last card
     }
 
-    let started = false, raf = 0, curG = 0;
+    let started = false, inView = false, raf = 0, curG = 0;
+    // Cursor pan: the scene shifts its perspective-origin (a subtle camera-angle
+    // change → depth parallax) and translates a touch toward the cursor. Very gentle.
+    const coarse = window.matchMedia('(pointer:coarse)').matches;
+    const PANO = 11, PANT = 10;     // perspective-origin % swing / whole-scene px swing
+    let panX = 0, panY = 0, panTX = 0, panTY = 0;
     // Only the arc (hero cycling / swipe-in) eases; the vertical track follows the
     // scroll 1:1 so the slide between carousels feels like natural scrolling.
     function frame() {
@@ -2578,9 +2609,23 @@
         if (Math.abs(c.target - c.cur) < 0.001) c.cur = c.target; else moving = true;
         placeCar(c);
       }
+      panX += (panTX - panX) * 0.07; panY += (panTY - panY) * 0.07;
+      if (Math.abs(panTX - panX) > 0.001 || Math.abs(panTY - panY) > 0.001) moving = true;
+      const pox = (50 - panX * PANO).toFixed(2), poy = (50 - panY * PANO).toFixed(2);
+      const ptx = (-panX * PANT).toFixed(1), pty = (-panY * PANT).toFixed(1);
+      for (let k = 0; k < M; k++) {
+        cars[k].pcarEl.style.perspectiveOrigin = pox + '% ' + poy + '%';
+        cars[k].pcarEl.style.transform = 'translate(' + ptx + 'px,' + pty + 'px)';
+      }
       if (moving) raf = requestAnimationFrame(frame);
     }
     function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+    if (!coarse) window.addEventListener('pointermove', function (e) {
+      if (!started || !inView) return;
+      panTX = (e.clientX / window.innerWidth - 0.5) * 2;   // −1 … 1
+      panTY = (e.clientY / window.innerHeight - 0.5) * 2;
+      kick();
+    }, { passive: true });
 
     function onScroll() {
       if (!started) return;
@@ -2596,7 +2641,9 @@
     // swipes in (from -ENTRANCE) when the user gets here — not silently on load.
     new IntersectionObserver(function (es) {
       es.forEach(function (x) {
-        if (x.isIntersecting && !started) { started = true; cars.forEach(placeCar); onScroll(); }
+        inView = x.isIntersecting;
+        if (inView && !started) { started = true; cars.forEach(placeCar); onScroll(); }
+        if (!inView) { panTX = 0; panTY = 0; kick(); }   // ease back to neutral when scrolled away
       });
     }, { threshold: 0 }).observe(sticky);
   }
@@ -3119,16 +3166,20 @@
     function spawn() {
       if (inView && active < 2) {
         const lr = layer.getBoundingClientRect(), ir = inner.getBoundingClientRect();
-        const zones = [];
-        if (ir.left - lr.left > 120)  zones.push([lr.left + 12, ir.left - 88,  lr.top + 16,  lr.bottom - 20]);
-        if (lr.right - ir.right > 120) zones.push([ir.right + 16, lr.right - 88, lr.top + 16,  lr.bottom - 20]);
-        if (ir.top - lr.top > 110)    zones.push([lr.left + 12,  lr.right - 88, lr.top + 12,  ir.top - 88]);
-        if (lr.bottom - ir.bottom > 110) zones.push([lr.left + 12, lr.right - 88, ir.bottom + 16, lr.bottom - 20]);
+        // Keep the icons in a narrow band hugging the content (GAP off the edge,
+        // BAND wide) so they cluster near the data instead of scattering to the edges.
+        const zones = [], GAP = 46, BAND = 128;
+        if (ir.left - lr.left > GAP + 46)   zones.push([ir.left - GAP - BAND, ir.left - GAP, ir.top, ir.bottom]);
+        if (lr.right - ir.right > GAP + 46) zones.push([ir.right + GAP, ir.right + GAP + BAND, ir.top, ir.bottom]);
+        if (ir.top - lr.top > GAP + 46)     zones.push([ir.left, ir.right, ir.top - GAP - BAND, ir.top - GAP]);
+        if (lr.bottom - ir.bottom > GAP + 46) zones.push([ir.left, ir.right, ir.bottom + GAP, ir.bottom + GAP + BAND]);
         if (zones.length) {
           const z = zones[Math.floor(Math.random() * zones.length)];
-          const size = 42 + Math.random() * 33;
-          const x = z[0] + Math.random() * Math.max(8, (z[1] - z[0])) - lr.left;
-          const y = z[2] + Math.random() * Math.max(8, (z[3] - z[2])) - lr.top;
+          const size = 34 + Math.random() * 24;
+          let x = z[0] + Math.random() * Math.max(8, (z[1] - z[0] - size));
+          let y = z[2] + Math.random() * Math.max(8, (z[3] - z[2] - size));
+          x = Math.min(Math.max(x, lr.left + 8), lr.right - size - 8) - lr.left;
+          y = Math.min(Math.max(y, lr.top + 8), lr.bottom - size - 8) - lr.top;
           const el = document.createElement('div');
           el.className = 'ct-icon';
           el.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + size + 'px;height:' + size + 'px';
@@ -3337,6 +3388,55 @@
       scrollFill.style.width = pct.toFixed(1) + '%';
     }
     overlay.addEventListener('scroll', onOverlayScroll, {passive: true});
+
+    // ── Gallery lightbox: click any picture / GIF / clip to expand it centered ──
+    (function initGalleryLightbox() {
+      let lb = null, holder = null;
+      function ensure() {
+        if (lb) return;
+        lb = document.createElement('div'); lb.id = 'poLightbox';
+        holder = document.createElement('div');
+        holder.style.cssText = 'display:flex;align-items:center;justify-content:center';
+        const close = document.createElement('button'); close.id = 'poLightboxClose';
+        close.setAttribute('aria-label', 'Close');
+        close.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+        lb.appendChild(holder); lb.appendChild(close);
+        document.body.appendChild(lb);
+        lb.addEventListener('click', hide);
+        close.addEventListener('click', function (e) { e.stopPropagation(); hide(); });
+      }
+      function show(node) {
+        ensure();
+        holder.innerHTML = '';
+        let el;
+        if (node.tagName === 'VIDEO') {
+          el = document.createElement('video');
+          el.src = node.currentSrc || node.src;
+          el.muted = true; el.loop = true; el.autoplay = true; el.controls = true;
+          el.setAttribute('playsinline', '');
+        } else {
+          el = document.createElement('img');
+          el.src = node.currentSrc || node.src;
+        }
+        el.addEventListener('click', function (e) { e.stopPropagation(); });   // clicking the media doesn't close
+        holder.appendChild(el);
+        void lb.offsetWidth; lb.classList.add('open');
+      }
+      function hide() {
+        if (!lb) return;
+        lb.classList.remove('open');
+        const v = holder.querySelector('video'); if (v) v.pause();
+      }
+      overlay.addEventListener('click', function (e) {
+        const item = e.target.closest('.po-gallery-item');
+        if (!item) return;
+        const media = item.querySelector('img, video');
+        if (media) show(media);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && lb && lb.classList.contains('open')) hide();
+      });
+    })();
 
     // ── IntersectionObserver for gallery items ───────────────────────────
     function observeGallery() {
