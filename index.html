@@ -943,7 +943,7 @@
     /* ── WORK TABS (Personal Work / Mofid Securities) ── */
     .work-tabs{display:flex;align-items:center;gap:0}
     .work-tab{
-      font-family:var(--font-display);font-size:clamp(18px,2.2vw,30px);font-weight:800;
+      font-family:var(--font-display);font-size:clamp(9px,1.1vw,15px);font-weight:800;
       background:none;border:none;cursor:pointer;
       color:rgba(255,255,255,0.22);
       padding:0 0 4px;margin-right:clamp(16px,2.5vw,36px);
@@ -953,7 +953,7 @@
     }
     .work-tab--active{color:var(--yellow);border-bottom-color:var(--yellow)}
     .work-tab:hover:not(.work-tab--active){color:rgba(255,255,255,0.55)}
-    @media(max-width:600px){.work-tab{font-size:clamp(14px,4vw,20px);margin-right:16px}}
+    @media(max-width:600px){.work-tab{font-size:clamp(10px,2.4vw,13px);margin-right:16px}}
 
     /* ── FAST-FORWARD ARROW (right edge of carousel) ── */
     .carousel-ff-arrow{
@@ -1207,9 +1207,10 @@
     /* left-side (#2): mirror, pushed left */
     .side-left .pcar{left:40%;top:63%}
     .side-left .pcar-text{right:21%;top:56%;text-align:right}
-    /* bottom (#3): hero at the top peak, cards fan down to the sides; text above */
-    .side-bottom .pcar{left:50%;top:63%}
-    .side-bottom .pcar-text{left:50%;top:12%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
+    /* bottom (#3): hero at the top peak, cards fan down to the sides; text above.
+       Whole carousel sits lower on screen; title/subtext-to-cards gap kept wide. */
+    .side-bottom .pcar{left:50%;top:71%}
+    .side-bottom .pcar-text{left:50%;top:20%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
 
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
@@ -2485,7 +2486,7 @@
   //    three hero-stacks stacked one screen apart. Scrolling slides the track so
   //    each carousel cycles its hero, then rolls up and out while the next rises
   //    in from below (swiping in along its own arc) — no fades, no section edges.
-  const ENTRANCE = 6;      // how many "cards" back the stack starts, for the swipe-in
+  const ENTRANCE = 3.3;    // how many "cards" back the stack starts (low enough that the hero is already ~visible at g=0, so no dead scroll)
   const EASE = 0.11;       // easing toward the arc target — the "standard ease"
   function buildCarousels(host, configs) {
     if (!host) return;
