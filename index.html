@@ -16,6 +16,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    /* Lenis smooth scroll */
+    html.lenis,html.lenis body{height:auto}
+    .lenis.lenis-smooth{scroll-behavior:auto!important}
+    .lenis.lenis-stopped{overflow:hidden}
+    .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
     :root{
       --bg:#07080f;--bg2:#0c0e1a;--surface:#0f1120;--border:#1a1d2e;
       --text:#f0ede8;--muted:#9da2bb;--yellow:#f5d94e;--yellow-soft:rgba(245,217,78,0.1);
@@ -4075,32 +4080,17 @@
 
 
 
+<!-- Lenis smooth scroll (desktop pointer only; touch keeps native momentum) -->
+<script src="./vendor/lenis.min.js"></script>
 <script>
-// ── Smooth inertial page scrolling — eased start & stop on wheel/trackpad ──
-// Desktop pointer only (touch keeps its native momentum). Drives window.scrollTo
-// so every scroll-linked effect (the carousel pin, reveals) keeps working.
 (function () {
+  if (typeof Lenis === 'undefined') return;
   if (window.matchMedia('(pointer:coarse)').matches) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var target = window.scrollY, cur = target, raf = 0, running = false;
-  var EASE = 0.22;   // light smoothing — softens the start/stop without a floaty glide
-  function maxY() { return document.documentElement.scrollHeight - window.innerHeight; }
-  function frame() {
-    cur += (target - cur) * EASE;
-    if (Math.abs(target - cur) < 0.4) { cur = target; window.scrollTo(0, cur); raf = 0; running = false; return; }
-    window.scrollTo(0, cur);
-    raf = requestAnimationFrame(frame);
-  }
-  window.addEventListener('wheel', function (e) {
-    if (e.ctrlKey) return;                          // let pinch-zoom through
-    e.preventDefault();
-    if (!running) { cur = window.scrollY; running = true; }
-    var d = e.deltaMode === 1 ? e.deltaY * 16 : (e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY);
-    target = Math.max(0, Math.min(maxY(), target + d));
-    if (!raf) raf = requestAnimationFrame(frame);
-  }, { passive: false });
-  // resync if scrolled by other means (keyboard, scrollbar, anchor jump)
-  window.addEventListener('scroll', function () { if (!running) { target = cur = window.scrollY; } }, { passive: true });
+  var lenis = new Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 1 });
+  function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
+  requestAnimationFrame(raf);
+  window.__lenis = lenis;
 })();
 </script>
 <script type="importmap">{"imports": {"three": "./vendor/three.module.min.js"}}</script>
