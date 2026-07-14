@@ -4083,7 +4083,7 @@
   if (window.matchMedia('(pointer:coarse)').matches) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var target = window.scrollY, cur = target, raf = 0, running = false;
-  var EASE = 0.10;
+  var EASE = 0.22;   // light smoothing — softens the start/stop without a floaty glide
   function maxY() { return document.documentElement.scrollHeight - window.innerHeight; }
   function frame() {
     cur += (target - cur) * EASE;
