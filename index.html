@@ -320,7 +320,11 @@
     .work-cat{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--yellow);transform:translateY(10px);transition:transform 0.55s var(--ease) 0.05s,opacity 0.4s 0.05s;opacity:0}
     .work-item:hover .work-cat{transform:translateY(0);opacity:1}
 
-    #about{background:#0d1fd4;position:relative;overflow:visible;padding:0}
+    /* About + Services share one blue field so the hero's ring-pulses can span both
+       (the field is clipped at Contact). The 3D canvas is a child of the field. */
+    #echoField{position:relative;background:#0d1fd4}
+    #about3d{position:absolute;inset:0;pointer-events:none;z-index:0}
+    #about{background:transparent;position:relative;overflow:visible;padding:0}
 
     /* Two-column about layout */
     .about-center{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,7vw,120px);align-items:start;padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1400px;margin:0 auto}
@@ -358,7 +362,7 @@
     .about-stats{display:none}
     .stat{display:none}
 
-    #services{padding:120px 56px;background:#0d1fd4;position:relative}
+    #services{padding:120px 56px;background:transparent;position:relative}
     .services-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
@@ -1360,8 +1364,9 @@
   </div><!-- end personalPanel -->
 </section>
 
+<div id="echoField">
+<canvas id="about3d" aria-hidden="true"></canvas>
 <section id="about">
-  <canvas id="about3d" aria-hidden="true"></canvas>
   <div class="about-marquee-wrap" style="margin-bottom:48px">
     <div class="about-marquee about-marquee-left"><span class="am-inner"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span><span class="am-inner" aria-hidden="true"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span></div>
   </div>
@@ -1389,6 +1394,7 @@
     <div class="service-card reveal"><div class="service-num-bg">04</div><div class="service-title">Logo Animation</div><div class="service-desc">Bringing brand marks to life with purposeful motion — intro sequences, stingers, and looping animations that give your identity a distinctive on-screen presence.</div></div>
   </div>
 </section>
+</div><!-- end echoField -->
 
 <div id="contact-wrapper">
   <div class="contact-sticky">
@@ -4186,8 +4192,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (window.matchMedia('(pointer:coarse)').matches) return;   // skip on phones/tablets
   const canvas = document.getElementById('about3d');
-  const section = document.getElementById('about');
-  if (!canvas || !section) return;
+  const section = document.getElementById('echoField');   // canvas spans About + Services
+  const aboutSec = document.getElementById('about');
+  if (!canvas || !section || !aboutSec) return;
 
   let renderer;
   try {
@@ -4238,6 +4245,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   }
 
   let halfW = 8, halfH = 5;                                     // world-space bounds, set on resize
+  let aboutTopY = 5, aboutBotY = -5, aboutCenterY = 0;          // world-y band of the About portion (top of the field)
   const bodies = defs.map((d, i) => {
     const mesh = new THREE.Mesh(d.geo, matte);
     // Wide z-spread so depth of field is visible: near spheres (toward the
@@ -4258,20 +4266,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   //    so anything past the edges is simply clipped → "confined"). The drifting
   //    spheres feel each pulse and are held off by a keep-out field: they keep
   //    approaching but can never quite touch it.
-  const heroR = 1.8, heroSpin = 0.0016;
+  const heroR = 1.26, heroSpin = 0.0016;
   const hero = new THREE.Mesh(new THREE.SphereGeometry(heroR, 64, 64), matte);
   scene.add(hero);
-  // soft glow behind the hero (radial-gradient sprite, additive → a touch of glow)
-  const gcan = document.createElement('canvas'); gcan.width = gcan.height = 160;
-  const gctx = gcan.getContext('2d');
-  const grd = gctx.createRadialGradient(80, 80, 0, 80, 80, 80);
-  grd.addColorStop(0, 'rgba(245,217,78,0.85)');
-  grd.addColorStop(0.45, 'rgba(245,217,78,0.30)');
-  grd.addColorStop(1, 'rgba(245,217,78,0)');
-  gctx.fillStyle = grd; gctx.fillRect(0, 0, 160, 160);
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gcan), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.75 }));
-  glow.scale.set(heroR * 5.2, heroR * 5.2, 1);
-  scene.add(glow);
   // thin ring-pulses (constant-width lines → stay thin as they grow)
   const circPts = []; const RSEG = 100;
   for (let i = 0; i <= RSEG; i++) { const a = i / RSEG * Math.PI * 2; circPts.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0)); }
@@ -4316,16 +4313,23 @@ import {RGBELoader} from './vendor/RGBELoader.js';
 
   function resize() {
     const w = section.clientWidth, h = section.clientHeight;
+    const aboutH = aboutSec.clientHeight || h;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
+    // Scale the camera distance so the ABOUT portion keeps its exact original
+    // framing (world-per-pixel constant, halfW preserved); the field just extends
+    // downward into Services, where the rings continue.
+    camera.position.z = 90 * (h / aboutH);
     camera.updateProjectionMatrix();
     halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     halfW = halfH * camera.aspect;
-    // Hero fixed on the right, vertically centred; glow just behind it; rings reach
-    // the far corner then reset (the section canvas clips anything past the edges).
-    hero.position.set(halfW * 0.52, 0, 0);
-    glow.position.set(hero.position.x, hero.position.y, hero.position.z - heroR * 0.7);
-    ringMaxR = Math.hypot(hero.position.x + halfW, halfH) + heroR;
+    aboutTopY = halfH;                                  // top of the field == top of About
+    aboutBotY = halfH * (1 - 2 * aboutH / h);           // where About ends and Services begins
+    aboutCenterY = (aboutTopY + aboutBotY) / 2;
+    // Hero fixed on the right, vertically centred in the ABOUT band. Rings reach the
+    // far (bottom-left) corner of the whole field then reset — clipped at Contact.
+    hero.position.set(halfW * 0.52, aboutCenterY, 0);
+    ringMaxR = Math.hypot(hero.position.x + halfW, hero.position.y + halfH) + heroR;
   }
   resize();
   new ResizeObserver(resize).observe(section);
@@ -4336,7 +4340,10 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     if (visible && !enteredOnce) {
       enteredOnce = true;
       speedCap = 0.13;                      // brief burst so they sweep in from the left
-      for (const b of bodies) b.vel.set(0.085 + Math.random() * 0.06, (Math.random() - 0.5) * 0.05, 0);
+      for (const b of bodies) {
+        b.vel.set(0.085 + Math.random() * 0.06, (Math.random() - 0.5) * 0.05, 0);
+        b.mesh.position.y = aboutCenterY + (Math.random() - 0.5) * (aboutTopY - aboutBotY) * 0.8;   // sweep in within the About band
+      }
     }
   }, {rootMargin: '100px'}).observe(section);
 
@@ -4363,20 +4370,19 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       tmp.subVectors(b.mesh.position, mouse); tmp.z = 0;
       const md = tmp.length();
       if (md < 4 && md > 0.001) b.vel.addScaledVector(tmp.normalize(), (4 - md) * 0.0011);
-      // hero: a keep-out field it can never breach + a sideways sling so approaching
-      // spheres curl around rather than pile up, and an outward nudge as each pulse
-      // ring sweeps past (every sphere is *slightly* pushed by the resonance — they
-      // keep drifting through the scene, never driven away or clustered onto it).
+      // hero: the pushback is LOCAL — it only kicks in once a sphere is inside the
+      // resonance zone. Out here spheres drift/approach freely; only when close does
+      // a passing pulse shove it back (that's what keeps them off), plus a thin hard
+      // shell so they never actually overlap the hero.
       tmpH.subVectors(hero.position, b.mesh.position); tmpH.z = 0;
       const dH = tmpH.length();
-      if (dH > 0.001) {
+      const CLOSE = heroR + 4.5;                                   // resonance zone — no pushback outside this
+      if (dH > 0.001 && dH < CLOSE) {
         tmpH.multiplyScalar(1 / dH);                               // unit vector ball→hero
-        const keep = heroR + b.r + 1.7;
-        if (dH < keep + 1.4) {
-          if (dH < keep) b.vel.addScaledVector(tmpH, -(keep - dH) * 0.007);   // firm keep-out — can never touch
-          b.vel.x += -tmpH.y * 0.0016; b.vel.y += tmpH.x * 0.0016;            // tangential sling → curl around it
-        }
-        for (const rg of rings) { if (rg.active && Math.abs(rg.rad - dH) < 0.6) { b.vel.addScaledVector(tmpH, -0.0035); break; } }
+        const shell = heroR + b.r + 0.2;
+        if (dH < shell) b.vel.addScaledVector(tmpH, -(shell - dH) * 0.011);   // thin hard shell — no overlap
+        b.vel.x += -tmpH.y * 0.0010; b.vel.y += tmpH.x * 0.0010;             // gentle curl
+        for (const rg of rings) { if (rg.active && Math.abs(rg.rad - dH) < 0.7) { b.vel.addScaledVector(tmpH, -0.006); break; } }  // a passing pulse pushes it back
       }
       // drift + spin (capped slow speed)
       b.vel.clampLength(0, speedCap);
@@ -4390,11 +4396,12 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - p.z);
       const hw = hh * camera.aspect;
       const xLim = hw + b.r * 0.5;                    // may exit ~half-way sideways
-      const yLim = hh - b.r - 0.35;                   // always whole vertically
       if (p.x >  xLim) b.vel.x -= (p.x - xLim) * 0.0012;
       if (p.x < -xLim) b.vel.x -= (p.x + xLim) * 0.0012;
-      if (p.y >  yLim) { p.y =  yLim; if (b.vel.y > 0) b.vel.y *= -0.5; }
-      if (p.y < -yLim) { p.y = -yLim; if (b.vel.y < 0) b.vel.y *= -0.5; }
+      // vertically: stay inside the About band (top of the field), never wander into Services
+      const yTop = aboutTopY - b.r - 0.35, yBot = aboutBotY + b.r + 0.35;
+      if (p.y > yTop) { p.y = yTop; if (b.vel.y > 0) b.vel.y *= -0.5; }
+      if (p.y < yBot) { p.y = yBot; if (b.vel.y < 0) b.vel.y *= -0.5; }
     }
     // soft body-vs-body collisions — resolved in the screen plane only so each
     // sphere keeps its fixed depth (and therefore its blur stays steady)
