@@ -365,17 +365,24 @@
     .about-stats{display:none}
     .stat{display:none}
 
-    #services{padding:120px 56px;background:transparent;position:relative}
+    #services{padding:clamp(150px,20vh,260px) 56px clamp(150px,19vh,240px);background:transparent;position:relative}
     /* ── Services: clickable list + a slideshow, on one frosted-glass card. The
        loose balls + pulse rings drift behind it and are blurred by the backdrop. ── */
-    .svc-panel{position:relative;z-index:1;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;
+    .svc-wrap{max-width:1400px;margin:0 auto}
+    /* "Services" title sits at the top-left of the card (same left edge), 30% larger */
+    .svc-title{font-size:clamp(31px,3.9vw,52px);margin-bottom:clamp(20px,2.4vw,36px)}
+    .svc-panel{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);
       background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;
+      transform-origin:top center;
       -webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1)}
+    /* clicking a tab makes the card ripple/expand downward */
+    @keyframes svcRipple{0%{transform:scaleY(0.972)}68%{transform:scaleY(1.012)}100%{transform:scaleY(1)}}
+    .svc-panel.rippling{animation:svcRipple .5s cubic-bezier(.22,1,.36,1)}
     .svc-list{list-style:none;margin:0;padding:clamp(24px,3vw,52px)}
     .svc-item{border-bottom:1px solid rgba(255,255,255,0.1);padding:clamp(13px,1.6vw,24px) 0}
     .svc-item:last-child{border-bottom:none}
-    .svc-name{display:block;width:100%;text-align:left;background:none;border:none;cursor:none;padding:0;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(21px,2.5vw,38px);line-height:1.05;letter-spacing:-.01em;
+    .svc-name{display:block;width:100%;text-align:left;background:none;border:none;cursor:none;padding:0;white-space:nowrap;
+      font-family:var(--font-display);font-weight:800;font-size:clamp(19px,2.15vw,33px);line-height:1.05;letter-spacing:-.01em;
       color:rgba(255,255,255,0.4);transition:color .35s var(--ease)}
     .svc-item:hover .svc-name{color:rgba(255,255,255,0.72)}
     .svc-item.active .svc-name,.svc-item.active:hover .svc-name{color:#f5d94e}
@@ -1408,7 +1415,8 @@
 </section>
 
 <section id="services">
-  <h2 class="section-title">Services<span class="round-dot"></span></h2>
+  <div class="svc-wrap">
+  <h2 class="section-title svc-title">Services<span class="round-dot"></span></h2>
   <div class="svc-panel" id="svcPanel">
     <ul class="svc-list" id="svcList" role="tablist" aria-label="Services">
       <li class="svc-item" data-svc="product-viz">
@@ -1430,6 +1438,7 @@
     </ul>
     <div class="svc-media" id="svcMedia" aria-live="polite"></div>
   </div>
+  </div><!-- end svc-wrap -->
 </section>
 </div><!-- end echoField -->
 
@@ -4199,6 +4208,7 @@
   var list = document.getElementById('svcList');
   var mediaEl = document.getElementById('svcMedia');
   var section = document.getElementById('services');
+  var panel = document.getElementById('svcPanel');
   if (!list || !mediaEl) return;
 
   // Placeholder media (3D-designs stills). Replace per service; use {type:'video', src}
@@ -4245,13 +4255,14 @@
     if (v) { v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); v.onended = next; timer = setTimeout(next, 8000); }
     else { timer = setTimeout(next, 3000); }   // images: 3s each
   }
-  function activate(item) {
+  function activate(item, ripple) {
     if (!item) return;
     for (var i = 0; i < list.children.length; i++) list.children[i].classList.toggle('active', list.children[i] === item);
+    if (ripple && panel) { panel.classList.remove('rippling'); void panel.offsetWidth; panel.classList.add('rippling'); }  // card expands/ripples on click
     show(item.dataset.svc);
   }
-  list.addEventListener('click', function (e) { var item = e.target.closest('.svc-item'); if (item) activate(item); });
-  activate(list.querySelector('.svc-item'));   // default to the first service
+  list.addEventListener('click', function (e) { var item = e.target.closest('.svc-item'); if (item) activate(item, true); });
+  activate(list.querySelector('.svc-item'), false);   // default to the first service (no ripple on load)
 
   // Pause the slideshow (and any video) while Services is off-screen
   if (section && 'IntersectionObserver' in window) {
