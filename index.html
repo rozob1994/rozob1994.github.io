@@ -197,7 +197,7 @@
 
     /* top padding = base + the 15% reel reduction, so the empty space above the
        intro is part of THIS section (continuous with the rest of the work bg). */
-    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px 0 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px clamp(100px,14vh,190px) 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
     /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
     #work .work-intro{color:#15161d}
     #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
