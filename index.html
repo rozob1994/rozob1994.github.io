@@ -1223,9 +1223,11 @@
     .side-left .pcar{left:40%;top:63%}
     .side-left .pcar-text{right:21%;top:56%;text-align:right}
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above.
-       Whole carousel sits lower on screen; title/subtext-to-cards gap kept wide. */
-    .side-bottom .pcar{left:50%;top:71%}
-    .side-bottom .pcar-text{left:50%;top:23%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
+       Raised up the screen so it doesn't snap to the bottom edge and #2's tail is
+       pushed off the top. Title + subtext are centred. */
+    .side-bottom .pcar{left:50%;top:60%}
+    .side-bottom .pcar-text{left:50%;top:13%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
+    .side-bottom .pcar-sub{text-align:center}
 
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
@@ -1369,7 +1371,7 @@
     </div>
     <div class="about-col-right" id="aboutColRight">
       <p class="about-intro">We bring your vision to life.</p>
-      <p class="about-body">Every project gets everything we&rsquo;ve got — we don&rsquo;t stop until it&rsquo;s the best work we can make.</p>
+      <p class="about-body">And make sure it stands out.</p>
     </div>
   </div><!-- end about-center -->
   <div class="about-marquee-wrap" style="margin-top:48px">
@@ -2533,7 +2535,7 @@
       for (let y = oy - gGRID; y <= gH; y += gGRID) gridCtx.fillRect(0, Math.round(y), gW, gLW);
     }
 
-    const ANCH = { right: [0.60, 0.63], left: [0.40, 0.63], bottom: [0.50, 0.71] };
+    const ANCH = { right: [0.60, 0.63], left: [0.40, 0.63], bottom: [0.50, 0.60] };
     const cars = configs.map(function (cfg, k) {
       const stage = document.createElement('div'); stage.className = 'pcar-stage side-' + cfg.side;
       const text = document.createElement('div'); text.className = 'pcar-text'; text.innerHTML = cfg.text;
@@ -2557,7 +2559,7 @@
         stage: stage, text: text, sub: sub, subFull: cfg.sub || '', subN: -1,
         pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1,
         ax: ANCH[cfg.side][0], ay: ANCH[cfg.side][1], panX: 0, panY: 0, panTX: 0, panTY: 0,
-        rev: 0, revT: 0, isActive: false, typer: 0
+        rev: 0, revT: 0, isActive: false, typer: 0, vis: 1
       };
     });
 
@@ -2578,7 +2580,7 @@
       SHIFT23 = Math.round(vh * 2.1); // bigger slide before carousel #3
       LEADIN = Math.round(vh * 0.20); // carousel #1 starts cycling shortly after the section pins
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
-      TAIL = Math.round(vh * 0.85);   // after #3, roll the gallery up and out over this scroll → gridded breathing space before About
+      TAIL = Math.round(vh * 0.42);   // after #3, roll the gallery up and out over this scroll → gridded breathing space before About
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2628,7 +2630,7 @@
         const ty = ry + c.panX * 7 * hw;      // extra Y-tilt toward the cursor
         const tx = -c.panY * 6 * hw;          // slight X-tilt
         const card = c.cards[i];
-        card.style.opacity = o;
+        card.style.opacity = o * c.vis;   // fade a carousel out once it has parked a screen above (kills its downward-fan tail leaking back in)
         card.style.setProperty('--shade', shade.toFixed(3));
         card.style.zIndex = 300 - Math.round(a * 6);
         card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
@@ -2733,9 +2735,14 @@
       curG = Math.max(0, raw);
       track.style.transform = 'translateY(' + (-trackUnits(curG) * vhPx).toFixed(1) + 'px)';
       drawGrid(-curG * 0.5);   // grid drifts with the scroll (canvas → crisp, seamless)
-      const activeK = clamp(Math.round(trackUnits(curG)), 0, M - 1);
+      const tu = trackUnits(curG);
+      const activeK = clamp(Math.round(tu), 0, M - 1);
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
-      for (let k = 0; k < M; k++) { cars[k].target = carTarget(k, k === 0 ? raw : curG); setActiveCar(cars[k], k === activeK); }
+      for (let k = 0; k < M; k++) {
+        cars[k].target = carTarget(k, k === 0 ? raw : curG);
+        setActiveCar(cars[k], k === activeK);
+        cars[k].vis = clamp((1 - (tu - k)) / 0.3, 0, 1);   // 1 until parked ~0.7 screen up, →0 by a full screen up
+      }
       kick();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
