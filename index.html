@@ -1174,6 +1174,11 @@
     .pcar-text{position:absolute;top:50%;opacity:0;transform:translateY(-50%) translateY(var(--ty,0));z-index:6;white-space:nowrap;
       font-family:var(--font-display);font-weight:800;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
     .pcar-text em{font-style:normal;color:#0d1fd4}
+    .pcar-sub{display:block;margin-top:12px;font-family:var(--font-mono);font-weight:400;
+      font-size:clamp(11px,0.95vw,14px);letter-spacing:.03em;line-height:1.3;color:rgba(21,22,29,0.55);min-height:1.3em}
+    .pcar-sub.typing::after{content:'';display:inline-block;width:2px;height:1em;background:currentColor;
+      margin-left:3px;vertical-align:-2px;animation:pcarBlink 1s steps(1) infinite}
+    @keyframes pcarBlink{50%{opacity:0}}
     .pcar{position:absolute;top:50%;left:50%;width:0;height:0;perspective:1250px}   /* stronger perspective → real depth */
     /* Cards are real 3D slabs: a front face (the image), a back panel, and four
        translucent glass side walls extruded back by --t. As a card turns on its Y
@@ -2492,6 +2497,7 @@
     const cars = configs.map(function (cfg, k) {
       const stage = document.createElement('div'); stage.className = 'pcar-stage side-' + cfg.side;
       const text = document.createElement('div'); text.className = 'pcar-text'; text.innerHTML = cfg.text;
+      const sub = document.createElement('span'); sub.className = 'pcar-sub'; text.appendChild(sub);
       const car = document.createElement('div'); car.className = 'pcar';
       const cards = cfg.imgs.map(function (src, i) {
         const c = document.createElement('div'); c.className = 'pcar-card';
@@ -2508,7 +2514,8 @@
       track.appendChild(stage);
       return {
         side: cfg.side, dir: cfg.side === 'left' ? -1 : 1, horizontal: cfg.side === 'bottom',
-        stage: stage, text: text, pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1
+        stage: stage, text: text, sub: sub, subFull: cfg.sub || '', subN: -1,
+        pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1
       };
     });
 
@@ -2549,6 +2556,15 @@
       const tp = clamp(1 - Math.max(0, -c.cur) / ENTRANCE, 0, 1);
       c.text.style.opacity = tp.toFixed(3);
       c.text.style.setProperty('--ty', ((1 - tp) * TXTOFF).toFixed(1) + 'px');
+      // Subtext types in (and un-types on scroll-up) once the title is mostly in.
+      if (c.subFull) {
+        const n = Math.round(clamp((tp - 0.35) / 0.55, 0, 1) * c.subFull.length);
+        if (n !== c.subN) {
+          c.sub.textContent = c.subFull.slice(0, n);
+          c.sub.classList.toggle('typing', n > 0 && n < c.subFull.length);
+          c.subN = n;
+        }
+      }
       for (let i = 0; i < N; i++) {
         const u = i - c.cur, a = Math.abs(u);
         const pop = Math.exp(-a * a * 0.8);   // 1 at the hero, easing out over more cards — pops the hero out gradually (no snap)
@@ -2696,9 +2712,9 @@
     }));
 
     buildCarousels(document.getElementById('pcarAll'), [
-      { side: 'right',  text: 'be&nbsp;<em>bold</em>',                   imgs: galleryImgs(1, 16)  },
-      { side: 'left',   text: 'tell your&nbsp;<em>story</em>',          imgs: galleryImgs(17, 16) },
-      { side: 'bottom', text: 'make your brand&nbsp;<em>Resonate</em>', imgs: galleryImgs(33, 16) }
+      { side: 'right',  text: 'be&nbsp;<em>bold</em>',                   sub: "Timid doesn't get remembered.", imgs: galleryImgs(1, 16)  },
+      { side: 'left',   text: 'tell your&nbsp;<em>story</em>',          sub: 'Motion that means something.',   imgs: galleryImgs(17, 16) },
+      { side: 'bottom', text: 'make your brand&nbsp;<em>Resonate</em>', sub: 'Felt long after the scroll.',    imgs: galleryImgs(33, 16) }
     ]);
 
     const rev = makeRevealObserver();
