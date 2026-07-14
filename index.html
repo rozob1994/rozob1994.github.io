@@ -197,7 +197,7 @@
 
     /* top padding = base + the 15% reel reduction, so the empty space above the
        intro is part of THIS section (continuous with the rest of the work bg). */
-    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px 110px 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px 0 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
     /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
     #work .work-intro{color:#15161d}
     #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
@@ -1172,20 +1172,24 @@
        three hero-stacks stacked one screen apart; scrolling slides the track so
        each carousel rolls up and out and the next rises in from below — no fades,
        no section edges. Each carousel swipes in along its arc, then cycles. ── */
+    /* The whole 3D-designs block is full-bleed and carries the grid, so the grid
+       spans the entire gallery seamlessly and scrolls with the page (the pinned
+       canvas above is transparent). A single full-width line separates it from the
+       work grid above and the grid runs right up to that line — no fades. */
+    #mofid3dBlock{position:relative;width:100vw;margin-left:calc(50% - 50vw);padding:0;
+      border-top:1px solid rgba(255,255,255,.85);
+      background-image:
+        repeating-linear-gradient(to right, rgba(255,255,255,.85) 0 1px, transparent 1px 156px),
+        repeating-linear-gradient(to bottom, rgba(255,255,255,.85) 0 1px, transparent 1px 156px);
+      background-position:0 0}
+    #mofid3dBlock .pcar-all{width:100%;margin-left:0}
     .pcar-all{position:relative;width:100vw;margin-left:calc(50% - 50vw)}  /* full-bleed past #work padding; height set by JS */
-    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;
-      background-image:repeating-linear-gradient(to right,rgba(255,255,255,.8) 0 1px,transparent 1px 78px),repeating-linear-gradient(to bottom,rgba(255,255,255,.8) 0 1px,transparent 1px 78px);
-      background-position:0 0}   /* thin white grid; position driven by scroll in JS */
-    /* soft strip over the top so a neighbouring carousel can't poke past the nav */
-    .pcar-mask{position:absolute;top:0;left:0;width:100%;height:17vh;z-index:340;pointer-events:none;
-      background:linear-gradient(#e9e9ec 58%,rgba(233,233,236,0))}
+    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden}   /* grid lives on the block below so it spans the whole gallery seamlessly */
     .pcar-track{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
     .pcar-stage{position:absolute;left:0;width:100%;height:100vh}     /* top set by JS (k * 100vh) */
     .pcar-text{position:absolute;top:50%;opacity:0;transform:translateY(-50%) translateY(var(--ty,0));z-index:6;white-space:nowrap;
       font-family:var(--font-display);font-weight:800;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
     .pcar-text em{font-style:normal;color:#0d1fd4}
-    /* grid-free zone behind the title+subtext (same grey as the page — no visible frame) */
-    .pcar-text::before{content:'';position:absolute;z-index:-1;background:#e9e9ec;inset:-42px -58px -34px -46px}
     .pcar-sub{display:block;margin-top:12px;text-align:left;font-family:var(--font-mono);font-weight:400;
       font-size:clamp(11px,0.95vw,14px);letter-spacing:.03em;line-height:1.3;color:rgba(21,22,29,0.55);min-height:1.3em}
     .pcar-sub.typing::after{content:'';display:inline-block;width:2px;height:1em;background:currentColor;
@@ -1244,10 +1248,20 @@
       .work-intro{margin-bottom:clamp(34px,4.5vh,54px)}
     }
 
-    /* Back-to-top button at the bottom of the work section (light theme) */
-    .back-to-top{display:flex;align-items:center;gap:10px;margin:clamp(48px,6vw,96px) auto 0;padding:13px 26px;background:transparent;border:1px solid rgba(0,0,0,0.24);color:#15161d;font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:none;transition:background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
-    .back-to-top svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .back-to-top:hover{background:#15161d;border-color:#15161d;color:#e9e9ec}
+    /* Back-to-top: a circled up-arrow on the right of the contact section, bobbing
+       up and down to invite a click (no label — the gesture reads on its own). */
+    .scroll-top-arrow{position:absolute;right:clamp(22px,4vw,72px);top:50%;transform:translateY(-50%);
+      width:52px;height:52px;border-radius:50%;background:transparent;border:1px solid rgba(0,0,0,0.28);
+      display:flex;align-items:center;justify-content:center;cursor:none;pointer-events:auto;z-index:4;
+      transition:background .3s var(--ease),border-color .3s var(--ease)}
+    .scroll-top-arrow svg{width:20px;height:20px;stroke:#15161d;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+      animation:scrollTopBob 1.5s var(--ease) infinite}
+    .scroll-top-arrow:hover{background:rgba(0,0,0,0.06);border-color:rgba(0,0,0,0.5)}
+    @keyframes scrollTopBob{0%,100%{transform:translateY(3px)}50%{transform:translateY(-3px)}}
+    @media(max-width:760px){
+      .scroll-top-arrow{right:50%;top:auto;bottom:clamp(20px,5vh,40px);transform:translateX(50%);width:46px;height:46px}
+    }
+    @media(prefers-reduced-motion:reduce){ .scroll-top-arrow svg{animation:none} }
 
     @media(max-width:760px){
       .col-grid{grid-template-columns:1fr;gap:0}
@@ -1332,7 +1346,6 @@
       <div class="work-grid2" id="mofidGrid"></div>
     </div>
     <div class="rest-block" id="mofid3dBlock">
-      <div class="rest-label">3D Designs</div>
       <div class="pcar-all" id="pcarAll"></div>
     </div>
   </div><!-- end mofidPanel -->
@@ -1344,10 +1357,6 @@
       <div class="work-grid2" id="personalGrid"></div>
     </div>
   </div><!-- end personalPanel -->
-  <button id="backToTop" class="back-to-top" aria-label="Back to top">
-    <svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>
-    <span>Back to top</span>
-  </button>
 </section>
 
 <section id="about">
@@ -1406,6 +1415,9 @@
           <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-cta">Start a project</a>
         </div>
       </div>
+      <button id="backToTop" class="scroll-top-arrow" aria-label="Back to top" title="Back to top">
+        <svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>
+      </button>
       </div>
     </div>
   </div>
@@ -1421,7 +1433,7 @@
   <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   close
 </button>
-<div id="projectOverlay" role="dialog" aria-modal="true" aria-label="Project detail">
+<div id="projectOverlay" role="dialog" aria-modal="true" aria-label="Project detail" data-lenis-prevent>
   <div class="po-inner">
     <div class="po-hero">
       <div class="po-hero-placeholder">hero image</div>
@@ -1453,7 +1465,7 @@
   <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   close
 </button>
-<div id="mofidOverlay" role="dialog" aria-modal="true" aria-label="Mofid Securities">
+<div id="mofidOverlay" role="dialog" aria-modal="true" aria-label="Mofid Securities" data-lenis-prevent>
   <div class="mofid-ov-inner" id="mofidOvInner">
     <div class="mofid-ov-header">
       <h2 class="mofid-ov-title">Mofid Securities</h2>
@@ -2130,21 +2142,16 @@
     window._switchWorkTab = switchTab;
   })();
 
-  // Back-to-top button (bottom of the work section, both tabs)
+  // Back-to-top arrow (right side of the contact section) — returns to the very top.
   (function initBackToTop() {
     var btn = document.getElementById('backToTop');
-    var work = document.getElementById('work');
-    if (!btn || !work) return;
+    if (!btn) return;
     btn.addEventListener('click', function () {
-      // Land on the tabs (with breathing room under the ribbon) — the studio
-      // subtext scrolls out of view so it never stacks with the ECCHO logo.
-      var header = work.querySelector('.work-header');
-      var nav = document.getElementById('navbar');
-      var navH = nav ? nav.offsetHeight : 72;
-      var target = header
-        ? (header.getBoundingClientRect().top + window.scrollY - navH - 28)
-        : work.offsetTop;
-      window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      if (window.__lenis && typeof window.__lenis.scrollTo === 'function') {
+        window.__lenis.scrollTo(0, { duration: 1.2 });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     });
   })();
 
@@ -2506,8 +2513,7 @@
     host.innerHTML = '';
     const sticky = document.createElement('div'); sticky.className = 'pcar-sticky';
     const track = document.createElement('div'); track.className = 'pcar-track';
-    const mask = document.createElement('div'); mask.className = 'pcar-mask';
-    sticky.appendChild(track); sticky.appendChild(mask); host.appendChild(sticky);
+    sticky.appendChild(track); host.appendChild(sticky);
 
     const ANCH = { right: [0.60, 0.63], left: [0.40, 0.63], bottom: [0.50, 0.71] };
     const cars = configs.map(function (cfg, k) {
@@ -2532,13 +2538,14 @@
         side: cfg.side, dir: cfg.side === 'left' ? -1 : 1, horizontal: cfg.side === 'bottom',
         stage: stage, text: text, sub: sub, subFull: cfg.sub || '', subN: -1,
         pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1,
-        ax: ANCH[cfg.side][0], ay: ANCH[cfg.side][1], panX: 0, panY: 0, panTX: 0, panTY: 0
+        ax: ANCH[cfg.side][0], ay: ANCH[cfg.side][1], panX: 0, panY: 0, panTX: 0, panTY: 0,
+        rev: 0, revT: 0, isActive: false, typer: 0
       };
     });
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, gaps, cycStart;
+    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, gaps, cycStart;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
@@ -2551,7 +2558,8 @@
       CYCLE = (N - 1) * STEP;     // scroll to cycle one carousel's hero end-to-end
       SHIFT = Math.round(vh * 1.3);   // slide between carousels
       SHIFT23 = Math.round(vh * 2.1); // bigger slide before carousel #3
-      LEADIN = Math.round(vh * 0.45); // carousel #1's own entrance — short, so it appears quickly
+      LEADIN = Math.round(vh * 0.20); // carousel #1 starts cycling shortly after the section pins
+      IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2570,20 +2578,11 @@
         if (c.heroIdx >= 0) c.cards[c.heroIdx].classList.remove('hero');
         c.cards[hero].classList.add('hero'); c.heroIdx = hero;
       }
-      // Text swipes up from below as the carousel enters (tied to the eased card
-      // entrance, so it reverses and disappears when scrolling back up).
-      const tp = clamp(1 - Math.max(0, -c.cur) / ENTRANCE, 0, 1);
-      c.text.style.opacity = tp.toFixed(3);
-      c.text.style.setProperty('--ty', ((1 - tp) * TXTOFF).toFixed(1) + 'px');
-      // Subtext types in (and un-types on scroll-up) once the title is mostly in.
-      if (c.subFull) {
-        const n = Math.round(clamp((tp - 0.35) / 0.55, 0, 1) * c.subFull.length);
-        if (n !== c.subN) {
-          c.sub.textContent = c.subFull.slice(0, n);
-          c.sub.classList.toggle('typing', n > 0 && n < c.subFull.length);
-          c.subN = n;
-        }
-      }
+      // Title fades + slides up on its own smooth ease (c.rev, driven in frame()),
+      // independent of the exact scroll position — no snap. The subtext is typed
+      // in / out by a timer (setActiveCar), so it reads letter-by-letter smoothly.
+      c.text.style.opacity = c.rev.toFixed(3);
+      c.text.style.setProperty('--ty', ((1 - c.rev) * TXTOFF).toFixed(1) + 'px');
       for (let i = 0; i < N; i++) {
         const u = i - c.cur, a = Math.abs(u);
         const pop = Math.exp(-a * a * 0.8);   // 1 at the hero, easing out over more cards — pops the hero out gradually (no snap)
@@ -2619,7 +2618,7 @@
     // Where is the track (in carousel units) and what should each carousel's hero
     // index (cur) be, purely as a function of scroll depth g.
     function trackUnits(g) {
-      if (g <= cycStart[0]) return -1 + g / cycStart[0];   // lead-in: carousel 0 rises up from below (like #2/#3)
+      if (g <= cycStart[0]) return 0;   // #1 sits in place — it swipes in along its arc (and rides in with the section as it enters), so no empty vertical scroll
       for (let k = 0; k < M; k++) {
         const cs = cycStart[k];
         if (g <= cs + CYCLE) {
@@ -2630,8 +2629,15 @@
       return M - 1;
     }
     function carTarget(k, g) {
-      const cs = cycStart[k], inLen = gaps[k];      // entrance window = the gap before carousel k
-      if (g < cs - inLen) return -ENTRANCE;         // not reached yet — fanned out below
+      const cs = cycStart[k];
+      if (k === 0) {
+        // #1's arc swipe-in runs across [IN0 .. cs] — it STARTS before the pin (g<0,
+        // section still entering) so the cards are already fanning in as it arrives.
+        if (g >= cs) return clamp((g - cs) / STEP, 0, N - 1);   // cycling
+        return -ENTRANCE * (1 - easeIO(clamp((g - IN0) / (cs - IN0), 0, 1)));
+      }
+      const inLen = gaps[k];                         // entrance window = the gap before carousel k
+      if (g < cs - inLen) return -ENTRANCE;          // not reached yet — fanned out below
       if (g < cs) return -ENTRANCE * (1 - easeIO((g - (cs - inLen)) / inLen));  // swipe in along the arc
       if (g <= cs + CYCLE) return clamp((g - cs) / STEP, 0, N - 1);             // cycling
       return N - 1;                                  // done — held at the last card
@@ -2652,6 +2658,8 @@
         const c = cars[k];
         c.cur += (c.target - c.cur) * EASE;
         if (Math.abs(c.target - c.cur) < 0.001) c.cur = c.target; else moving = true;
+        c.rev += (c.revT - c.rev) * 0.07;   // title fade/slide eases on its own — smooth, not scroll-snapped
+        if (Math.abs(c.revT - c.rev) < 0.002) c.rev = c.revT; else moving = true;
         c.panX += (c.panTX - c.panX) * 0.06; c.panY += (c.panTY - c.panY) * 0.06;
         if (Math.abs(c.panTX - c.panX) > 0.001 || Math.abs(c.panTY - c.panY) > 0.001) moving = true;
         c.pcarEl.style.perspectiveOrigin = (50 - c.panX * PANO).toFixed(2) + '% ' + (50 - c.panY * PANO).toFixed(2) + '%';
@@ -2672,12 +2680,38 @@
       kick();
     }, { passive: true });
 
+    // Whichever carousel is front-most reveals its title (smooth ease) and types
+    // its subtext; the others hide + un-type. Self-contained, not tied to scroll pos.
+    function setActiveCar(c, on) {
+      c.revT = on ? 1 : 0;
+      if (c.isActive === on) return;
+      c.isActive = on;
+      if (c.typer) { clearInterval(c.typer); c.typer = 0; }
+      if (!c.subFull) return;
+      if (on) {
+        let i = c.sub.textContent.length;
+        c.sub.classList.add('typing');
+        c.typer = setInterval(function () {
+          i++; c.sub.textContent = c.subFull.slice(0, i);
+          if (i >= c.subFull.length) { clearInterval(c.typer); c.typer = 0; c.sub.classList.remove('typing'); }
+        }, 30);
+      } else {
+        let i = c.sub.textContent.length;
+        c.typer = setInterval(function () {
+          i--; if (i < 0) i = 0; c.sub.textContent = c.subFull.slice(0, i);
+          if (i <= 0) { clearInterval(c.typer); c.typer = 0; c.sub.classList.remove('typing'); }
+        }, 15);
+      }
+    }
+
     function onScroll() {
       if (!started) return;
-      curG = Math.max(0, -host.getBoundingClientRect().top);
+      const raw = -host.getBoundingClientRect().top;   // signed: negative while the section is still entering
+      curG = Math.max(0, raw);
       track.style.transform = 'translateY(' + (-trackUnits(curG) * vhPx).toFixed(1) + 'px)';
-      sticky.style.backgroundPositionY = (-curG * 0.5).toFixed(0) + 'px';   // grid drifts with the scroll
-      for (let k = 0; k < M; k++) cars[k].target = carTarget(k, curG);
+      const activeK = clamp(Math.round(trackUnits(curG)), 0, M - 1);
+      // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
+      for (let k = 0; k < M; k++) { cars[k].target = carTarget(k, k === 0 ? raw : curG); setActiveCar(cars[k], k === activeK); }
       kick();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -4095,6 +4129,20 @@
   function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
   requestAnimationFrame(raf);
   window.__lenis = lenis;
+  // Pause smooth-scroll while a full-screen overlay is open, so the wheel drives the
+  // overlay's own scroll (it also carries data-lenis-prevent) and never the page behind.
+  function syncLenis() {
+    var open = document.querySelector('#projectOverlay.po-open, #mofidOverlay.mofid-open, .mofid-expand-panel.open, #poLightbox.open');
+    if (open) lenis.stop(); else lenis.start();
+  }
+  var mo = new MutationObserver(syncLenis);
+  ['projectOverlay', 'mofidOverlay', 'poLightbox'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) mo.observe(el, { attributes: true, attributeFilter: ['class'] });
+  });
+  // Expand panels are created inside the Mofid overlay at runtime — watch subtree there only.
+  var mov = document.getElementById('mofidOverlay');
+  if (mov) mo.observe(mov, { attributes: true, subtree: true, attributeFilter: ['class'] });
 })();
 </script>
 <script type="importmap">{"imports": {"three": "./vendor/three.module.min.js"}}</script>
