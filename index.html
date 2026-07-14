@@ -1172,19 +1172,19 @@
        three hero-stacks stacked one screen apart; scrolling slides the track so
        each carousel rolls up and out and the next rises in from below — no fades,
        no section edges. Each carousel swipes in along its arc, then cycles. ── */
-    /* The whole 3D-designs block is full-bleed and carries the grid, so the grid
-       spans the entire gallery seamlessly and scrolls with the page (the pinned
-       canvas above is transparent). A single full-width line separates it from the
-       work grid above and the grid runs right up to that line — no fades. */
+    /* The 3D-designs block is full-bleed so its top line (works ↔ gallery divider)
+       hits the screen edges. A single full-width line, no fades. */
     #mofid3dBlock{position:relative;width:100vw;margin-left:calc(50% - 50vw);padding:0;
-      border-top:1px solid rgba(255,255,255,.85);
-      background-image:
-        repeating-linear-gradient(to right, rgba(255,255,255,.85) 0 1px, transparent 1px 156px),
-        repeating-linear-gradient(to bottom, rgba(255,255,255,.85) 0 1px, transparent 1px 156px);
-      background-position:0 0}
+      border-top:1px solid rgba(255,255,255,.85)}
     #mofid3dBlock .pcar-all{width:100%;margin-left:0}
     .pcar-all{position:relative;width:100vw;margin-left:calc(50% - 50vw)}  /* full-bleed past #work padding; height set by JS */
-    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden}   /* grid lives on the block below so it spans the whole gallery seamlessly */
+    /* The grid lives on the pinned 100vh canvas (screen-sized → the 1px lines stay
+       crisp; on a multi-thousand-px element the browser drops every other line).
+       Since the canvas is pinned for the whole gallery it spans the section; its
+       background-position drifts with scroll (set in JS) so the grid moves. */
+    .pcar-sticky{position:sticky;top:0;height:100vh;overflow:hidden;
+      background-image:repeating-linear-gradient(to right,rgba(255,255,255,.85) 0 1px,transparent 1px 156px),repeating-linear-gradient(to bottom,rgba(255,255,255,.85) 0 1px,transparent 1px 156px);
+      background-position:0 0}
     .pcar-track{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
     .pcar-stage{position:absolute;left:0;width:100%;height:100vh}     /* top set by JS (k * 100vh) */
     .pcar-text{position:absolute;top:50%;opacity:0;transform:translateY(-50%) translateY(var(--ty,0));z-index:6;white-space:nowrap;
@@ -2709,6 +2709,7 @@
       const raw = -host.getBoundingClientRect().top;   // signed: negative while the section is still entering
       curG = Math.max(0, raw);
       track.style.transform = 'translateY(' + (-trackUnits(curG) * vhPx).toFixed(1) + 'px)';
+      sticky.style.backgroundPositionY = Math.round(-curG * 0.5) + 'px';   // grid drifts with the scroll (integer → no sub-pixel seam)
       const activeK = clamp(Math.round(trackUnits(curG)), 0, M - 1);
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
       for (let k = 0; k < M; k++) { cars[k].target = carTarget(k, k === 0 ? raw : curG); setActiveCar(cars[k], k === activeK); }
