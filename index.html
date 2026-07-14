@@ -197,7 +197,7 @@
 
     /* top padding = base + the 15% reel reduction, so the empty space above the
        intro is part of THIS section (continuous with the rest of the work bg). */
-    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px clamp(100px,14vh,190px) 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
+    #work{padding:calc(80px + (100vh - 420px) * 0.05) 56px 0 56px;background:#e9e9ec;position:relative;overflow:visible;z-index:22}
     /* Work section: light theme (FutureDeluxe-style) — flip text to dark */
     #work .work-intro{color:#15161d}
     #work .work-intro .wi-soft{color:rgba(21,22,29,0.4)}
@@ -2563,7 +2563,7 @@
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, gaps, cycStart;
+    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, TAIL, gaps, cycStart;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
@@ -2578,12 +2578,13 @@
       SHIFT23 = Math.round(vh * 2.1); // bigger slide before carousel #3
       LEADIN = Math.round(vh * 0.20); // carousel #1 starts cycling shortly after the section pins
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
+      TAIL = Math.round(vh * 0.85);   // after #3, roll the gallery up and out over this scroll → gridded breathing space before About
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
       for (let k = 1; k < M; k++) cycStart[k] = cycStart[k - 1] + CYCLE + gaps[k];
       cars.forEach(function (c, k) { c.stage.style.top = (k * 100) + 'vh'; });
-      host.style.height = (vh + cycStart[M - 1] + CYCLE) + 'px';
+      host.style.height = (vh + cycStart[M - 1] + CYCLE + TAIL) + 'px';
       sizeGrid();
     }
     dims();
@@ -2645,7 +2646,10 @@
           return (k - 1) + (g - (cs - gaps[k])) / gaps[k];   // sliding (k-1) → k
         }
       }
-      return M - 1;
+      // Past the last cycle: roll the whole gallery up and out over TAIL, leaving the
+      // grid alone on screen (gridded breathing space) before the About section.
+      const cycEnd = cycStart[M - 1] + CYCLE;
+      return (M - 1) + Math.min(1, Math.max(0, (g - cycEnd) / TAIL));
     }
     function carTarget(k, g) {
       const cs = cycStart[k];
