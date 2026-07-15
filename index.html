@@ -330,8 +330,10 @@
     /* One centred row: heading, then the two taglines flanking the hero ball (the
        ball itself is the 3D sphere, placed onto #aboutBallSlot by the WebGL code). */
     .about-center{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
-      gap:clamp(22px,3.4vw,60px);padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1500px;margin:0 auto}
-    .about-ball-slot{flex:0 0 auto;width:clamp(110px,12vw,190px);height:clamp(110px,12vw,190px)}
+      gap:clamp(40px,6vw,110px);padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1500px;margin:0 auto}
+    /* the two taglines + ball form a tight cluster (bound close to the ball) */
+    .about-tag{display:flex;align-items:center;gap:clamp(6px,0.7vw,12px);flex:0 0 auto}
+    .about-ball-slot{flex:0 0 auto;width:clamp(88px,8vw,120px);height:clamp(88px,8vw,120px)}
     .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
     .about-heading em{font-style:normal;color:var(--yellow)}
     /* word-by-word swipe animation */
@@ -494,6 +496,7 @@
       /* About */
       .about-center{flex-direction:column;align-items:flex-start;padding:90px 28px;gap:26px}
       .about-heading{width:auto}
+      .about-tag{flex-direction:column;align-items:flex-start;gap:10px}
       .about-intro,.about-body{text-align:left;max-width:none}
       .about-ball-slot{display:none}   /* 3D ball is skipped on touch */
 
@@ -1411,9 +1414,11 @@
   </div>
   <div class="about-center" id="aboutCenter">
     <h2 class="about-heading" id="aboutHeading"><span class="aw">GOOD</span> <span class="aw">DESIGN</span> <span class="aw"><em>ECHOES</em></span></h2>
-    <p class="about-intro">We bring your vision to life.</p>
-    <div class="about-ball-slot" id="aboutBallSlot" aria-hidden="true"></div>
-    <p class="about-body">And make sure it stands out.</p>
+    <div class="about-tag">
+      <p class="about-intro">We bring your vision to life.</p>
+      <div class="about-ball-slot" id="aboutBallSlot" aria-hidden="true"></div>
+      <p class="about-body">And make sure it stands out.</p>
+    </div>
   </div><!-- end about-center -->
 </section>
 
