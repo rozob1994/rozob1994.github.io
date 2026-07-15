@@ -2578,6 +2578,10 @@
       const wCss = sticky.clientWidth, hCss = sticky.clientHeight;
       gridCanvas.width = gW = Math.round(wCss * gDPR);
       gridCanvas.height = gH = Math.round(hCss * gDPR);
+      // Pin the CSS size too, else the canvas shows at its buffer size (dpr× too big,
+      // rendered at 1× and upscaled → soft). Now buffer maps 1:1 to device pixels.
+      gridCanvas.style.width = wCss + 'px';
+      gridCanvas.style.height = hCss + 'px';
       gGRID = Math.round(156 * gDPR); gLW = Math.max(1, Math.round(gDPR));
     }
     function drawGrid(offsetCss) {
