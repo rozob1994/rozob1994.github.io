@@ -326,14 +326,16 @@
     #echoField{position:relative;background:#0d1fd4;height:220vh}
     #aboutStage{position:sticky;top:0;height:100vh;overflow:hidden}
     #about3d{position:absolute;inset:0;pointer-events:none;z-index:0}
-    #about{position:absolute;inset:0;background:transparent;z-index:1;display:flex;align-items:center;justify-content:center}
+    #aboutPulse{position:absolute;inset:0;pointer-events:none;z-index:1}   /* pulse rings drawn in 2D (real thickness) */
+    #about{position:absolute;inset:0;background:transparent;z-index:2;display:flex;align-items:center;justify-content:center}
 
     /* Taglines flank the ball, sat low on the screen; hidden until the ball settles
        (revealed one at a time, each with a pulse — see the WebGL module). */
     .about-center{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
-      transform:translateY(clamp(80px,16vh,220px));padding:0 clamp(28px,5vw,80px);max-width:1500px;margin:0 auto}
-    .about-tag{display:flex;align-items:center;gap:clamp(6px,0.7vw,12px);flex:0 0 auto}
-    .about-intro,.about-body{opacity:0;transition:opacity .6s var(--ease)}
+      padding:0 clamp(28px,5vw,80px);max-width:1600px;margin:0 auto}
+    /* equal-width taglines → the slot (and ball) sit dead-centre; the gap pushes them off the ball */
+    .about-tag{display:flex;align-items:center;gap:clamp(28px,4vw,80px);flex:0 0 auto}
+    .about-intro,.about-body{flex:0 0 clamp(150px,17vw,250px);opacity:0;transition:opacity .6s var(--ease)}
     .about-intro.show,.about-body.show{opacity:1}
     .about-ball-slot{flex:0 0 auto;width:clamp(88px,8vw,120px);height:clamp(88px,8vw,120px)}
     .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
@@ -1416,12 +1418,13 @@
 <div id="echoField">
   <div id="aboutStage">
     <canvas id="about3d" aria-hidden="true"></canvas>
+    <canvas id="aboutPulse" aria-hidden="true"></canvas>
     <section id="about">
       <div class="about-center" id="aboutCenter">
         <div class="about-tag">
-          <p class="about-intro">We bring your vision to life.</p>
+          <p class="about-intro">We bring your vision to life</p>
           <div class="about-ball-slot" id="aboutBallSlot" aria-hidden="true"></div>
-          <p class="about-body">And make sure it stands out.</p>
+          <p class="about-body">And make sure it stands out</p>
         </div>
       </div><!-- end about-center -->
     </section>
@@ -3419,7 +3422,11 @@
       navbar.classList.toggle('on-light', onLight || isScrolled);
       navbar.classList.toggle('on-blue', onBlue && !isScrolled);
       navbar.classList.toggle('scrolled', isScrolled);
-      navbar.classList.remove('hidden'); // header stays visible at all scroll positions
+      // Hide (swipe up) the top banner while the immersive About hero fills the screen.
+      const ef = document.getElementById('echoField');
+      const efr = ef ? ef.getBoundingClientRect() : null;
+      const inHero = !!efr && efr.top <= 4 && efr.bottom > window.innerHeight * 0.6;
+      navbar.classList.toggle('hidden', inHero);
     }
     window.addEventListener('scroll', updateNav, {passive:true});
     updateNav();
@@ -4398,7 +4405,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   // One shape family: spheres only, assorted modest sizes, 10 total
   const defs = [];
   for (let i = 0; i < 10; i++) {
-    const rad = 0.3 + Math.random() * 0.45;
+    const rad = 0.28 + Math.random() * 0.34;   // ≤ 0.62 — never more than 50% of the hero (r 1.26)
     defs.push({geo: new THREE.SphereGeometry(rad, 48, 48), r: rad});
   }
 
@@ -4427,26 +4434,57 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const heroR = 1.26, heroSpin = 0.0016;
   const hero = new THREE.Mesh(new THREE.SphereGeometry(heroR, 64, 64), matte);
   scene.add(hero);
-  // thin ring-pulses (constant-width lines → stay thin as they grow)
-  const circPts = []; const RSEG = 100;
-  for (let i = 0; i <= RSEG; i++) { const a = i / RSEG * Math.PI * 2; circPts.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0)); }
-  const circGeo = new THREE.BufferGeometry().setFromPoints(circPts);
-  const rings = [];
-  for (let i = 0; i < 6; i++) {
-    const mat = new THREE.LineBasicMaterial({ color: 0xf5d94e, transparent: true, opacity: 0.55 });  // own material → each ring fades independently
-    const m = new THREE.LineLoop(circGeo, mat); m.visible = false; scene.add(m);
-    rings.push({ mesh: m, mat: mat, rad: 0, active: false });
+  // ── Pulse rings drawn on a 2D overlay (#aboutPulse) so they have REAL thickness
+  //    (WebGL lines are stuck at 1px). Each ring keeps its world radius for the
+  //    physics; on screen it is thick near the hero, thinning toward the edges but
+  //    never vanishing — it just exits the screen. ──
+  const pulseCanvas = document.getElementById('aboutPulse');
+  const pctx = pulseCanvas ? pulseCanvas.getContext('2d') : null;
+  let pW = 0, pH = 0, pDPR = 1;
+  function sizePulse() {
+    if (!pulseCanvas) return;
+    pDPR = window.devicePixelRatio || 1;
+    const w = stage.clientWidth, h = stage.clientHeight;
+    pulseCanvas.width = pW = Math.round(w * pDPR);
+    pulseCanvas.height = pH = Math.round(h * pDPR);
+    pulseCanvas.style.width = w + 'px'; pulseCanvas.style.height = h + 'px';
   }
+  const rings = [];
+  for (let i = 0; i < 7; i++) rings.push({ rad: 0, active: false });
   let ringMaxR = 20, ringTimer = 1.0, lastT = performance.now();
   const RING_INTERVAL = 3.0, RING_SPEED = 3.4;   // seconds between pulses / world-units per second
+  const PULSE_THICK = 4.0;                        // base ring thickness (CSS px) — noticeably thicker than the old hairline
   const tmpH = new THREE.Vector3();
+  function drawPulses() {
+    if (!pctx || !pW || !slotEl) return;
+    pctx.clearRect(0, 0, pW, pH);
+    const cr = canvas.getBoundingClientRect(), sr = slotEl.getBoundingClientRect();
+    const cx = (sr.left + sr.width / 2 - cr.left) * pDPR;
+    const cy = (sr.top + sr.height / 2 - cr.top) * pDPR;
+    const pxPerWorld = (pH / 2) / halfH;           // world → device px
+    for (const rg of rings) {
+      if (!rg.active) continue;
+      const f = Math.max(0, 1 - rg.rad / ringMaxR);   // 1 near the hero → 0 at the far corner
+      const k = 0.3 + 0.7 * f;                        // thin toward the edges, but never to nothing
+      pctx.beginPath();
+      pctx.arc(cx, cy, rg.rad * pxPerWorld, 0, Math.PI * 2);
+      pctx.lineWidth = Math.max(1, PULSE_THICK * k * pDPR);
+      pctx.strokeStyle = 'rgba(245,217,78,' + (0.32 + 0.5 * k).toFixed(3) + ')';
+      pctx.stroke();
+    }
+  }
 
-  // ── Scroll-driven entrance: while #aboutStage is pinned, the hero descends from
-  //    above (from behind the gallery) starting 10× its size and shrinks to rest at
-  //    the fixed slot. Once settled it pulses; the two taglines appear one at a time
-  //    with the first two pulses. ──
-  const HERO_START = 10, ENTR_END = 0.55;   // start scale / fraction of the runway used for the descent
-  let settled = false, pulseCount = 0;
+  // ── Scroll-driven entrance: while #aboutStage is pinned the hero descends from
+  //    behind the top at a CONSTANT 3× size to the fixed centred slot. Only once it
+  //    arrives does it shrink (smooth cubic-bezier) to 1× and start pulsing; the two
+  //    taglines then appear one at a time with the first two pulses. ──
+  const HERO_START = 3, ENTR_END = 0.6, SHRINK_DUR = 1.0;
+  const shrinkEase = (function (x1, y1, x2, y2) {
+    const bx = t => 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
+    const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
+    return x => { let lo = 0, hi = 1, t = x; for (let i = 0; i < 22; i++) { t = (lo + hi) / 2; if (bx(t) < x) lo = t; else hi = t; } return by(t); };
+  })(0.6, 0.0, 0.06, 1.0);
+  let settled = false, settleT = 0, pulseCount = 0;
   const introEl = document.querySelector('#about .about-intro');
   const bodyEl  = document.querySelector('#about .about-body');
   function pinProgress() {
@@ -4501,6 +4539,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     aboutTopY = halfH;                                  // top of the field == top of About
     aboutBotY = halfH * (1 - 2 * aboutH / h);           // where About ends and Services begins
     aboutCenterY = (aboutTopY + aboutBotY) / 2;
+    sizePulse();
     placeHero();
   }
   // Keep the hero ball locked onto the HTML slot so the taglines always flank it.
@@ -4516,8 +4555,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       }
     }
     hero.position.set(hx, hy, 0);
-    // Rings reach the far corner of the whole field then reset — clipped at Contact.
-    ringMaxR = Math.hypot(Math.max(hero.position.x + halfW, halfW - hero.position.x), hero.position.y + halfH) + heroR;
+    // Rings expand a bit past the far corner so they fully exit the screen before reset.
+    ringMaxR = Math.hypot(Math.max(hero.position.x + halfW, halfW - hero.position.x),
+                          Math.max(hero.position.y + halfH, halfH - hero.position.y)) + heroR + 2;
   }
   resize();
   new ResizeObserver(resize).observe(section);
@@ -4546,12 +4586,19 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     placeHero();                            // hero locked onto the HTML slot (its settled home)
     speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm
     hero.rotation.y += heroSpin;
-    // Scroll-driven descent: from 10× + high above the frame → 1× at the slot (eased).
+    // Scroll-driven descent: the hero stays a CONSTANT 3× while it drops from behind
+    // the top to the centred slot. descentLift keeps the 3× ball fully above the frame
+    // (hidden) at the start.
     const eIn = Math.min(1, pinProgress() / ENTR_END);
     const eP = 1 - Math.pow(1 - eIn, 3);
-    hero.scale.setScalar(1 + (HERO_START - 1) * (1 - eP));
-    hero.position.y += halfH * 2.4 * (1 - eP);   // start well above the top, descend to the slot
-    settled = eIn >= 0.999;
+    const arrived = eIn >= 0.999;
+    const descentLift = halfH + HERO_START * heroR + 1.5;
+    hero.position.y += descentLift * (1 - eP);
+    // Arrival → shrink 3× → 1× on a smooth cubic-bezier, THEN start pulsing.
+    if (arrived) { if (!settleT) settleT = now; } else { settleT = 0; }
+    const shrinkP = settleT ? Math.min(1, (now - settleT) / 1000 / SHRINK_DUR) : 0;
+    hero.scale.setScalar(HERO_START + (1 - HERO_START) * (settleT ? shrinkEase(shrinkP) : 0));
+    settled = arrived && shrinkP >= 1;
     // Once settled: pulse, and reveal the taglines one at a time with the first two pulses.
     if (settled) {
       ringTimer += dt;
@@ -4563,7 +4610,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
         if (pulseCount === 2 && bodyEl) bodyEl.classList.add('show');
       }
     } else {
-      ringTimer = RING_INTERVAL - 0.5;       // first pulse fires ~0.5s after it settles
+      ringTimer = RING_INTERVAL - 0.4;       // first pulse fires shortly after it settles
       pulseCount = 0;
       if (introEl) introEl.classList.remove('show');
       if (bodyEl) bodyEl.classList.remove('show');
@@ -4571,12 +4618,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     for (const rg of rings) {
       if (!rg.active) continue;
       rg.rad += dt * RING_SPEED;
-      if (rg.rad > ringMaxR) { rg.active = false; rg.mesh.visible = false; continue; }
-      rg.mesh.visible = true;
-      rg.mesh.position.copy(hero.position);
-      rg.mesh.scale.setScalar(rg.rad);
-      rg.mat.opacity = 0.55 * (1 - rg.rad / ringMaxR);   // fade fainter toward the edges until it disappears
+      if (rg.rad > ringMaxR) { rg.active = false; }
     }
+    drawPulses();
     for (const b of bodies) {
       // gentle mouse repulsion
       tmp.subVectors(b.mesh.position, mouse); tmp.z = 0;
