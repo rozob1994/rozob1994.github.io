@@ -320,19 +320,21 @@
     .work-cat{font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--yellow);transform:translateY(10px);transition:transform 0.55s var(--ease) 0.05s,opacity 0.4s 0.05s;opacity:0}
     .work-item:hover .work-cat{transform:translateY(0);opacity:1}
 
-    /* About + Services share one blue field so the hero's ring-pulses can span both
-       (the field is clipped at Contact). The 3D canvas is a child of the field. */
-    #echoField{position:relative;background:#0d1fd4}
+    /* The About "hero" is an immersive full-screen moment: #echoField is a tall
+       runway, #aboutStage pins (sticky) and fills the screen, and the scroll drives
+       the ball's entrance (see the WebGL module). */
+    #echoField{position:relative;background:#0d1fd4;height:220vh}
+    #aboutStage{position:sticky;top:0;height:100vh;overflow:hidden}
     #about3d{position:absolute;inset:0;pointer-events:none;z-index:0}
-    #about{background:transparent;position:relative;overflow:visible;padding:0}
+    #about{position:absolute;inset:0;background:transparent;z-index:1;display:flex;align-items:center;justify-content:center}
 
-    /* Two-column about layout */
-    /* One centred row: heading, then the two taglines flanking the hero ball (the
-       ball itself is the 3D sphere, placed onto #aboutBallSlot by the WebGL code). */
+    /* Taglines flank the ball, sat low on the screen; hidden until the ball settles
+       (revealed one at a time, each with a pulse — see the WebGL module). */
     .about-center{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
-      gap:clamp(40px,6vw,110px);padding:clamp(110px,13vh,180px) clamp(28px,5vw,80px);max-width:1500px;margin:0 auto}
-    /* the two taglines + ball form a tight cluster (bound close to the ball) */
+      transform:translateY(clamp(80px,16vh,220px));padding:0 clamp(28px,5vw,80px);max-width:1500px;margin:0 auto}
     .about-tag{display:flex;align-items:center;gap:clamp(6px,0.7vw,12px);flex:0 0 auto}
+    .about-intro,.about-body{opacity:0;transition:opacity .6s var(--ease)}
+    .about-intro.show,.about-body.show{opacity:1}
     .about-ball-slot{flex:0 0 auto;width:clamp(88px,8vw,120px);height:clamp(88px,8vw,120px)}
     .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
     .about-heading em{font-style:normal;color:var(--yellow)}
@@ -343,11 +345,16 @@
     .about-heading.aw-animate .aw:nth-child(1){animation-delay:0s}
     .about-heading.aw-animate .aw:nth-child(2){animation-delay:0.15s}
     .about-heading.aw-animate .aw:nth-child(3){animation-delay:0.30s}
-    /* right-column staggered fade-rise */
-    @keyframes aboutFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-    .about-intro,.about-body,.about-meta-row{opacity:1}
-    .about-center.ac-animate .about-intro{animation:aboutFadeUp 0.55s var(--ease) 0.5s both}
-    .about-center.ac-animate .about-body{animation:aboutFadeUp 0.55s var(--ease) 0.65s both}
+    /* (taglines are revealed via .show, staggered with the ball's pulses — WebGL module) */
+    #services{display:none}   /* hidden for now — focusing on the About hero moment */
+    /* Touch / reduced-motion: the 3D module is skipped, so drop the pin runway and
+       just show the taglines (no ball entrance). */
+    @media (pointer:coarse), (prefers-reduced-motion:reduce){
+      #echoField{height:auto}
+      #aboutStage{position:relative;height:auto;min-height:100vh;overflow:visible}
+      .about-intro,.about-body{opacity:1}
+      .about-ball-slot{display:none}
+    }
     @media(prefers-reduced-motion:reduce){
       .about-heading .aw,.about-intro,.about-body,.about-meta-row{animation:none!important;opacity:1!important;transform:none!important}
     }
@@ -1407,20 +1414,18 @@
 </section>
 
 <div id="echoField">
-<canvas id="about3d" aria-hidden="true"></canvas>
-<section id="about">
-  <div class="about-marquee-wrap" style="margin-bottom:48px">
-    <div class="about-marquee about-marquee-left"><span class="am-inner"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span><span class="am-inner" aria-hidden="true"><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span><span class="am-o">ECCHO</span><span class="round-dot"></span><span class="am-e">ECCHO</span><span class="round-dot"></span></span></div>
-  </div>
-  <div class="about-center" id="aboutCenter">
-    <h2 class="about-heading" id="aboutHeading"><span class="aw">GOOD</span> <span class="aw">DESIGN</span> <span class="aw"><em>ECHOES</em></span></h2>
-    <div class="about-tag">
-      <p class="about-intro">We bring your vision to life.</p>
-      <div class="about-ball-slot" id="aboutBallSlot" aria-hidden="true"></div>
-      <p class="about-body">And make sure it stands out.</p>
-    </div>
-  </div><!-- end about-center -->
-</section>
+  <div id="aboutStage">
+    <canvas id="about3d" aria-hidden="true"></canvas>
+    <section id="about">
+      <div class="about-center" id="aboutCenter">
+        <div class="about-tag">
+          <p class="about-intro">We bring your vision to life.</p>
+          <div class="about-ball-slot" id="aboutBallSlot" aria-hidden="true"></div>
+          <p class="about-body">And make sure it stands out.</p>
+        </div>
+      </div><!-- end about-center -->
+    </section>
+  </div><!-- end aboutStage -->
 
 <section id="services">
   <div class="svc-wrap">
@@ -4342,10 +4347,12 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (window.matchMedia('(pointer:coarse)').matches) return;   // skip on phones/tablets
   const canvas = document.getElementById('about3d');
-  const section = document.getElementById('echoField');   // canvas spans About + Services
+  const stage = document.getElementById('aboutStage');    // sticky, fills the screen — canvas sizes to this
+  const host = document.getElementById('echoField');      // the tall runway → scroll progress
   const aboutSec = document.getElementById('about');
   const slotEl = document.getElementById('aboutBallSlot');
-  if (!canvas || !section || !aboutSec) return;
+  if (!canvas || !stage || !host || !aboutSec) return;
+  const section = stage;   // canvas sizing / observers use the pinned stage
 
   let renderer;
   try {
@@ -4434,6 +4441,20 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const RING_INTERVAL = 3.0, RING_SPEED = 3.4;   // seconds between pulses / world-units per second
   const tmpH = new THREE.Vector3();
 
+  // ── Scroll-driven entrance: while #aboutStage is pinned, the hero descends from
+  //    above (from behind the gallery) starting 10× its size and shrinks to rest at
+  //    the fixed slot. Once settled it pulses; the two taglines appear one at a time
+  //    with the first two pulses. ──
+  const HERO_START = 10, ENTR_END = 0.55;   // start scale / fraction of the runway used for the descent
+  let settled = false, pulseCount = 0;
+  const introEl = document.querySelector('#about .about-intro');
+  const bodyEl  = document.querySelector('#about .about-body');
+  function pinProgress() {
+    const range = host.offsetHeight - window.innerHeight;   // pinned scroll distance
+    if (range <= 0) return 1;
+    return Math.max(0, Math.min(1, -host.getBoundingClientRect().top / range));
+  }
+
   // Entrance: park each sphere off-screen to the LEFT. When the section first
   // scrolls into view we kick them rightward and let the SAME drift physics
   // (walls + collisions) carry them in — one continuous simulation, so there is
@@ -4506,10 +4527,13 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     visible = es[0].isIntersecting;
     if (visible && !enteredOnce) {
       enteredOnce = true;
-      speedCap = 0.13;                      // brief burst so they sweep in from the left
+      speedCap = 0.15;                      // brief burst so they sweep in
       for (const b of bodies) {
-        b.vel.set(0.085 + Math.random() * 0.06, (Math.random() - 0.5) * 0.05, 0);
-        b.mesh.position.y = -halfH + b.r + Math.random() * (2 * halfH - 2 * b.r);   // sweep in spread across the whole field (About + Services)
+        const ang = Math.random() * Math.PI * 2;
+        const R = halfW * 1.35 + Math.random() * halfW * 0.6;         // start off-screen, all around
+        b.mesh.position.set(Math.cos(ang) * R, Math.sin(ang) * R, b.mesh.position.z);
+        const spd = 0.085 + Math.random() * 0.06;                     // same speed as before
+        b.vel.set(-Math.cos(ang) * spd, -Math.sin(ang) * spd, 0);     // inward, toward the centre
       }
     }
   }, {rootMargin: '100px'}).observe(section);
@@ -4519,12 +4543,31 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     requestAnimationFrame(tick);
     if (!visible) return;
     const now = performance.now(); const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
-    placeHero();                            // keep the ball locked onto the HTML slot every frame
-    speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm — long, smooth tail
-    // Hero: slow spin + emit/expand the thin ring-pulses (constant opacity → no fade)
+    placeHero();                            // hero locked onto the HTML slot (its settled home)
+    speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm
     hero.rotation.y += heroSpin;
-    ringTimer += dt;
-    if (ringTimer >= RING_INTERVAL) { ringTimer = 0; const slot = rings.find(r => !r.active); if (slot) { slot.active = true; slot.rad = heroR; } }
+    // Scroll-driven descent: from 10× + high above the frame → 1× at the slot (eased).
+    const eIn = Math.min(1, pinProgress() / ENTR_END);
+    const eP = 1 - Math.pow(1 - eIn, 3);
+    hero.scale.setScalar(1 + (HERO_START - 1) * (1 - eP));
+    hero.position.y += halfH * 2.4 * (1 - eP);   // start well above the top, descend to the slot
+    settled = eIn >= 0.999;
+    // Once settled: pulse, and reveal the taglines one at a time with the first two pulses.
+    if (settled) {
+      ringTimer += dt;
+      if (ringTimer >= RING_INTERVAL) {
+        ringTimer = 0;
+        const slot = rings.find(r => !r.active); if (slot) { slot.active = true; slot.rad = heroR; }
+        pulseCount++;
+        if (pulseCount === 1 && introEl) introEl.classList.add('show');
+        if (pulseCount === 2 && bodyEl) bodyEl.classList.add('show');
+      }
+    } else {
+      ringTimer = RING_INTERVAL - 0.5;       // first pulse fires ~0.5s after it settles
+      pulseCount = 0;
+      if (introEl) introEl.classList.remove('show');
+      if (bodyEl) bodyEl.classList.remove('show');
+    }
     for (const rg of rings) {
       if (!rg.active) continue;
       rg.rad += dt * RING_SPEED;
@@ -4561,17 +4604,19 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       // gently steered back (no teleporting). Vertically they must stay fully
       // inside the section — bounds are computed at each object's own depth
       // and hard-clamped, so they never get trimmed on any screen size.
+      // Walls only once settled — during the entrance the spheres fly in from
+      // off-screen (all angles), so they must be free to start outside the frame.
       const p = b.mesh.position;
-      const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - p.z);
-      const hw = hh * camera.aspect;
-      const xLim = hw + b.r * 0.5;                    // may exit ~half-way sideways
-      if (p.x >  xLim) b.vel.x -= (p.x - xLim) * 0.0012;
-      if (p.x < -xLim) b.vel.x -= (p.x + xLim) * 0.0012;
-      // vertically: free to roam the whole field — down through Services — but not past
-      // its bottom edge (Contact). They pass behind the frosted Services card, blurred.
-      const yTop = aboutTopY - b.r - 0.35, yBot = -halfH + b.r + 0.35;
-      if (p.y > yTop) { p.y = yTop; if (b.vel.y > 0) b.vel.y *= -0.5; }
-      if (p.y < yBot) { p.y = yBot; if (b.vel.y < 0) b.vel.y *= -0.5; }
+      if (settled) {
+        const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - p.z);
+        const hw = hh * camera.aspect;
+        const xLim = hw + b.r * 0.5;                    // may exit ~half-way sideways
+        if (p.x >  xLim) b.vel.x -= (p.x - xLim) * 0.0012;
+        if (p.x < -xLim) b.vel.x -= (p.x + xLim) * 0.0012;
+        const yTop = aboutTopY - b.r - 0.35, yBot = -halfH + b.r + 0.35;
+        if (p.y > yTop) { p.y = yTop; if (b.vel.y > 0) b.vel.y *= -0.5; }
+        if (p.y < yBot) { p.y = yBot; if (b.vel.y < 0) b.vel.y *= -0.5; }
+      }
     }
     // soft body-vs-body collisions — resolved in the screen plane only so each
     // sphere keeps its fixed depth (and therefore its blur stays steady)
