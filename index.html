@@ -335,8 +335,11 @@
       padding:0 clamp(28px,5vw,80px);max-width:1600px;margin:0 auto}
     /* equal-width taglines → the slot (and ball) sit dead-centre; the gap pushes them off the ball */
     .about-tag{display:flex;align-items:center;gap:clamp(28px,4vw,80px);flex:0 0 auto}
-    .about-intro,.about-body{flex:0 0 clamp(150px,17vw,250px);opacity:0;transition:opacity .6s var(--ease)}
-    .about-intro.show,.about-body.show{opacity:1}
+    /* mask reveal: each line is wiped in (from the ball side) by its pulse */
+    .about-intro,.about-body{flex:0 0 clamp(150px,17vw,250px);transition:clip-path .6s var(--ease)}
+    .about-intro{clip-path:inset(-25% 0 -25% 100%)}   /* hidden → revealed right-to-left */
+    .about-body{clip-path:inset(-25% 100% -25% 0)}    /* hidden → revealed left-to-right */
+    .about-intro.show,.about-body.show{clip-path:inset(-25% 0 -25% 0)}
     .about-ball-slot{flex:0 0 auto;width:clamp(88px,8vw,120px);height:clamp(88px,8vw,120px)}
     .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
     .about-heading em{font-style:normal;color:var(--yellow)}
@@ -354,7 +357,7 @@
     @media (pointer:coarse), (prefers-reduced-motion:reduce){
       #echoField{height:auto}
       #aboutStage{position:relative;height:auto;min-height:100vh;overflow:visible}
-      .about-intro,.about-body{opacity:1}
+      .about-intro,.about-body{clip-path:none}
       .about-ball-slot{display:none}
     }
     @media(prefers-reduced-motion:reduce){
@@ -4434,6 +4437,15 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const heroR = 1.26, heroSpin = 0.0016;
   const hero = new THREE.Mesh(new THREE.SphereGeometry(heroR, 64, 64), matte);
   scene.add(hero);
+  // Very light ground shadow under the hero — fades in as it shrinks into place,
+  // out as it grows/rises. A flattened dark sprite behind the ball.
+  const shCan = document.createElement('canvas'); shCan.width = shCan.height = 128;
+  const shx = shCan.getContext('2d');
+  const shg = shx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  shg.addColorStop(0, 'rgba(0,0,18,0.6)'); shg.addColorStop(0.55, 'rgba(0,0,18,0.22)'); shg.addColorStop(1, 'rgba(0,0,18,0)');
+  shx.fillStyle = shg; shx.fillRect(0, 0, 128, 128);
+  const shadow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(shCan), transparent: true, depthWrite: false, opacity: 0 }));
+  scene.add(shadow);
   // ── Pulse rings drawn on a 2D overlay (#aboutPulse) so they have REAL thickness
   //    (WebGL lines are stuck at 1px). Each ring keeps its world radius for the
   //    physics; on screen it is thick near the hero, thinning toward the edges but
@@ -4465,11 +4477,11 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     for (const rg of rings) {
       if (!rg.active) continue;
       const f = Math.max(0, 1 - rg.rad / ringMaxR);   // 1 near the hero → 0 at the far corner
-      const k = 0.3 + 0.7 * f;                        // thin toward the edges, but never to nothing
+      const k = 0.5 + 0.5 * f;                        // thin toward the edges, but keeps real body (never faint/blurry)
       pctx.beginPath();
       pctx.arc(cx, cy, rg.rad * pxPerWorld, 0, Math.PI * 2);
-      pctx.lineWidth = Math.max(1, PULSE_THICK * k * pDPR);
-      pctx.strokeStyle = 'rgba(245,217,78,' + (0.32 + 0.5 * k).toFixed(3) + ')';
+      pctx.lineWidth = Math.max(1.5 * pDPR, PULSE_THICK * k * pDPR);
+      pctx.strokeStyle = 'rgba(245,217,78,' + (0.5 + 0.4 * k).toFixed(3) + ')';
       pctx.stroke();
     }
   }
@@ -4484,7 +4496,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
     return x => { let lo = 0, hi = 1, t = x; for (let i = 0; i < 22; i++) { t = (lo + hi) / 2; if (bx(t) < x) lo = t; else hi = t; } return by(t); };
   })(0.6, 0.0, 0.06, 1.0);
-  let settled = false, settleT = 0, pulseCount = 0;
+  let settled = false, shrinkP = 0, pulseCount = 0;   // shrinkP: 0 = 3× (entering) → 1 = 1× (settled)
   const introEl = document.querySelector('#about .about-intro');
   const bodyEl  = document.querySelector('#about .about-body');
   function pinProgress() {
@@ -4586,19 +4598,27 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     placeHero();                            // hero locked onto the HTML slot (its settled home)
     speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm
     hero.rotation.y += heroSpin;
-    // Scroll-driven descent: the hero stays a CONSTANT 3× while it drops from behind
-    // the top to the centred slot. descentLift keeps the 3× ball fully above the frame
-    // (hidden) at the start.
-    const eIn = Math.min(1, pinProgress() / ENTR_END);
+    // Descent (scroll-driven, reversible): begins when the gallery/About border reaches
+    // mid-screen and completes over ~1.3 screens; hero stays a CONSTANT 3× throughout.
+    const vhh = window.innerHeight || 1;
+    const topY = host.getBoundingClientRect().top;
+    const eIn = Math.max(0, Math.min(1, (vhh * 0.5 - topY) / (vhh * 1.3)));
     const eP = 1 - Math.pow(1 - eIn, 3);
     const arrived = eIn >= 0.999;
     const descentLift = halfH + HERO_START * heroR + 1.5;
     hero.position.y += descentLift * (1 - eP);
-    // Arrival → shrink 3× → 1× on a smooth cubic-bezier, THEN start pulsing.
-    if (arrived) { if (!settleT) settleT = now; } else { settleT = 0; }
-    const shrinkP = settleT ? Math.min(1, (now - settleT) / 1000 / SHRINK_DUR) : 0;
-    hero.scale.setScalar(HERO_START + (1 - HERO_START) * (settleT ? shrinkEase(shrinkP) : 0));
-    settled = arrived && shrinkP >= 1;
+    // Shrink is smooth AND reversible: it eases to 1× when arrived and rolls back to
+    // 3× when you scroll away (no snap). cubic-bezier(.6,0,.06,1).
+    const srate = dt / SHRINK_DUR;
+    shrinkP = arrived ? Math.min(1, shrinkP + srate) : Math.max(0, shrinkP - srate);
+    const shrinkEased = shrinkEase(shrinkP);
+    hero.scale.setScalar(HERO_START + (1 - HERO_START) * shrinkEased);
+    settled = arrived && shrinkP >= 0.999;
+    // Ground shadow: fades in as it shrinks into place, out as it grows/rises.
+    const hs = hero.scale.x;
+    shadow.material.opacity = 0.34 * shrinkP;
+    shadow.scale.set(heroR * 2.2 * hs, heroR * 0.62 * hs, 1);
+    shadow.position.set(hero.position.x, hero.position.y - heroR * hs * 1.05, -0.15);
     // Once settled: pulse, and reveal the taglines one at a time with the first two pulses.
     if (settled) {
       ringTimer += dt;
@@ -4648,19 +4668,17 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       // gently steered back (no teleporting). Vertically they must stay fully
       // inside the section — bounds are computed at each object's own depth
       // and hard-clamped, so they never get trimmed on any screen size.
-      // Walls only once settled — during the entrance the spheres fly in from
-      // off-screen (all angles), so they must be free to start outside the frame.
+      // Soft walls, always on (no hard snap → nothing pops into view when the hero
+      // finishes shrinking/growing). Beyond the edge the sphere is gently steered
+      // back, which also curves the entrance in from off-screen.
       const p = b.mesh.position;
-      if (settled) {
-        const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - p.z);
-        const hw = hh * camera.aspect;
-        const xLim = hw + b.r * 0.5;                    // may exit ~half-way sideways
-        if (p.x >  xLim) b.vel.x -= (p.x - xLim) * 0.0012;
-        if (p.x < -xLim) b.vel.x -= (p.x + xLim) * 0.0012;
-        const yTop = aboutTopY - b.r - 0.35, yBot = -halfH + b.r + 0.35;
-        if (p.y > yTop) { p.y = yTop; if (b.vel.y > 0) b.vel.y *= -0.5; }
-        if (p.y < yBot) { p.y = yBot; if (b.vel.y < 0) b.vel.y *= -0.5; }
-      }
+      const hh = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - p.z);
+      const hw = hh * camera.aspect;
+      const xLim = hw + b.r * 0.5, yTop = aboutTopY - b.r - 0.35, yBot = -halfH + b.r + 0.35;
+      if (p.x >  xLim) b.vel.x -= (p.x - xLim) * 0.0016;
+      if (p.x < -xLim) b.vel.x -= (p.x + xLim) * 0.0016;
+      if (p.y >  yTop) b.vel.y -= (p.y - yTop) * 0.0016;
+      if (p.y <  yBot) b.vel.y -= (p.y - yBot) * 0.0016;
     }
     // soft body-vs-body collisions — resolved in the screen plane only so each
     // sphere keeps its fixed depth (and therefore its blur stays steady)
