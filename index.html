@@ -327,10 +327,12 @@
     #aboutStage{position:sticky;top:0;height:100vh;overflow:hidden}
     /* Runway: the hero scene stays pinned and fully performs (descend → settle →
        pulse → taglines) across this scroll before the Services card rises over it. */
-    #aboutRunway{height:110vh;pointer-events:none}
-    #about3d{position:absolute;inset:0;pointer-events:none;z-index:0}
-    #aboutPulse{position:absolute;inset:0;pointer-events:none;z-index:1}   /* pulse rings drawn in 2D (real thickness) */
-    #about{position:absolute;inset:0;background:transparent;z-index:2;display:flex;align-items:center;justify-content:center}
+    #aboutRunway{height:150vh;pointer-events:none}
+    /* Stacking (back→front): pulse rings, then the taglines, then the 3D balls on top —
+       so the taglines are always BEHIND the hero ball (they emerge from behind it). */
+    #aboutPulse{position:absolute;inset:0;pointer-events:none;z-index:0}   /* pulse rings drawn in 2D (real thickness) */
+    #about{position:absolute;inset:0;background:transparent;z-index:1;display:flex;align-items:center;justify-content:center}
+    #about3d{position:absolute;inset:0;pointer-events:none;z-index:2}
 
     /* Taglines flank the ball, sat low on the screen; hidden until the ball settles
        (revealed one at a time, each with a pulse — see the WebGL module). */
@@ -4494,7 +4496,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   //    behind the top at a CONSTANT 3× size to the fixed centred slot. Only once it
   //    arrives does it shrink (smooth cubic-bezier) to 1× and start pulsing; the two
   //    taglines then appear one at a time with the first two pulses. ──
-  const HERO_START = 3, ENTR_END = 0.6, SHRINK_DUR = 1.0;
+  const HERO_START = 3, SHRINK_SCROLL = 0.42;   // shrink spans this slice of descRaw AFTER arrival (scroll-driven)
   const shrinkEase = (function (x1, y1, x2, y2) {
     const bx = t => 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
     const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
@@ -4621,16 +4623,16 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     const descRaw = (vhh * 0.5 - topY) / (vhh * 1.3);   // uncapped: >1 means the ball has arrived and scroll continues
     const eIn = Math.max(0, Math.min(1, descRaw));
     const eP = 1 - Math.pow(1 - eIn, 3);
-    const arrived = eIn >= 0.999;
     const descentLift = halfH + HERO_START * heroR + 1.5;
     hero.position.y += descentLift * (1 - eP);
-    // Shrink is smooth AND reversible: it eases to 1× when arrived and rolls back to
-    // 3× when you scroll away (no snap). cubic-bezier(.6,0,.06,1).
-    const srate = dt / SHRINK_DUR;
-    shrinkP = arrived ? Math.min(1, shrinkP + srate) : Math.max(0, shrinkP - srate);
+    // Shrink is SCROLL-DRIVEN (not time-based): once the ball has arrived (descRaw ≥ 1)
+    // it shrinks 3×→1× over the next SHRINK_SCROLL of scroll and grows straight back
+    // when you scroll up. Being pure scroll, it never lags or desyncs from the descent
+    // on fast scrolling, and Services (much further down) can't arrive mid-shrink.
+    shrinkP = Math.max(0, Math.min(1, (descRaw - 1.0) / SHRINK_SCROLL));
     const shrinkEased = shrinkEase(shrinkP);
     hero.scale.setScalar(HERO_START + (1 - HERO_START) * shrinkEased);
-    settled = arrived && shrinkP >= 0.999;
+    settled = shrinkP >= 0.999;
     // Ground shadow: fades in as it shrinks into place, out as it grows/rises.
     const hs = hero.scale.x;
     shadow.material.opacity = 0.34 * shrinkP;
