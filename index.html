@@ -390,22 +390,24 @@
     /* Frosted-glass card — the pinned hero scene behind it is blurred through the glass.
        padding-bottom is breathing space below the titles so the scroll doesn't overshoot
        straight into Contact. */
-    #services{display:block;position:relative;min-height:100vh;color:#14141a;
+    /* Blue frosted glass: same hero blue, a clean thin top edge, blurring whatever
+       (balls, rings) drifts behind it. */
+    #services{display:block;position:relative;min-height:100vh;color:#fff;
       padding:0 0 30vh;overflow:hidden;isolation:isolate;
-      background:rgba(234,232,227,0.5);
-      -webkit-backdrop-filter:blur(40px) saturate(1.18);backdrop-filter:blur(40px) saturate(1.18)}
+      background:rgba(13,31,212,0.5);border-top:1px solid rgba(255,255,255,0.22);
+      -webkit-backdrop-filter:blur(34px) saturate(1.05);backdrop-filter:blur(34px) saturate(1.05)}
     .svc2{position:relative;height:100vh;width:100%}
     /* left column */
     .svc2-brand{position:absolute;top:clamp(26px,4.2vh,52px);left:clamp(26px,4vw,64px);z-index:6;
-      font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em;color:#14141a}
+      font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em;color:#fff}
     .svc2-offer{position:absolute;top:clamp(120px,18vh,206px);left:clamp(26px,4vw,64px);z-index:6;
       display:flex;align-items:center;gap:13px}
     .svc2-offer .dot{width:clamp(13px,1.15vw,17px);height:clamp(13px,1.15vw,17px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
-    .svc2-offer span{font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.55vw,23px);color:#14141a}
-    /* per-service note now sits directly below "What we offer" */
-    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);top:clamp(158px,23vh,258px);max-width:min(27vw,290px);z-index:6;
-      font-family:var(--font-display);font-weight:600;font-size:clamp(13px,1.02vw,16px);line-height:1.34;color:#14141a;
-      opacity:.9;transition:opacity .35s var(--ease)}
+    .svc2-offer span{font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.55vw,23px);color:#fff}
+    /* per-service note (a short paragraph) sits directly below "What we offer" */
+    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);top:clamp(150px,22vh,244px);max-width:min(24vw,262px);z-index:6;
+      font-family:var(--font-body);font-weight:400;font-size:clamp(12.5px,0.92vw,15px);line-height:1.5;color:rgba(255,255,255,0.82);
+      transition:opacity .35s var(--ease)}
     /* image box — sits BEHIND the titles */
     .svc2-box{position:absolute;right:clamp(26px,6vw,110px);top:0;width:clamp(230px,29vw,440px);aspect-ratio:1/1;z-index:2;
       opacity:0;pointer-events:none;background:#eceae6;border:1px solid rgba(0,0,0,.14);overflow:hidden;
@@ -414,14 +416,14 @@
     .svc2-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
     .svc2-box img.on{opacity:1}
     /* the two overlaid lists (base = coloured, mask = dark, clipped to the box) */
-    .svc2-list,.svc2-mask{position:absolute;left:24%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
+    .svc2-list,.svc2-mask{position:absolute;left:28%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
     .svc2-list{z-index:3}
     .svc2-mask{z-index:4;pointer-events:none;clip-path:inset(0 0 100% 0)}   /* hidden until box shows */
     .svc2-item{cursor:none;margin:0 0 clamp(4px,0.7vw,16px)}
     .svc2-item:last-child{margin-bottom:0}
     .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
-      font-size:clamp(34px,5.5vw,83px);line-height:.9;letter-spacing:-.02em;color:#14141a;transition:color .28s var(--ease)}
-    .svc2-item.hot .svc2-name{color:#ffffff}
+      font-size:clamp(34px,5.5vw,83px);line-height:.9;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
+    .svc2-item.hot .svc2-name{color:var(--yellow)}
     .svc2-mask .svc2-name{color:#14141a}
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
@@ -3401,9 +3403,11 @@
       navbar.classList.toggle('on-blue', onBlue && !isScrolled);
       navbar.classList.toggle('scrolled', isScrolled);
       // Hide (swipe up) the top banner while the immersive About hero fills the screen.
+      // Hide early — as the blue section's top reaches mid-screen (when the ball begins
+      // its descent) — so the header is gone before the incoming ball reaches the top.
       const ef = document.getElementById('echoField');
       const efr = ef ? ef.getBoundingClientRect() : null;
-      const inHero = !!efr && efr.top <= 4 && efr.bottom > window.innerHeight * 0.6;
+      const inHero = !!efr && efr.top <= window.innerHeight * 0.5 && efr.bottom > window.innerHeight * 0.6;
       navbar.classList.toggle('hidden', inHero);
     }
     window.addEventListener('scroll', updateNav, {passive:true});
@@ -4225,10 +4229,10 @@
     'logo-animation': 'media/mofid/3d-designs/20.jpg'
   };
   var NOTE = {
-    'product-viz':    'High-fidelity 3D product renders — packshots and hero shots built to sell.',
-    '3d-motion':      'Product-focused 3D animation that gives objects real weight and motion.',
-    '2d-motion':      'Clean, modern 2D animation for explainers, brand stories and social.',
-    'logo-animation': 'Purposeful motion for brand marks — intros, stingers and loops.'
+    'product-viz':    'High-fidelity 3D product renders that make your product the hero of every frame. From clean studio packshots to rich lifestyle scenes, we build photoreal imagery tuned for e-commerce, advertising and brand campaigns — on-brand, precise, and ready to sell.',
+    '3d-motion':      'Product-focused 3D animation that gives objects real weight, material and motion. Launch films, social spots and looping brand moments — physical and tactile, rendered with the same care as a hero still and built to stop the scroll.',
+    '2d-motion':      'Clean, modern 2D animation for explainers, brand stories and social content. Motion that lands an idea quickly, keeps a clear visual voice, and stays memorable long after the last frame — crafted frame by frame around your message.',
+    'logo-animation': 'Purposeful motion for brand marks — intros, stingers and looping idents that give your identity a distinctive on-screen signature. Short, precise pieces of animation that make your logo feel alive wherever it appears.'
   };
   // Stack one <img> per service inside the box; we cross-fade between them.
   var layers = {};
@@ -4277,6 +4281,7 @@
   }
   items.forEach(function (it) { it.addEventListener('mouseenter', function () { hover(it); }); });
   listEl.addEventListener('mouseleave', leave);
+  if (items[0]) hover(items[0]);   // first service + its image is highlighted on arrival
   window.addEventListener('resize', function () {
     if (!curKey) return;
     var it = items.filter(function (x) { return x.dataset.svc === curKey; })[0];
