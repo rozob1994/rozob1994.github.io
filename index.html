@@ -393,24 +393,26 @@
     /* Blue frosted glass: same hero blue, a clean thin top edge, blurring whatever
        (balls, rings) drifts behind it. */
     #services{display:block;position:relative;min-height:100vh;color:#fff;
-      padding:0 0 30vh;overflow:hidden;isolation:isolate;
+      padding:18vh 0 30vh;overflow:hidden;isolation:isolate;   /* top lead-in ≈60% of the bottom breathing space */
       background:rgba(13,31,212,0.5);border-top:1px solid rgba(255,255,255,0.22);
       -webkit-backdrop-filter:blur(34px) saturate(1.05);backdrop-filter:blur(34px) saturate(1.05)}
     .svc2{position:relative;height:100vh;width:100%}
     /* left column */
     .svc2-brand{position:absolute;top:clamp(26px,4.2vh,52px);left:clamp(26px,4vw,64px);z-index:6;
       font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em;color:#fff}
-    .svc2-offer{position:absolute;top:clamp(120px,18vh,206px);left:clamp(26px,4vw,64px);z-index:6;
-      display:flex;align-items:center;gap:13px}
+    /* "What we offer" + the note form one package; its top is aligned in JS to the
+       top of the first service tab. */
+    .svc2-lead{position:absolute;left:clamp(26px,4vw,64px);top:clamp(150px,22vh,244px);z-index:6;max-width:min(24vw,262px)}
+    .svc2-offer{display:flex;align-items:center;gap:13px}
     .svc2-offer .dot{width:clamp(13px,1.15vw,17px);height:clamp(13px,1.15vw,17px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
     .svc2-offer span{font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.55vw,23px);color:#fff}
     /* per-service note (a short paragraph) sits directly below "What we offer" */
-    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);top:clamp(150px,22vh,244px);max-width:min(24vw,262px);z-index:6;
+    .svc2-note{margin:clamp(14px,1.6vw,22px) 0 0;
       font-family:var(--font-body);font-weight:400;font-size:clamp(12.5px,0.92vw,15px);line-height:1.5;color:rgba(255,255,255,0.82);
       transition:opacity .35s var(--ease)}
     /* image box — sits BEHIND the titles */
     .svc2-box{position:absolute;right:clamp(26px,6vw,110px);top:0;width:clamp(230px,29vw,440px);aspect-ratio:1/1;z-index:2;
-      opacity:0;pointer-events:none;background:#eceae6;border:1px solid rgba(0,0,0,.14);overflow:hidden;
+      opacity:0;pointer-events:none;background:transparent;overflow:hidden;
       transition:opacity .4s var(--ease)}
     .svc2.show-box .svc2-box{opacity:1}
     .svc2-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
@@ -424,7 +426,7 @@
     .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
       font-size:clamp(34px,5.5vw,83px);line-height:.9;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
     .svc2-item.hot .svc2-name{color:var(--yellow)}
-    .svc2-mask .svc2-name{color:#14141a}
+    .svc2-mask .svc2-name{color:#fff}
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
     .service-card{background:rgba(255,255,255,0.06);padding:48px 32px;border:1px solid rgba(255,255,255,0.1);position:relative;overflow:hidden;transition:background 0.5s var(--ease),border-color 0.5s var(--ease),transform 0.5s var(--ease),box-shadow 0.5s var(--ease),filter 0.5s var(--ease),opacity 0.5s var(--ease)}
@@ -1450,8 +1452,10 @@
 <section id="services">
   <div class="svc2" id="svc2">
     <div class="svc2-brand">ECCHO</div>
-    <div class="svc2-offer"><span class="dot" aria-hidden="true"></span><span>What we offer</span></div>
-    <p class="svc2-note" id="svc2Note">Hover a service to see what it means and what we set out to achieve.</p>
+    <div class="svc2-lead" id="svc2Lead">
+      <div class="svc2-offer"><span class="dot" aria-hidden="true"></span><span>What we offer</span></div>
+      <p class="svc2-note" id="svc2Note">Hover a service to see what it means and what we set out to achieve.</p>
+    </div>
     <div class="svc2-box" id="svc2Box" aria-hidden="true"></div>
     <ul class="svc2-list" id="svc2List">
       <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<br>Visualization</span></li>
@@ -4218,6 +4222,7 @@
   var maskEl  = document.getElementById('svc2Mask');
   var boxEl   = document.getElementById('svc2Box');
   var noteEl  = document.getElementById('svc2Note');
+  var leadEl  = document.getElementById('svc2Lead');
   if (!section || !listEl || !boxEl) return;
 
   var items = [].slice.call(listEl.querySelectorAll('.svc2-item'));
@@ -4243,7 +4248,8 @@
 
   var curKey = null, targetTop = 0, curTop = 0, shown = false, raf = 0;
   function targetTopFor(it) {
-    var sr = section.getBoundingClientRect(), ir = it.getBoundingClientRect();
+    // box/lead are positioned relative to .svc2 (wrap), so measure against it
+    var sr = wrap.getBoundingClientRect(), ir = it.getBoundingClientRect();
     var center = (ir.top - sr.top) + ir.height / 2;
     var bh = boxEl.offsetHeight, pad = 24;
     return Math.max(pad, Math.min(sr.height - bh - pad, center - bh / 2));
@@ -4265,11 +4271,30 @@
     if (Math.abs(targetTop - curTop) > 0.3) raf = requestAnimationFrame(loop);
   }
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
+  // Type the note in letter-by-letter, each glyph fading up on our established ease
+  // (cubic-bezier(.16,1,.3,1)). Runs fresh every time the service changes.
+  function typeNote(text) {
+    if (!noteEl) return;
+    noteEl.textContent = '';
+    var frag = document.createDocumentFragment(), spans = [], idx = 0;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (ch === ' ') { frag.appendChild(document.createTextNode(' ')); continue; }  // real break opportunity → wraps normally
+      var s = document.createElement('span');
+      s.textContent = ch;
+      s.style.cssText = 'opacity:0;transition:opacity .3s var(--ease);transition-delay:' + (idx * 0.009).toFixed(3) + 's';
+      frag.appendChild(s); spans.push(s); idx++;
+    }
+    noteEl.appendChild(frag);
+    void noteEl.offsetWidth;   // flush so the transition runs from opacity 0
+    for (var j = 0; j < spans.length; j++) spans[j].style.opacity = '1';
+  }
   function hover(it) {
     var k = it.dataset.svc;
+    if (k === curKey) return;   // already active — don't retype on re-enter
     items.forEach(function (x) { x.classList.toggle('hot', x === it); });
     for (var key in layers) layers[key].classList.toggle('on', key === k);
-    if (noteEl && NOTE[k]) noteEl.textContent = NOTE[k];
+    if (NOTE[k]) typeNote(NOTE[k]);
     targetTop = targetTopFor(it);
     if (!shown) { shown = true; wrap.classList.add('show-box'); curTop = targetTop; }  // first appear: no slide
     curKey = k; kick();
@@ -4279,10 +4304,19 @@
     items.forEach(function (x) { x.classList.remove('hot'); });
     curKey = null; kick();
   }
+  // Align the "What we offer" + note package with the TOP of the first service tab.
+  function alignLead() {
+    if (!leadEl || !items[0]) return;
+    var sr = wrap.getBoundingClientRect(), ir = items[0].getBoundingClientRect();
+    leadEl.style.top = Math.round(ir.top - sr.top) + 'px';
+  }
   items.forEach(function (it) { it.addEventListener('mouseenter', function () { hover(it); }); });
   listEl.addEventListener('mouseleave', leave);
+  alignLead();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignLead);
   if (items[0]) hover(items[0]);   // first service + its image is highlighted on arrival
   window.addEventListener('resize', function () {
+    alignLead();
     if (!curKey) return;
     var it = items.filter(function (x) { return x.dataset.svc === curKey; })[0];
     if (it) { targetTop = targetTopFor(it); curTop = targetTop; boxEl.style.top = curTop + 'px'; kick(); }
@@ -4546,7 +4580,16 @@ import {RGBELoader} from './vendor/RGBELoader.js';
 
   let visible = false;
   new IntersectionObserver(es => {
+    const wasVisible = visible;
     visible = es[0].isIntersecting;
+    if (visible && !wasVisible) lastT = performance.now();   // no dt spike / frozen resume
+    if (!visible) {
+      // Reset the pulse rings when the section leaves the screen, so a fast scroll
+      // away-and-back doesn't freeze them mid-expansion and resume from a stale frame.
+      for (const rg of rings) { rg.active = false; rg.rad = 0; }
+      ringTimer = RING_INTERVAL - 0.4;
+      if (pctx && pW) pctx.clearRect(0, 0, pW, pH);
+    }
     if (visible && !enteredOnce) {
       enteredOnce = true;
       speedCap = 0.15;                      // brief burst so they sweep in
@@ -4600,12 +4643,12 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     } else {
       ringTimer = RING_INTERVAL - 0.4;       // first pulse fires shortly after it settles
     }
-    // Taglines: scroll-scrubbed reveal AFTER the ball arrives (decoupled from pulses).
-    // Quick wipe from the ball side — left line leads, right follows close behind.
-    const revBase = Math.max(0, Math.min(1, (descRaw - 1.0) / 0.32));   // completes ~0.42 screens past arrival
+    // Taglines wipe in from the ball side as the ball SHRINKS into place (rvBase =
+    // shrinkP) and wipe back out as it grows — tied to the ball, not to raw scroll.
+    const rvBase = shrinkP;
     const eo = x => 1 - Math.pow(1 - x, 3);
-    const rvL = eo(Math.min(1, revBase / 0.6));
-    const rvR = eo(Math.max(0, Math.min(1, (revBase - 0.28) / 0.72)));
+    const rvL = eo(Math.min(1, rvBase / 0.82));
+    const rvR = eo(Math.max(0, Math.min(1, (rvBase - 0.16) / 0.82)));
     if (introEl) introEl.style.clipPath = 'inset(-25% 0 -25% ' + ((1 - rvL) * 100).toFixed(1) + '%)';
     if (bodyEl)  bodyEl.style.clipPath  = 'inset(-25% ' + ((1 - rvR) * 100).toFixed(1) + '% -25% 0)';
     for (const rg of rings) {
