@@ -323,8 +323,11 @@
     /* The About "hero" is an immersive full-screen moment: #echoField is a tall
        runway, #aboutStage pins (sticky) and fills the screen, and the scroll drives
        the ball's entrance (see the WebGL module). */
-    #echoField{position:relative;background:#0d1fd4;height:220vh}
+    #echoField{position:relative;background:#0d1fd4}   /* height = content; the sticky scene stays pinned behind the whole field */
     #aboutStage{position:sticky;top:0;height:100vh;overflow:hidden}
+    /* Runway: the hero scene stays pinned and fully performs (descend → settle →
+       pulse → taglines) across this scroll before the Services card rises over it. */
+    #aboutRunway{height:110vh;pointer-events:none}
     #about3d{position:absolute;inset:0;pointer-events:none;z-index:0}
     #aboutPulse{position:absolute;inset:0;pointer-events:none;z-index:1}   /* pulse rings drawn in 2D (real thickness) */
     #about{position:absolute;inset:0;background:transparent;z-index:2;display:flex;align-items:center;justify-content:center}
@@ -384,9 +387,14 @@
        a single image box (behind the titles) to that row, swapping its image.
        Where a white title crosses the box, a dark duplicate of the list — clipped
        to the box rectangle — keeps that segment readable. ── */
-    #services{display:block;position:relative;min-height:100vh;background:#d6d4d0;color:#14141a;
-      padding:0;overflow:hidden;isolation:isolate}
-    .svc2{position:relative;min-height:100vh;width:100%}
+    /* Frosted-glass card — the pinned hero scene behind it is blurred through the glass.
+       padding-bottom is breathing space below the titles so the scroll doesn't overshoot
+       straight into Contact. */
+    #services{display:block;position:relative;min-height:100vh;color:#14141a;
+      padding:0 0 30vh;overflow:hidden;isolation:isolate;
+      background:rgba(234,232,227,0.5);
+      -webkit-backdrop-filter:blur(40px) saturate(1.18);backdrop-filter:blur(40px) saturate(1.18)}
+    .svc2{position:relative;height:100vh;width:100%}
     /* left column */
     .svc2-brand{position:absolute;top:clamp(26px,4.2vh,52px);left:clamp(26px,4vw,64px);z-index:6;
       font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em;color:#14141a}
@@ -394,7 +402,8 @@
       display:flex;align-items:center;gap:13px}
     .svc2-offer .dot{width:clamp(13px,1.15vw,17px);height:clamp(13px,1.15vw,17px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
     .svc2-offer span{font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.55vw,23px);color:#14141a}
-    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);bottom:clamp(38px,7vh,82px);max-width:min(31vw,300px);z-index:6;
+    /* per-service note now sits directly below "What we offer" */
+    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);top:clamp(158px,23vh,258px);max-width:min(27vw,290px);z-index:6;
       font-family:var(--font-display);font-weight:600;font-size:clamp(13px,1.02vw,16px);line-height:1.34;color:#14141a;
       opacity:.9;transition:opacity .35s var(--ease)}
     /* image box — sits BEHIND the titles */
@@ -405,13 +414,13 @@
     .svc2-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
     .svc2-box img.on{opacity:1}
     /* the two overlaid lists (base = coloured, mask = dark, clipped to the box) */
-    .svc2-list,.svc2-mask{position:absolute;left:30%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
+    .svc2-list,.svc2-mask{position:absolute;left:24%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
     .svc2-list{z-index:3}
     .svc2-mask{z-index:4;pointer-events:none;clip-path:inset(0 0 100% 0)}   /* hidden until box shows */
     .svc2-item{cursor:none;margin:0 0 clamp(4px,0.7vw,16px)}
     .svc2-item:last-child{margin-bottom:0}
     .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
-      font-size:clamp(38px,6.1vw,92px);line-height:.9;letter-spacing:-.02em;color:#14141a;transition:color .28s var(--ease)}
+      font-size:clamp(34px,5.5vw,83px);line-height:.9;letter-spacing:-.02em;color:#14141a;transition:color .28s var(--ease)}
     .svc2-item.hot .svc2-name{color:#ffffff}
     .svc2-mask .svc2-name{color:#14141a}
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
@@ -443,7 +452,7 @@
       100%{transform:translate(-50%,-50%) scale(4.5);opacity:0}
     }
     #contactGlowRing{position:absolute;width:32px;height:32px;border:2px solid rgba(245,217,78,0.6);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none;animation:contactRing 2s var(--ease) infinite}
-    #contactReveal{position:absolute;inset:0;background:#f5d94e;clip-path:circle(0% at 50% 50%);z-index:1}
+    #contactReveal{position:absolute;inset:0;background:#f5d94e;z-index:1}
     #contactContent{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 56px;pointer-events:none}
 
     #contactIcons{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
@@ -1434,6 +1443,7 @@
       </div><!-- end about-center -->
     </section>
   </div><!-- end aboutStage -->
+  <div id="aboutRunway" aria-hidden="true"></div><!-- hero performance runway -->
 
 <section id="services">
   <div class="svc2" id="svc2">
@@ -3280,47 +3290,16 @@
     window.closeMofidOverlay = closeMofidOverlay;
   })();
 
-  // ── Contact: circular iris clip-path reveal ──────────────────────────────
+  // ── Contact: reveal removed — everything shows straight away (revisit later) ──
   function initContactScroll() {
-    const wrapper = document.getElementById('contact-wrapper');
-    const glowDot = document.getElementById('contactGlowDot');
     const reveal = document.getElementById('contactReveal');
     const content = document.getElementById('contactContent');
-    if (!wrapper || !glowDot || !reveal) return;
-    let lastP = -1;
-    function update() {
-      const scrollY = window.scrollY;
-      const top = wrapper.offsetTop;
-      const wh = window.innerHeight;
-      const scrollableH = wrapper.scrollHeight - wh;
-      // Reveal spans from the section scrolling in to the moment it unpins, so the
-      // iris finishes opening right as you reach the bottom — no dead scroll after.
-      const span = scrollableH + wh * 0.4;
-      const progress = span > 0 ? Math.max(0, Math.min(1, (scrollY - (top - wh * 0.4)) / span)) : 0;
-      if (Math.abs(progress - lastP) < 0.001) return;
-      lastP = progress;
-      if (progress <= 0) {
-        glowDot.style.opacity = '1';
-        glowDot.style.transition = '';
-        reveal.style.clipPath = 'circle(0% at 50% 50%)';
-        if (content) { content.style.clipPath = 'circle(0% at 50% 50%)'; content.style.pointerEvents = 'none'; }
-      } else {
-        glowDot.style.transition = 'opacity 0.3s var(--ease)';
-        glowDot.style.opacity = '0';
-        // Iris reaches full coverage (~71%) near the end of the section. On phones
-        // the section is shorter and we open faster so the photo is revealed sooner.
-        const pct = Math.min(150, progress * (window.innerWidth <= 900 ? 118 : 74));
-        const cp = 'circle(' + pct.toFixed(1) + '% at 50% 50%)';
-        reveal.style.clipPath = cp;
-        // Sync content clip-path so content is only visible inside the expanding iris
-        if (content) {
-          content.style.clipPath = cp;
-          content.style.pointerEvents = progress >= 0.65 ? 'all' : 'none';
-        }
-      }
-    }
-    window.addEventListener('scroll', update, {passive:true});
-    update();
+    const glowDot = document.getElementById('contactGlowDot');
+    const glowRing = document.getElementById('contactGlowRing');
+    if (reveal) reveal.style.clipPath = 'none';
+    if (content) { content.style.clipPath = 'none'; content.style.pointerEvents = 'all'; }
+    if (glowDot) glowDot.style.display = 'none';
+    if (glowRing) glowRing.style.display = 'none';
   }
 
   // ── Contact: blue minimal tool-concept icons popping in the empty space ────
