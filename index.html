@@ -4584,11 +4584,14 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     visible = es[0].isIntersecting;
     if (visible && !wasVisible) lastT = performance.now();   // no dt spike / frozen resume
     if (!visible) {
-      // Reset the pulse rings when the section leaves the screen, so a fast scroll
-      // away-and-back doesn't freeze them mid-expansion and resume from a stale frame.
+      // Reset the pulse rings + taglines when the section leaves the screen, so a fast
+      // scroll away-and-back doesn't freeze them mid-animation and resume from a stale frame.
       for (const rg of rings) { rg.active = false; rg.rad = 0; }
       ringTimer = RING_INTERVAL - 0.4;
+      shrinkP = 0;
       if (pctx && pW) pctx.clearRect(0, 0, pW, pH);
+      if (introEl) introEl.style.clipPath = 'inset(-25% 0 -25% 100%)';
+      if (bodyEl)  bodyEl.style.clipPath  = 'inset(-25% 100% -25% 0)';
     }
     if (visible && !enteredOnce) {
       enteredOnce = true;
@@ -4643,9 +4646,10 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     } else {
       ringTimer = RING_INTERVAL - 0.4;       // first pulse fires shortly after it settles
     }
-    // Taglines wipe in from the ball side as the ball SHRINKS into place (rvBase =
-    // shrinkP) and wipe back out as it grows — tied to the ball, not to raw scroll.
-    const rvBase = shrinkP;
+    // Taglines wipe in as the ball SHRINKS into place and out as it grows. Driven by
+    // the ball's ACTUAL eased scale (shrinkEased), so the lines always match the
+    // rendered ball 1:1 — no lag/desync when scrolling up and down fast.
+    const rvBase = shrinkEased;
     const eo = x => 1 - Math.pow(1 - x, 3);
     const rvL = eo(Math.min(1, rvBase / 0.82));
     const rvR = eo(Math.max(0, Math.min(1, (rvBase - 0.16) / 0.82)));
