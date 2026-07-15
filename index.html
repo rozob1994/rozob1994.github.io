@@ -350,8 +350,7 @@
     .about-heading.aw-animate .aw:nth-child(1){animation-delay:0s}
     .about-heading.aw-animate .aw:nth-child(2){animation-delay:0.15s}
     .about-heading.aw-animate .aw:nth-child(3){animation-delay:0.30s}
-    /* (taglines are revealed via .show, staggered with the ball's pulses — WebGL module) */
-    #services{display:none}   /* hidden for now — focusing on the About hero moment */
+    /* (taglines are scroll-scrubbed in the WebGL module, decoupled from the pulses) */
     /* Touch / reduced-motion: the 3D module is skipped, so drop the pin runway and
        just show the taglines (no ball entrance). */
     @media (pointer:coarse), (prefers-reduced-motion:reduce){
@@ -380,38 +379,41 @@
     .about-stats{display:none}
     .stat{display:none}
 
-    #services{padding:clamp(150px,20vh,260px) 56px clamp(260px,40vh,520px);background:transparent;position:relative}
-    /* ── Services: clickable list + a slideshow, on one frosted-glass card. The
-       loose balls + pulse rings drift behind it and are blurred by the backdrop. ── */
-    .svc-wrap{max-width:1400px;margin:0 auto}
-    /* "Services" title sits at the top-left of the card (same left edge), 30% larger */
-    .svc-title{font-size:clamp(31px,3.9vw,52px);margin-bottom:clamp(20px,2.4vw,36px)}
-    /* cursor-pan 3D tilt + a click ripple (a brief expand that returns to rest) are
-       both driven in JS on .transform, so they compose without fighting. */
-    /* Fixed height: revealing a subtext happens INSIDE the card, so the section
-       never reflows (which would resize #echoField and make the 3D scene flicker). */
-    .svc-panel{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);
-      height:clamp(420px,52vh,600px);
-      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;
-      transform-origin:center;will-change:transform;
-      -webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1)}
-    .svc-list{list-style:none;margin:0;padding:clamp(24px,3vw,52px)}
-    .svc-item{border-bottom:1px solid rgba(255,255,255,0.1);padding:clamp(13px,1.6vw,24px) 0}
-    .svc-item:last-child{border-bottom:none}
-    .svc-name{display:block;width:100%;text-align:left;background:none;border:none;cursor:none;padding:0;white-space:nowrap;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(19px,2.15vw,33px);line-height:1.05;letter-spacing:-.01em;
-      color:rgba(255,255,255,0.4);transition:color .35s var(--ease)}
-    .svc-item:hover .svc-name{color:rgba(255,255,255,0.72)}
-    .svc-item.active .svc-name,.svc-item.active:hover .svc-name{color:#f5d94e}
-    .svc-sub{margin:0;max-height:0;overflow:hidden;opacity:0;font-size:clamp(13px,1vw,15px);line-height:1.6;
-      color:rgba(255,255,255,0.62);transition:max-height .5s var(--ease),opacity .4s var(--ease),margin-top .5s var(--ease)}
-    .svc-item.active .svc-sub{max-height:240px;opacity:1;margin-top:12px}
-    .svc-media{position:relative;overflow:hidden;background:rgba(3,6,26,0.35);min-height:clamp(320px,44vh,560px)}
-    .svc-slide{position:absolute;inset:0;opacity:0;transition:opacity .6s var(--ease);pointer-events:none}
-    .svc-slide.on{opacity:1}
-    .svc-slide img,.svc-slide video{width:100%;height:100%;object-fit:cover;display:block}
-    .svc-media-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.35)}
+    /* ══ SERVICES v2 ═══════════════════════════════════════════════════════
+       Full-screen light section. A hover over a service highlights it and slides
+       a single image box (behind the titles) to that row, swapping its image.
+       Where a white title crosses the box, a dark duplicate of the list — clipped
+       to the box rectangle — keeps that segment readable. ── */
+    #services{display:block;position:relative;min-height:100vh;background:#d6d4d0;color:#14141a;
+      padding:0;overflow:hidden;isolation:isolate}
+    .svc2{position:relative;min-height:100vh;width:100%}
+    /* left column */
+    .svc2-brand{position:absolute;top:clamp(26px,4.2vh,52px);left:clamp(26px,4vw,64px);z-index:6;
+      font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em;color:#14141a}
+    .svc2-offer{position:absolute;top:clamp(120px,18vh,206px);left:clamp(26px,4vw,64px);z-index:6;
+      display:flex;align-items:center;gap:13px}
+    .svc2-offer .dot{width:clamp(13px,1.15vw,17px);height:clamp(13px,1.15vw,17px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
+    .svc2-offer span{font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.55vw,23px);color:#14141a}
+    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);bottom:clamp(38px,7vh,82px);max-width:min(31vw,300px);z-index:6;
+      font-family:var(--font-display);font-weight:600;font-size:clamp(13px,1.02vw,16px);line-height:1.34;color:#14141a;
+      opacity:.9;transition:opacity .35s var(--ease)}
+    /* image box — sits BEHIND the titles */
+    .svc2-box{position:absolute;right:clamp(26px,6vw,110px);top:0;width:clamp(230px,29vw,440px);aspect-ratio:1/1;z-index:2;
+      opacity:0;pointer-events:none;background:#eceae6;border:1px solid rgba(0,0,0,.14);overflow:hidden;
+      transition:opacity .4s var(--ease)}
+    .svc2.show-box .svc2-box{opacity:1}
+    .svc2-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
+    .svc2-box img.on{opacity:1}
+    /* the two overlaid lists (base = coloured, mask = dark, clipped to the box) */
+    .svc2-list,.svc2-mask{position:absolute;left:30%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
+    .svc2-list{z-index:3}
+    .svc2-mask{z-index:4;pointer-events:none;clip-path:inset(0 0 100% 0)}   /* hidden until box shows */
+    .svc2-item{cursor:none;margin:0 0 clamp(4px,0.7vw,16px)}
+    .svc2-item:last-child{margin-bottom:0}
+    .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
+      font-size:clamp(38px,6.1vw,92px);line-height:.9;letter-spacing:-.02em;color:#14141a;transition:color .28s var(--ease)}
+    .svc2-item.hot .svc2-name{color:#ffffff}
+    .svc2-mask .svc2-name{color:#14141a}
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
     .service-card{background:rgba(255,255,255,0.06);padding:48px 32px;border:1px solid rgba(255,255,255,0.1);position:relative;overflow:hidden;transition:background 0.5s var(--ease),border-color 0.5s var(--ease),transform 0.5s var(--ease),box-shadow 0.5s var(--ease),filter 0.5s var(--ease),opacity 0.5s var(--ease)}
@@ -1434,30 +1436,24 @@
   </div><!-- end aboutStage -->
 
 <section id="services">
-  <div class="svc-wrap">
-  <h2 class="section-title svc-title">Services<span class="round-dot"></span></h2>
-  <div class="svc-panel" id="svcPanel">
-    <ul class="svc-list" id="svcList" role="tablist" aria-label="Services">
-      <li class="svc-item" data-svc="product-viz">
-        <button class="svc-name" role="tab">Product Visualization</button>
-        <p class="svc-sub">High-fidelity 3D renders that make your product the hero — packshots, lifestyle scenes, and hero shots built for e-commerce, advertising, and brand campaigns.</p>
-      </li>
-      <li class="svc-item" data-svc="3d-motion">
-        <button class="svc-name" role="tab">3D Motion Design</button>
-        <p class="svc-sub">Product-focused 3D animation that brings objects to life — launch videos, social content, and dynamic brand moments with physicality and depth.</p>
-      </li>
-      <li class="svc-item" data-svc="2d-motion">
-        <button class="svc-name" role="tab">2D Motion Design</button>
-        <p class="svc-sub">Clean, modern 2D animation for explainers, brand stories, and social media — motion that communicates quickly and stays visually memorable.</p>
-      </li>
-      <li class="svc-item" data-svc="logo-animation">
-        <button class="svc-name" role="tab">Logo Animation</button>
-        <p class="svc-sub">Bringing brand marks to life with purposeful motion — intro sequences, stingers, and looping animations that give your identity a distinctive on-screen presence.</p>
-      </li>
+  <div class="svc2" id="svc2">
+    <div class="svc2-brand">ECCHO</div>
+    <div class="svc2-offer"><span class="dot" aria-hidden="true"></span><span>What we offer</span></div>
+    <p class="svc2-note" id="svc2Note">Hover a service to see what it means and what we set out to achieve.</p>
+    <div class="svc2-box" id="svc2Box" aria-hidden="true"></div>
+    <ul class="svc2-list" id="svc2List">
+      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<br>Visualization</span></li>
+      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<br>Design</span></li>
+      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<br>Design</span></li>
+      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<br>Animation</span></li>
     </ul>
-    <div class="svc-media" id="svcMedia" aria-live="polite"></div>
+    <ul class="svc2-mask" id="svc2Mask" aria-hidden="true">
+      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<br>Visualization</span></li>
+      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<br>Design</span></li>
+      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<br>Design</span></li>
+      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<br>Animation</span></li>
+    </ul>
   </div>
-  </div><!-- end svc-wrap -->
 </section>
 </div><!-- end echoField -->
 
@@ -4227,96 +4223,86 @@
 })();
 </script>
 
-<!-- Services: click a service → highlight + reveal its subtext, and play its media
-     slideshow on the right. Images cross-fade; motion services play their reel clips
-     back-to-back. MEDIA is placeholder for now — swap in the real per-service lists. -->
+<!-- Services v2: hover a service → highlight it, slide a single image box (behind the
+     titles) to that row and swap its image, update the bottom note. A dark duplicate
+     of the list, clipped to the box rectangle, keeps white titles readable over the box.
+     IMAGES are placeholders — swap in one real image per service. -->
 <script>
 (function initServices() {
-  var list = document.getElementById('svcList');
-  var mediaEl = document.getElementById('svcMedia');
   var section = document.getElementById('services');
-  var panel = document.getElementById('svcPanel');
-  if (!list || !mediaEl) return;
+  var wrap    = document.getElementById('svc2');
+  var listEl  = document.getElementById('svc2List');
+  var maskEl  = document.getElementById('svc2Mask');
+  var boxEl   = document.getElementById('svc2Box');
+  var noteEl  = document.getElementById('svc2Note');
+  if (!section || !listEl || !boxEl) return;
 
-  // Placeholder media (3D-designs stills). Replace per service; use {type:'video', src}
-  // for reel clips (each ~4–5s) — they'll play one after another and loop.
-  var g = function (n) { return 'media/mofid/3d-designs/' + ('0' + n).slice(-2) + '.jpg'; };
-  var IMG = function (arr) { return arr.map(function (n) { return { type: 'image', src: g(n) }; }); };
-  var MEDIA = {
-    'product-viz':    IMG([1, 2, 3, 4, 5, 6]),
-    '3d-motion':      IMG([7, 8, 9, 10, 11]),
-    '2d-motion':      IMG([12, 13, 14, 15, 16]),
-    'logo-animation': IMG([17, 18, 19, 20])
+  var items = [].slice.call(listEl.querySelectorAll('.svc2-item'));
+  // Placeholder image per service (from the 3D-designs stills). Swap for the real ones.
+  var IMG = {
+    'product-viz':    'media/mofid/3d-designs/01.jpg',
+    '3d-motion':      'media/mofid/3d-designs/09.jpg',
+    '2d-motion':      'media/mofid/3d-designs/14.jpg',
+    'logo-animation': 'media/mofid/3d-designs/20.jpg'
   };
+  var NOTE = {
+    'product-viz':    'High-fidelity 3D product renders — packshots and hero shots built to sell.',
+    '3d-motion':      'Product-focused 3D animation that gives objects real weight and motion.',
+    '2d-motion':      'Clean, modern 2D animation for explainers, brand stories and social.',
+    'logo-animation': 'Purposeful motion for brand marks — intros, stingers and loops.'
+  };
+  // Stack one <img> per service inside the box; we cross-fade between them.
+  var layers = {};
+  items.forEach(function (it) {
+    var k = it.dataset.svc, im = new Image();
+    im.src = IMG[k]; im.alt = ''; boxEl.appendChild(im); layers[k] = im;
+  });
 
-  var slides = [], curIdx = 0, timer = 0, token = 0, visible = true;
-  function clear() {
-    clearTimeout(timer);
-    slides.forEach(function (s) { var v = s.querySelector('video'); if (v) { v.pause(); v.onended = null; } });
-    slides = []; mediaEl.innerHTML = '';
+  var curKey = null, targetTop = 0, curTop = 0, shown = false, raf = 0;
+  function targetTopFor(it) {
+    var sr = section.getBoundingClientRect(), ir = it.getBoundingClientRect();
+    var center = (ir.top - sr.top) + ir.height / 2;
+    var bh = boxEl.offsetHeight, pad = 24;
+    return Math.max(pad, Math.min(sr.height - bh - pad, center - bh / 2));
   }
-  function show(key) {
-    clear();
-    var items = MEDIA[key]; var my = ++token;
-    if (!items || !items.length) {
-      var e = document.createElement('div'); e.className = 'svc-media-empty'; e.textContent = 'Coming soon'; mediaEl.appendChild(e); return;
-    }
-    slides = items.map(function (it) {
-      var s = document.createElement('div'); s.className = 'svc-slide';
-      if (it.type === 'video') {
-        var v = document.createElement('video'); v.src = it.src; v.muted = true; v.playsInline = true; v.preload = 'auto'; s.appendChild(v);
-      } else {
-        var im = new Image(); im.src = it.src; im.alt = ''; s.appendChild(im);
-      }
-      mediaEl.appendChild(s); return s;
-    });
-    curIdx = 0; play(0, my);
-  }
-  function play(i, my) {
-    if (my !== token || !slides.length) return;
-    curIdx = i;
-    slides.forEach(function (s, j) { s.classList.toggle('on', j === i); });
-    var v = slides[i].querySelector('video');
-    var advanced = false;
-    var next = function () { if (advanced || my !== token) return; advanced = true; clearTimeout(timer); play((i + 1) % slides.length, my); };
-    if (v) { v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); v.onended = next; timer = setTimeout(next, 8000); }
-    else { timer = setTimeout(next, 3000); }   // images: 3s each
-  }
-  // ── Card tilt (cursor pan): subtle whole-card perspective toward the cursor ──
-  var tRX = 0, tRY = 0, cRX = 0, cRY = 0, raf = 0;
-  function applyTilt() {
+  function loop() {
     raf = 0;
-    cRX += (tRX - cRX) * 0.09; cRY += (tRY - cRY) * 0.09;
-    if (panel) panel.style.transform = 'perspective(1500px) rotateX(' + cRX.toFixed(2) + 'deg) rotateY(' + cRY.toFixed(2) + 'deg)';
-    if (visible && (Math.abs(tRX - cRX) > 0.01 || Math.abs(tRY - cRY) > 0.01)) raf = requestAnimationFrame(applyTilt);
+    curTop += (targetTop - curTop) * 0.16;
+    boxEl.style.top = curTop.toFixed(1) + 'px';
+    if (maskEl) {
+      if (shown) {
+        var mr = maskEl.getBoundingClientRect(), br = boxEl.getBoundingClientRect();
+        var t = Math.max(0, br.top - mr.top), r = Math.max(0, mr.right - br.right),
+            b = Math.max(0, mr.bottom - br.bottom), l = Math.max(0, br.left - mr.left);
+        maskEl.style.clipPath = 'inset(' + t + 'px ' + r + 'px ' + b + 'px ' + l + 'px)';
+      } else {
+        maskEl.style.clipPath = 'inset(0 0 100% 0)';
+      }
+    }
+    if (Math.abs(targetTop - curTop) > 0.3) raf = requestAnimationFrame(loop);
   }
-  function kickTilt() { if (!raf) raf = requestAnimationFrame(applyTilt); }
-  if (panel && !window.matchMedia('(pointer:coarse)').matches) {
-    panel.addEventListener('pointermove', function (e) {
-      var r = panel.getBoundingClientRect();
-      tRY = ((e.clientX - r.left) / r.width - 0.5) * 6;     // horizontal → rotateY
-      tRX = -((e.clientY - r.top) / r.height - 0.5) * 6;    // vertical → rotateX
-      kickTilt();
-    }, { passive: true });
-    panel.addEventListener('pointerleave', function () { tRX = 0; tRY = 0; kickTilt(); });
+  function kick() { if (!raf) raf = requestAnimationFrame(loop); }
+  function hover(it) {
+    var k = it.dataset.svc;
+    items.forEach(function (x) { x.classList.toggle('hot', x === it); });
+    for (var key in layers) layers[key].classList.toggle('on', key === k);
+    if (noteEl && NOTE[k]) noteEl.textContent = NOTE[k];
+    targetTop = targetTopFor(it);
+    if (!shown) { shown = true; wrap.classList.add('show-box'); curTop = targetTop; }  // first appear: no slide
+    curKey = k; kick();
   }
-
-  function activate(item) {
-    if (!item) return;
-    for (var i = 0; i < list.children.length; i++) list.children[i].classList.toggle('active', list.children[i] === item);
-    show(item.dataset.svc);
+  function leave() {
+    shown = false; wrap.classList.remove('show-box');
+    items.forEach(function (x) { x.classList.remove('hot'); });
+    curKey = null; kick();
   }
-  list.addEventListener('click', function (e) { var item = e.target.closest('.svc-item'); if (item) activate(item); });
-  activate(list.querySelector('.svc-item'));   // default to the first service
-
-  // Pause the slideshow (and any video) while Services is off-screen
-  if (section && 'IntersectionObserver' in window) {
-    new IntersectionObserver(function (es) {
-      visible = es[0].isIntersecting;
-      if (!visible) { clearTimeout(timer); slides.forEach(function (s) { var v = s.querySelector('video'); if (v) v.pause(); }); }
-      else if (slides.length) { play(curIdx, token); }
-    }, { threshold: 0.12 }).observe(section);
-  }
+  items.forEach(function (it) { it.addEventListener('mouseenter', function () { hover(it); }); });
+  listEl.addEventListener('mouseleave', leave);
+  window.addEventListener('resize', function () {
+    if (!curKey) return;
+    var it = items.filter(function (x) { return x.dataset.svc === curKey; })[0];
+    if (it) { targetTop = targetTopFor(it); curTop = targetTop; boxEl.style.top = curTop + 'px'; kick(); }
+  });
 })();
 </script>
 
