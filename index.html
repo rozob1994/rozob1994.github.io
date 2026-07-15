@@ -365,19 +365,21 @@
     .about-stats{display:none}
     .stat{display:none}
 
-    #services{padding:clamp(150px,20vh,260px) 56px clamp(150px,19vh,240px);background:transparent;position:relative}
+    #services{padding:clamp(150px,20vh,260px) 56px clamp(260px,40vh,520px);background:transparent;position:relative}
     /* ── Services: clickable list + a slideshow, on one frosted-glass card. The
        loose balls + pulse rings drift behind it and are blurred by the backdrop. ── */
     .svc-wrap{max-width:1400px;margin:0 auto}
     /* "Services" title sits at the top-left of the card (same left edge), 30% larger */
     .svc-title{font-size:clamp(31px,3.9vw,52px);margin-bottom:clamp(20px,2.4vw,36px)}
+    /* cursor-pan 3D tilt + a click ripple (a brief expand that returns to rest) are
+       both driven in JS on .transform, so they compose without fighting. */
+    /* Fixed height: revealing a subtext happens INSIDE the card, so the section
+       never reflows (which would resize #echoField and make the 3D scene flicker). */
     .svc-panel{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);
+      height:clamp(420px,52vh,600px);
       background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;
-      transform-origin:top center;
+      transform-origin:center;will-change:transform;
       -webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1)}
-    /* clicking a tab makes the card ripple/expand downward */
-    @keyframes svcRipple{0%{transform:scaleY(0.972)}68%{transform:scaleY(1.012)}100%{transform:scaleY(1)}}
-    .svc-panel.rippling{animation:svcRipple .5s cubic-bezier(.22,1,.36,1)}
     .svc-list{list-style:none;margin:0;padding:clamp(24px,3vw,52px)}
     .svc-item{border-bottom:1px solid rgba(255,255,255,0.1);padding:clamp(13px,1.6vw,24px) 0}
     .svc-item:last-child{border-bottom:none}
@@ -496,7 +498,7 @@
 
       /* Services */
       #services{padding-left:28px;padding-right:28px}
-      .svc-panel{grid-template-columns:1fr}
+      .svc-panel{grid-template-columns:1fr;height:auto}
       .svc-media{min-height:clamp(220px,40vh,360px);order:2}
       .svc-list{order:1}
 
@@ -4255,14 +4257,32 @@
     if (v) { v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); v.onended = next; timer = setTimeout(next, 8000); }
     else { timer = setTimeout(next, 3000); }   // images: 3s each
   }
-  function activate(item, ripple) {
+  // ── Card tilt (cursor pan): subtle whole-card perspective toward the cursor ──
+  var tRX = 0, tRY = 0, cRX = 0, cRY = 0, raf = 0;
+  function applyTilt() {
+    raf = 0;
+    cRX += (tRX - cRX) * 0.09; cRY += (tRY - cRY) * 0.09;
+    if (panel) panel.style.transform = 'perspective(1500px) rotateX(' + cRX.toFixed(2) + 'deg) rotateY(' + cRY.toFixed(2) + 'deg)';
+    if (visible && (Math.abs(tRX - cRX) > 0.01 || Math.abs(tRY - cRY) > 0.01)) raf = requestAnimationFrame(applyTilt);
+  }
+  function kickTilt() { if (!raf) raf = requestAnimationFrame(applyTilt); }
+  if (panel && !window.matchMedia('(pointer:coarse)').matches) {
+    panel.addEventListener('pointermove', function (e) {
+      var r = panel.getBoundingClientRect();
+      tRY = ((e.clientX - r.left) / r.width - 0.5) * 6;     // horizontal → rotateY
+      tRX = -((e.clientY - r.top) / r.height - 0.5) * 6;    // vertical → rotateX
+      kickTilt();
+    }, { passive: true });
+    panel.addEventListener('pointerleave', function () { tRX = 0; tRY = 0; kickTilt(); });
+  }
+
+  function activate(item) {
     if (!item) return;
     for (var i = 0; i < list.children.length; i++) list.children[i].classList.toggle('active', list.children[i] === item);
-    if (ripple && panel) { panel.classList.remove('rippling'); void panel.offsetWidth; panel.classList.add('rippling'); }  // card expands/ripples on click
     show(item.dataset.svc);
   }
-  list.addEventListener('click', function (e) { var item = e.target.closest('.svc-item'); if (item) activate(item, true); });
-  activate(list.querySelector('.svc-item'), false);   // default to the first service (no ripple on load)
+  list.addEventListener('click', function (e) { var item = e.target.closest('.svc-item'); if (item) activate(item); });
+  activate(list.querySelector('.svc-item'));   // default to the first service
 
   // Pause the slideshow (and any video) while Services is off-screen
   if (section && 'IntersectionObserver' in window) {
