@@ -349,9 +349,10 @@
     @media(prefers-reduced-motion:reduce){
       .about-heading .aw,.about-intro,.about-body,.about-meta-row{animation:none!important;opacity:1!important;transform:none!important}
     }
-    /* Both taglines: identical size + weight; one hugs the ball from the left, the other from the right. */
-    .about-intro,.about-body{margin:0;flex:0 0 auto;font-family:var(--font-display);font-weight:500;
-      font-size:clamp(15px,1.5vw,20px);line-height:1.55;color:rgba(255,255,255,0.85);max-width:clamp(150px,15vw,220px)}
+    /* Both taglines: identical size + weight, each on a single line; one hugs the ball
+       from the left, the other from the right. */
+    .about-intro,.about-body{margin:0;flex:0 0 auto;white-space:nowrap;font-family:var(--font-display);font-weight:500;
+      font-size:clamp(15px,1.4vw,20px);line-height:1.55;color:rgba(255,255,255,0.85)}
     .about-intro{text-align:right}
     .about-body{text-align:left}
     .about-meta-row{display:flex;flex-direction:column;gap:8px}
@@ -4338,6 +4339,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const canvas = document.getElementById('about3d');
   const section = document.getElementById('echoField');   // canvas spans About + Services
   const aboutSec = document.getElementById('about');
+  const slotEl = document.getElementById('aboutBallSlot');
   if (!canvas || !section || !aboutSec) return;
 
   let renderer;
@@ -4473,15 +4475,18 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     aboutTopY = halfH;                                  // top of the field == top of About
     aboutBotY = halfH * (1 - 2 * aboutH / h);           // where About ends and Services begins
     aboutCenterY = (aboutTopY + aboutBotY) / 2;
-    // Place the hero ball onto the HTML slot (#aboutBallSlot) so the taglines flank
-    // it exactly; fall back to the right side if the slot isn't laid out yet.
+    placeHero();
+  }
+  // Keep the hero ball locked onto the HTML slot so the taglines always flank it.
+  // Read the slot live each call (robust to font-load / reflow); fall back to the
+  // right side if it isn't laid out yet.
+  function placeHero() {
     let hx = halfW * 0.52, hy = aboutCenterY;
-    const slotEl = document.getElementById('aboutBallSlot');
     if (slotEl) {
       const cr = canvas.getBoundingClientRect(), sr = slotEl.getBoundingClientRect();
       if (sr.width && cr.width) {
         hx = (((sr.left + sr.width / 2 - cr.left) / cr.width) * 2 - 1) * halfW;
-        hy = -((((sr.top + sr.height / 2 - cr.top) / cr.height) * 2 - 1)) * halfH;
+        hy = -(((sr.top + sr.height / 2 - cr.top) / cr.height) * 2 - 1) * halfH;
       }
     }
     hero.position.set(hx, hy, 0);
@@ -4509,6 +4514,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     requestAnimationFrame(tick);
     if (!visible) return;
     const now = performance.now(); const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    placeHero();                            // keep the ball locked onto the HTML slot every frame
     speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm — long, smooth tail
     // Hero: slow spin + emit/expand the thin ring-pulses (constant opacity → no fade)
     hero.rotation.y += heroSpin;
