@@ -395,13 +395,19 @@
     /* Blue frosted glass: same hero blue, a clean thin top edge, blurring whatever
        (balls, rings) drifts behind it. */
     #services{display:block;position:relative;min-height:100vh;color:#fff;
-      padding:18vh 0 30vh;overflow:hidden;isolation:isolate;   /* top lead-in ≈60% of the bottom breathing space */
+      padding:7vh 0 12vh;overflow:hidden;isolation:isolate;   /* reduced top lead-in + bottom breathing space */
       background:rgba(13,31,212,0.5);border-top:1px solid rgba(255,255,255,0.22);
       -webkit-backdrop-filter:blur(34px) saturate(1.05);backdrop-filter:blur(34px) saturate(1.05)}
     .svc2{position:relative;height:100vh;width:100%}
+    /* ECCHO marquee across the top of the card (replaces the single wordmark) */
+    .svc2-marquee-wrap{position:absolute;top:clamp(18px,2.4vh,38px);left:0;right:0;z-index:6;overflow:hidden;pointer-events:none}
+    .svc2-marquee{display:inline-flex;white-space:nowrap;will-change:transform;animation:marqueeLeft 55s linear infinite}
+    .svc2-marquee .m-inner{display:inline-flex;align-items:center;font-family:var(--font-display);font-weight:700;
+      font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em}
+    .svc2-marquee .m-o{color:#fff}
+    .svc2-marquee .m-e{color:rgba(255,255,255,0.42)}
+    .svc2-marquee .round-dot{margin:0 14px}
     /* left column */
-    .svc2-brand{position:absolute;top:clamp(26px,4.2vh,52px);left:clamp(26px,4vw,64px);z-index:6;
-      font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em;color:#fff}
     /* "What we offer" + the note form one package; its top is aligned in JS to the
        top of the first service tab. */
     .svc2-lead{position:absolute;left:clamp(26px,4vw,64px);top:clamp(150px,22vh,244px);z-index:6;max-width:min(24vw,262px)}
@@ -429,6 +435,18 @@
       font-size:clamp(34px,5.5vw,83px);line-height:.9;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
     .svc2-item.hot .svc2-name{color:var(--yellow)}
     .svc2-mask .svc2-name{color:#fff}
+    /* thin line marking the sentence break inside each title (longer than a usual
+       line-break sign); follows the title colour so it highlights with the tab */
+    .svc2-brk{display:block;height:2px;width:clamp(90px,10vw,190px);margin:0.1em 0;
+      background:currentColor;opacity:.5}
+    /* ── Large displays (≥1800px): pull things together, enlarge the image box (~60%),
+       and force the title/box overlap the 16" layout has. ── */
+    @media (min-width:1800px){
+      .svc2-lead{left:clamp(48px,4vw,110px);max-width:min(19vw,340px)}
+      .svc2-list,.svc2-mask{left:20%}
+      .svc2-name{font-size:min(6.4vw,138px)}
+      .svc2-box{width:min(34vw,700px);right:clamp(40px,15vw,400px)}   /* pulled left into the titles for the overlap */
+    }
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
     .service-card{background:rgba(255,255,255,0.06);padding:48px 32px;border:1px solid rgba(255,255,255,0.1);position:relative;overflow:hidden;transition:background 0.5s var(--ease),border-color 0.5s var(--ease),transform 0.5s var(--ease),box-shadow 0.5s var(--ease),filter 0.5s var(--ease),opacity 0.5s var(--ease)}
@@ -1453,23 +1471,27 @@
 
 <section id="services">
   <div class="svc2" id="svc2">
-    <div class="svc2-brand">ECCHO</div>
+    <div class="svc2-marquee-wrap" aria-hidden="true">
+      <div class="svc2-marquee">
+        <span class="m-inner"><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span></span><span class="m-inner"><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span></span>
+      </div>
+    </div>
     <div class="svc2-lead" id="svc2Lead">
       <div class="svc2-offer"><span class="dot" aria-hidden="true"></span><span>What we offer</span></div>
       <p class="svc2-note" id="svc2Note">Hover a service to see what it means and what we set out to achieve.</p>
     </div>
     <div class="svc2-box" id="svc2Box" aria-hidden="true"></div>
     <ul class="svc2-list" id="svc2List">
-      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<br>Visualization</span></li>
-      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<br>Design</span></li>
-      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<br>Design</span></li>
-      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<br>Animation</span></li>
+      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<span class="svc2-brk"></span>Visualization</span></li>
+      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<span class="svc2-brk"></span>Design</span></li>
+      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<span class="svc2-brk"></span>Design</span></li>
+      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<span class="svc2-brk"></span>Animation</span></li>
     </ul>
     <ul class="svc2-mask" id="svc2Mask" aria-hidden="true">
-      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<br>Visualization</span></li>
-      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<br>Design</span></li>
-      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<br>Design</span></li>
-      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<br>Animation</span></li>
+      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<span class="svc2-brk"></span>Visualization</span></li>
+      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<span class="svc2-brk"></span>Design</span></li>
+      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<span class="svc2-brk"></span>Design</span></li>
+      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<span class="svc2-brk"></span>Animation</span></li>
     </ul>
   </div>
 </section>
@@ -4273,23 +4295,32 @@
     if (Math.abs(targetTop - curTop) > 0.3) raf = requestAnimationFrame(loop);
   }
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
-  // Type the note in letter-by-letter, each glyph fading up on our established ease
-  // (cubic-bezier(.16,1,.3,1)). Runs fresh every time the service changes.
+  // Reveal the note letter-by-letter: each glyph swipes UP + fades in on our
+  // established ease (cubic-bezier(.16,1,.3,1)); the stagger is eased and short so
+  // the whole paragraph reveals fast and elegant. Runs fresh on every change.
   function typeNote(text) {
     if (!noteEl) return;
     noteEl.textContent = '';
-    var frag = document.createDocumentFragment(), spans = [], idx = 0;
-    for (var i = 0; i < text.length; i++) {
-      var ch = text[i];
-      if (ch === ' ') { frag.appendChild(document.createTextNode(' ')); continue; }  // real break opportunity → wraps normally
-      var s = document.createElement('span');
-      s.textContent = ch;
-      s.style.cssText = 'opacity:0;transition:opacity .3s var(--ease);transition-delay:' + (idx * 0.009).toFixed(3) + 's';
-      frag.appendChild(s); spans.push(s); idx++;
-    }
+    var frag = document.createDocumentFragment(), spans = [], words = text.split(' ');
+    var letters = text.replace(/\s/g, '').length, idx = 0;
+    var WINDOW = 0.34, eo = t => 1 - Math.pow(1 - t, 3);   // eased stagger envelope
+    words.forEach(function (word, wi) {
+      var w = document.createElement('span');
+      w.style.cssText = 'display:inline-block;white-space:nowrap';   // word stays intact (letters can't break mid-word)
+      for (var i = 0; i < word.length; i++) {
+        var s = document.createElement('span');
+        s.textContent = word[i];
+        var d = (WINDOW * eo(letters > 1 ? idx / (letters - 1) : 0)).toFixed(3);
+        s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(0.55em);' +
+          'transition:opacity .4s var(--ease),transform .5s var(--ease);transition-delay:' + d + 's';
+        w.appendChild(s); spans.push(s); idx++;
+      }
+      frag.appendChild(w);
+      if (wi < words.length - 1) frag.appendChild(document.createTextNode(' '));
+    });
     noteEl.appendChild(frag);
-    void noteEl.offsetWidth;   // flush so the transition runs from opacity 0
-    for (var j = 0; j < spans.length; j++) spans[j].style.opacity = '1';
+    void noteEl.offsetWidth;   // flush so the transition runs from the hidden state
+    for (var j = 0; j < spans.length; j++) { spans[j].style.opacity = '1'; spans[j].style.transform = 'translateY(0)'; }
   }
   function hover(it) {
     var k = it.dataset.svc;
@@ -4607,6 +4638,35 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       }
     }
   }, {rootMargin: '100px'}).observe(section);
+
+  // ── Auto shrink/grow beat ──────────────────────────────────────────────────
+  // The descent is scroll-driven up to arrival (descRaw = 1). Crossing that point
+  // hands off to a LOCKED snap that auto-scrolls through the shrink band to the
+  // settled anchor (or back), so the shrink + tagline reveal + pulses play as one
+  // uninterruptible beat — a little extra scrolling can't skip it or bring up
+  // Services mid-animation. Shrink itself stays a pure function of scroll position
+  // (shrinkP = f(descRaw)), so it never desyncs; the snap only drives the scroll.
+  // Desktop only (needs Lenis); touch keeps the plain scroll-driven shrink.
+  const snapEase = t => { const u = 1 - t; return 1 - u * u * u; };   // easeOutCubic
+  let snapping = false, lastScrollY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY, dir = y - lastScrollY; lastScrollY = y;
+    const lenis = window.__lenis;
+    if (snapping || !lenis || !visible) return;
+    const vhh = window.innerHeight || 1;
+    const top = host.getBoundingClientRect().top + y;      // echoField top in doc coords
+    const arriveY = top + 0.80 * vhh;                      // descRaw = 1.0 (ball arrived, big)
+    const settleY = top + 1.346 * vhh;                     // descRaw = 1 + SHRINK_SCROLL (settled)
+    const dz = vhh * 0.04;                                 // dead-zone so tiny jitter can't trigger
+    let target = null;
+    if (dir > 0 && y > arriveY + dz && y < settleY - dz) target = settleY;        // scroll down → shrink
+    else if (dir < 0 && y < settleY - dz && y > arriveY + dz) target = arriveY;   // scroll up → grow
+    if (target != null) {
+      snapping = true;
+      lenis.scrollTo(target, { duration: 0.7, lock: true, easing: snapEase,
+        onComplete: () => { snapping = false; lastScrollY = window.scrollY; } });
+    }
+  }, { passive: true });
 
   const tmp = new THREE.Vector3();
   function tick() {
