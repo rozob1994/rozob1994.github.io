@@ -335,11 +335,11 @@
       padding:0 clamp(28px,5vw,80px);max-width:1600px;margin:0 auto}
     /* equal-width taglines → the slot (and ball) sit dead-centre; the gap pushes them off the ball */
     .about-tag{display:flex;align-items:center;gap:clamp(28px,4vw,80px);flex:0 0 auto}
-    /* mask reveal: each line is wiped in (from the ball side) by its pulse */
-    .about-intro,.about-body{flex:0 0 clamp(150px,17vw,250px);transition:clip-path .6s var(--ease)}
+    /* mask reveal: each line is wiped in (from the ball side); the clip-path is
+       scroll-scrubbed per-frame in JS (no CSS transition, so it tracks the scroll) */
+    .about-intro,.about-body{flex:0 0 clamp(150px,17vw,250px)}
     .about-intro{clip-path:inset(-25% 0 -25% 100%)}   /* hidden → revealed right-to-left */
     .about-body{clip-path:inset(-25% 100% -25% 0)}    /* hidden → revealed left-to-right */
-    .about-intro.show,.about-body.show{clip-path:inset(-25% 0 -25% 0)}
     .about-ball-slot{flex:0 0 auto;width:clamp(88px,8vw,120px);height:clamp(88px,8vw,120px)}
     .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
     .about-heading em{font-style:normal;color:var(--yellow)}
@@ -4465,7 +4465,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   for (let i = 0; i < 7; i++) rings.push({ rad: 0, active: false });
   let ringMaxR = 20, ringTimer = 1.0, lastT = performance.now();
   const RING_INTERVAL = 3.0, RING_SPEED = 3.4;   // seconds between pulses / world-units per second
-  const PULSE_THICK = 4.0;                        // base ring thickness (CSS px) — noticeably thicker than the old hairline
+  const PULSE_THICK = 1.4;                        // thin, real vector line (CSS px) — not a thick/blurry band
   const tmpH = new THREE.Vector3();
   function drawPulses() {
     if (!pctx || !pW || !slotEl) return;
@@ -4477,11 +4477,11 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     for (const rg of rings) {
       if (!rg.active) continue;
       const f = Math.max(0, 1 - rg.rad / ringMaxR);   // 1 near the hero → 0 at the far corner
-      const k = 0.5 + 0.5 * f;                        // thin toward the edges, but keeps real body (never faint/blurry)
+      const k = 0.55 + 0.45 * f;                      // slightly thinner toward the edges
       pctx.beginPath();
       pctx.arc(cx, cy, rg.rad * pxPerWorld, 0, Math.PI * 2);
-      pctx.lineWidth = Math.max(1.5 * pDPR, PULSE_THICK * k * pDPR);
-      pctx.strokeStyle = 'rgba(245,217,78,' + (0.5 + 0.4 * k).toFixed(3) + ')';
+      pctx.lineWidth = Math.max(1 * pDPR, PULSE_THICK * k * pDPR);
+      pctx.strokeStyle = 'rgba(245,217,78,' + (0.45 + 0.4 * k).toFixed(3) + ')';
       pctx.stroke();
     }
   }
@@ -4496,7 +4496,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
     return x => { let lo = 0, hi = 1, t = x; for (let i = 0; i < 22; i++) { t = (lo + hi) / 2; if (bx(t) < x) lo = t; else hi = t; } return by(t); };
   })(0.6, 0.0, 0.06, 1.0);
-  let settled = false, shrinkP = 0, pulseCount = 0;   // shrinkP: 0 = 3× (entering) → 1 = 1× (settled)
+  let settled = false, shrinkP = 0;   // shrinkP: 0 = 3× (entering) → 1 = 1× (settled)
   const introEl = document.querySelector('#about .about-intro');
   const bodyEl  = document.querySelector('#about .about-body');
   function pinProgress() {
@@ -4602,7 +4602,8 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     // mid-screen and completes over ~1.3 screens; hero stays a CONSTANT 3× throughout.
     const vhh = window.innerHeight || 1;
     const topY = host.getBoundingClientRect().top;
-    const eIn = Math.max(0, Math.min(1, (vhh * 0.5 - topY) / (vhh * 1.3)));
+    const descRaw = (vhh * 0.5 - topY) / (vhh * 1.3);   // uncapped: >1 means the ball has arrived and scroll continues
+    const eIn = Math.max(0, Math.min(1, descRaw));
     const eP = 1 - Math.pow(1 - eIn, 3);
     const arrived = eIn >= 0.999;
     const descentLift = halfH + HERO_START * heroR + 1.5;
@@ -4619,22 +4620,24 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     shadow.material.opacity = 0.34 * shrinkP;
     shadow.scale.set(heroR * 2.2 * hs, heroR * 0.62 * hs, 1);
     shadow.position.set(hero.position.x, hero.position.y - heroR * hs * 1.05, -0.15);
-    // Once settled: pulse, and reveal the taglines one at a time with the first two pulses.
+    // Once settled: keep pulsing (rings only — no longer tied to the text).
     if (settled) {
       ringTimer += dt;
       if (ringTimer >= RING_INTERVAL) {
         ringTimer = 0;
         const slot = rings.find(r => !r.active); if (slot) { slot.active = true; slot.rad = heroR; }
-        pulseCount++;
-        if (pulseCount === 1 && introEl) introEl.classList.add('show');
-        if (pulseCount === 2 && bodyEl) bodyEl.classList.add('show');
       }
     } else {
       ringTimer = RING_INTERVAL - 0.4;       // first pulse fires shortly after it settles
-      pulseCount = 0;
-      if (introEl) introEl.classList.remove('show');
-      if (bodyEl) bodyEl.classList.remove('show');
     }
+    // Taglines: scroll-scrubbed reveal AFTER the ball arrives (decoupled from pulses).
+    // Quick wipe from the ball side — left line leads, right follows close behind.
+    const revBase = Math.max(0, Math.min(1, (descRaw - 1.0) / 0.32));   // completes ~0.42 screens past arrival
+    const eo = x => 1 - Math.pow(1 - x, 3);
+    const rvL = eo(Math.min(1, revBase / 0.6));
+    const rvR = eo(Math.max(0, Math.min(1, (revBase - 0.28) / 0.72)));
+    if (introEl) introEl.style.clipPath = 'inset(-25% 0 -25% ' + ((1 - rvL) * 100).toFixed(1) + '%)';
+    if (bodyEl)  bodyEl.style.clipPath  = 'inset(-25% ' + ((1 - rvR) * 100).toFixed(1) + '% -25% 0)';
     for (const rg of rings) {
       if (!rg.active) continue;
       rg.rad += dt * RING_SPEED;
