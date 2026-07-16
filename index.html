@@ -2692,9 +2692,9 @@
       SHIFT23 = Math.round(vh * 2.1); // bigger slide before carousel #3
       LEADIN = Math.round(vh * 0.20); // carousel #1 starts cycling shortly after the section pins
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
-      TAIL = Math.round(vh * 0.42);   // after #3, roll the gallery up and out over this scroll → gridded breathing space before About
+      TAIL = Math.round(vh * 0.10);   // short hold after #3 — the ring exit is driven by the About section's approach (below)
       CONV_DOWN = Math.round(vh * 0.62);   // carousels 1&2: how far the outgoing hero slides DOWN as it fades
-      RX = Math.min(Math.round(vw * 0.34), 640); RY = Math.min(Math.round(vh * 0.30), 340);   // carousel 3 solar-system ellipse radii
+      RX = Math.min(Math.round(vw * 0.442), 832); RY = Math.min(Math.round(vh * 0.30), 340);   // carousel 3 ring radii (RX 30% wider)
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2768,29 +2768,18 @@
     function placeRing(c) {
       const rot = (c.cur / (N - 1)) * Math.PI * 2;   // scroll-scrubbed rotation, one full turn
       const exitP = c.exitP || 0;
+      const drop = Math.pow(exitP, 1.35) * (vhPx * 1.55 + RY);   // whole ring slides straight DOWN (no collapse, no fade)
       for (let i = 0; i < N; i++) {
         const th = (i / N) * Math.PI * 2 - rot;
-        const ex = Math.cos(th), ey = Math.sin(th);
-        const depth = (ey + 1) / 2;                  // 0 = back (top) → 1 = front (bottom)
-        let x = RX * ex, y = RY * ey;
-        let s = 0.34 + 0.30 * depth;                 // near cards bigger
-        let o = 0.5 + 0.5 * depth;
-        if (exitP > 0) {                             // curve DOWN + out (front cards lead)
-          const lead = (1 - depth) * 0.32;
-          const le = clamp((exitP - lead) / (1 - lead), 0, 1);
-          x = x * (1 - le);                          // drift toward centre x …
-          y = y + le * le * (RY + vhPx * 0.95);      // … while falling away (accelerating → curved path)
-          o = o * (1 - le);
-          s = s * (1 - 0.22 * le);
-        }
-        const hw = 0.6 + 0.4 * depth;
-        const ty = ex * 14 + c.panX * 6 * hw;        // slight facing turn + cursor pan (3D preserved)
-        const tx = -c.panY * 5 * hw;
+        const x = RX * Math.cos(th);
+        const y = RY * Math.sin(th) + drop;
+        const ty = c.panX * 6;                       // always facing the camera; only the cursor pan tilts
+        const tx = -c.panY * 5;
         const card = c.cards[i];
-        card.style.opacity = (o * c.vis).toFixed(3);
-        card.style.setProperty('--shade', (0.20 * (1 - depth)).toFixed(3));
-        card.style.zIndex = 300 + Math.round(ey * 40);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
+        card.style.opacity = c.vis.toFixed(3);       // uniform, never fades on exit
+        card.style.setProperty('--shade', '0');
+        card.style.zIndex = 300 + Math.round(Math.sin(th) * 40);
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(0.52) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
 
@@ -2825,6 +2814,7 @@
     }
 
     let started = false, inView = false, raf = 0, curG = 0;
+    const echoFieldEl = document.getElementById('echoField');   // ring exit is timed to the About section (hero ball) rising below
     // Cursor pan: each carousel shifts its perspective-origin (camera-angle change
     // → depth parallax) + translates toward the cursor. Independent per carousel —
     // the target is the cursor relative to THAT carousel's own anchor.
@@ -2893,13 +2883,16 @@
       drawGrid(-curG * 0.5);   // grid drifts with the scroll (canvas → crisp, seamless)
       const tu = trackUnits(curG);
       const activeK = clamp(Math.round(tu), 0, M - 1);
-      const cycEnd = cycStart[M - 1] + CYCLE;
+      // Ring exit is driven by the About section rising below, so the cards slide out
+      // exactly as the hero ball comes down in the next section.
+      const efTop = echoFieldEl ? (echoFieldEl.getBoundingClientRect().top) : Infinity;
+      const ringExit = clamp((vhPx - efTop) / (vhPx * 1.5), 0, 1);
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
       for (let k = 0; k < M; k++) {
         cars[k].target = carTarget(k, k === 0 ? raw : curG);
         setActiveCar(cars[k], k === activeK);
         cars[k].vis = clamp((1 - (tu - k)) / 0.3, 0, 1);   // 1 until parked ~0.7 screen up, →0 by a full screen up
-        cars[k].exitP = (k === M - 1) ? clamp((curG - cycEnd) / (TAIL * 0.82), 0, 1) : 0;   // carousel 3 curves out over TAIL
+        cars[k].exitP = (k === M - 1) ? ringExit : 0;
       }
       kick();
     }
