@@ -2694,7 +2694,7 @@
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
       TAIL = Math.round(vh * 0.10);   // short hold after #3 — the ring exit is driven by the About section's approach (below)
       CONV_DOWN = Math.round(vh * 0.62);   // carousels 1&2: how far the outgoing hero slides DOWN as it fades
-      RX = Math.min(Math.round(vw * 0.442), 832); RY = Math.min(Math.round(vh * 0.30), 340);   // carousel 3 ring radii (RX 30% wider)
+      RX = Math.min(Math.round(vw * 0.51), 950); RY = Math.min(Math.round(vh * 0.345), 392);   // carousel 3 ring radii (wider + a bit larger)
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2768,18 +2768,25 @@
     function placeRing(c) {
       const rot = (c.cur / (N - 1)) * Math.PI * 2;   // scroll-scrubbed rotation, one full turn
       const exitP = c.exitP || 0;
-      const drop = Math.pow(exitP, 1.35) * (vhPx * 1.55 + RY);   // whole ring slides straight DOWN (no collapse, no fade)
+      // Exit: the cards first LINE UP into a vertical column in the centre, then the
+      // whole column slides straight DOWN and out (no fade) — timed to the hero ball.
+      const conv = bez(clamp(exitP / 0.45, 0, 1));                       // ring → centre column
+      const COLGAP = vhPx * 0.055;
+      const colHalf = (N - 1) * COLGAP / 2;
+      const drop = Math.pow(clamp((exitP - 0.22) / 0.78, 0, 1), 1.25) * (vhPx * 1.5 + colHalf);
       for (let i = 0; i < N; i++) {
         const th = (i / N) * Math.PI * 2 - rot;
-        const x = RX * Math.cos(th);
-        const y = RY * Math.sin(th) + drop;
+        const rx = RX * Math.cos(th), ry = RY * Math.sin(th);
+        const colY = (i - (N - 1) / 2) * COLGAP;                         // slot in the centre column
+        const x = rx * (1 - conv);                                       // → 0 (centre axis)
+        const y = ry * (1 - conv) + colY * conv + drop;                  // ring → column, then down
         const ty = c.panX * 6;                       // always facing the camera; only the cursor pan tilts
         const tx = -c.panY * 5;
         const card = c.cards[i];
         card.style.opacity = c.vis.toFixed(3);       // uniform, never fades on exit
         card.style.setProperty('--shade', '0');
-        card.style.zIndex = 300 + Math.round(Math.sin(th) * 40);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(1) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
+        card.style.zIndex = 300 + Math.round(Math.sin(th) * 40 * (1 - conv) + i * conv);
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(0.6) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
 
