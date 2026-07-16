@@ -2675,7 +2675,7 @@
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, TAIL, gaps, cycStart;
+    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, TAIL, CONV_DOWN, gaps, cycStart;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
@@ -2691,6 +2691,7 @@
       LEADIN = Math.round(vh * 0.20); // carousel #1 starts cycling shortly after the section pins
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
       TAIL = Math.round(vh * 0.42);   // after #3, roll the gallery up and out over this scroll → gridded breathing space before About
+      CONV_DOWN = Math.round(vh * 0.62);   // carousels 1&2: how far the outgoing hero slides DOWN as it fades
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2703,6 +2704,12 @@
 
     const clamp = function (v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; };
     const easeIO = function (t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };
+    // the site's "standard" ease — cubic-bezier(.16,1,.3,1) — evaluated in JS
+    const bez = (function (x1, y1, x2, y2) {
+      const bx = t => 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
+      const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
+      return x => { let lo = 0, hi = 1, t = x; for (let i = 0; i < 20; i++) { t = (lo + hi) / 2; if (bx(t) < x) lo = t; else hi = t; } return by(t); };
+    })(0.16, 1, 0.3, 1);
 
     function placeCar(c) {
       const hero = clamp(Math.round(c.cur), 0, N - 1);
@@ -2715,32 +2722,50 @@
       // in / out by a timer (setActiveCar), so it reads letter-by-letter smoothly.
       c.text.style.opacity = c.rev.toFixed(3);
       c.text.style.setProperty('--ty', ((1 - c.rev) * TXTOFF).toFixed(1) + 'px');
+      if (c.horizontal) { placeDome(c); return; }   // carousel 3 — its own overhaul comes later
+      // ── Carousels 1 & 2: conveyor. The hero sits centred on the anchor; the next
+      //    card EXPANDS from the middle with a fade, the outgoing one FADES away
+      //    downward. Motion eased with the standard cubic-bezier. The cursor pan/3D
+      //    tilt is preserved (rotateY/rotateX from panX/panY). ──
       for (let i = 0; i < N; i++) {
         const u = i - c.cur, a = Math.abs(u);
-        const pop = Math.exp(-a * a * 0.8);   // 1 at the hero, easing out over more cards — pops the hero out gradually (no snap)
-        let x, y, rot;
-        if (c.horizontal) {               // dome bulging up: hero at the top peak
-          x = u * SPX;
-          y = a * a * BVY - PULLY * pop;   // pull the hero further UP, away from the dome
-          rot = (u < 0 ? -1 : 1) * a * 1.2;
-        } else {                          // vertical arc: hero leftmost-middle, cards fan toward dir
-          x = c.dir * (a * a * BVX) - c.dir * PULLX * pop;   // pull the hero away from the arc (out to the free side)
-          y = -u * SPY;
-          rot = c.dir * u * 0.6;
-        }
-        // 3D: cards recede INTO the screen (translateZ) so perspective foreshortens
-        // them for real, and turn on their Y axis so the glass edge + shading show.
-        const z = -a * DZ;                                     // push back into depth
-        const ry = Math.max(-34, Math.min(34, -c.dir * u * 5));  // stronger turn
-        const s = 0.92 + 0.12 * Math.exp(-a * a * 0.7);        // small hero bump; perspective does most of the shrink
-        const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));   // fade cards out sooner → none stacked over the top edge
-        const shade = Math.min(0.6, a * 0.08 + Math.abs(ry) / 78);   // face darkens as it turns/recedes
-        // Cursor tilt: strongest on the hero, fading for cards further from it — subtle.
-        const hw = Math.exp(-a * a * 0.6);
-        const ty = ry + c.panX * 7 * hw;      // extra Y-tilt toward the cursor
-        const tx = -c.panY * 6 * hw;          // slight X-tilt
         const card = c.cards[i];
-        card.style.opacity = o * c.vis;   // fade a carousel out once it has parked a screen above (kills its downward-fan tail leaking back in)
+        let x = 0, y = 0, s = 1, o = 0, zi = 300;
+        if (a >= 1) { o = 0; }
+        else if (u > 0) {                       // incoming — expand from the middle, fade in
+          const t = bez(1 - u);
+          s = 0.24 + 0.76 * t; o = t; zi = 292;
+        } else {                                // hero / outgoing — fade + slide down
+          const t = bez(-u);
+          s = 1 - 0.12 * t; o = 1 - t; y = t * CONV_DOWN; zi = 300;
+        }
+        const hw = Math.max(0, 1 - a);          // pan tilt only on the visible cards
+        const ty = c.panX * 8 * hw;             // cursor Y-tilt (3D preserved)
+        const tx = -c.panY * 6 * hw;
+        card.style.opacity = (o * c.vis).toFixed(3);
+        card.style.setProperty('--shade', (0.12 * (1 - o)).toFixed(3));
+        card.style.zIndex = zi;
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
+      }
+    }
+    // Carousel 3 (bottom/dome) — unchanged for now (solar-system overhaul is a later pass).
+    function placeDome(c) {
+      for (let i = 0; i < N; i++) {
+        const u = i - c.cur, a = Math.abs(u);
+        const pop = Math.exp(-a * a * 0.8);
+        const x = u * SPX;
+        const y = a * a * BVY - PULLY * pop;
+        const rot = (u < 0 ? -1 : 1) * a * 1.2;
+        const z = -a * DZ;
+        const ry = Math.max(-34, Math.min(34, -c.dir * u * 5));
+        const s = 0.92 + 0.12 * Math.exp(-a * a * 0.7);
+        const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));
+        const shade = Math.min(0.6, a * 0.08 + Math.abs(ry) / 78);
+        const hw = Math.exp(-a * a * 0.6);
+        const ty = ry + c.panX * 7 * hw;
+        const tx = -c.panY * 6 * hw;
+        const card = c.cards[i];
+        card.style.opacity = o * c.vis;
         card.style.setProperty('--shade', shade.toFixed(3));
         card.style.zIndex = 300 - Math.round(a * 6);
         card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
