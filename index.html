@@ -414,10 +414,10 @@
     .svc2-offer{display:flex;align-items:center;gap:13px}
     .svc2-offer .dot{width:clamp(13px,1.15vw,17px);height:clamp(13px,1.15vw,17px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
     .svc2-offer span{font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.55vw,23px);color:#fff}
-    /* per-service note (a short paragraph) sits directly below "What we offer" */
-    .svc2-note{margin:clamp(14px,1.6vw,22px) 0 0;
-      font-family:var(--font-body);font-weight:400;font-size:clamp(12.5px,0.92vw,15px);line-height:1.5;color:rgba(255,255,255,0.82);
-      transition:opacity .35s var(--ease)}
+    /* per-service note — a short paragraph pinned (in JS) to the height of the
+       currently-hovered title, on the left column */
+    .svc2-note{position:absolute;left:clamp(26px,4vw,64px);top:50%;max-width:min(24vw,262px);z-index:6;transform:translateY(-50%);
+      font-family:var(--font-body);font-weight:400;font-size:clamp(12.5px,0.92vw,15px);line-height:1.5;color:rgba(255,255,255,0.82)}
     /* image box — sits BEHIND the titles */
     .svc2-box{position:absolute;right:clamp(26px,6vw,110px);top:0;width:clamp(230px,29vw,440px);aspect-ratio:1/1;z-index:2;
       opacity:0;pointer-events:none;background:transparent;overflow:hidden;
@@ -432,20 +432,21 @@
     .svc2-item{cursor:none;margin:0 0 clamp(4px,0.7vw,16px)}
     .svc2-item:last-child{margin-bottom:0}
     .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
-      font-size:clamp(34px,5.5vw,83px);line-height:.9;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
+      font-size:clamp(30px,4.5vw,66px);line-height:.92;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
     .svc2-item.hot .svc2-name{color:var(--yellow)}
     .svc2-mask .svc2-name{color:#fff}
-    /* thin line marking the sentence break inside each title (longer than a usual
-       line-break sign); follows the title colour so it highlights with the tab */
-    .svc2-brk{display:block;height:2px;width:clamp(90px,10vw,190px);margin:0.1em 0;
-      background:currentColor;opacity:.5}
+    /* thin line trailing the FIRST line of each title, marking the sentence break
+       (e.g. PRODUCT ——— / VISUALIZATION); follows the title colour */
+    .svc2-brk{display:inline-block;height:3px;width:clamp(56px,6vw,120px);vertical-align:middle;
+      margin:0 0 0 .4em;background:currentColor;opacity:.5}
     /* ── Large displays (≥1800px): pull things together, enlarge the image box (~60%),
        and force the title/box overlap the 16" layout has. ── */
     @media (min-width:1800px){
       .svc2-lead{left:clamp(48px,4vw,110px);max-width:min(19vw,340px)}
-      .svc2-list,.svc2-mask{left:20%}
-      .svc2-name{font-size:min(6.4vw,138px)}
-      .svc2-box{width:min(34vw,700px);right:clamp(40px,15vw,400px)}   /* pulled left into the titles for the overlap */
+      .svc2-note{left:clamp(48px,4vw,110px);max-width:min(19vw,340px)}
+      .svc2-list,.svc2-mask{left:25%}
+      .svc2-name{font-size:min(5vw,104px)}
+      .svc2-box{width:min(34vw,700px);right:clamp(40px,20vw,540px)}   /* pulled left into the titles for the overlap */
     }
     @property --sc-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
     @keyframes sc-spin{to{--sc-angle:360deg}}
@@ -1472,26 +1473,24 @@
 <section id="services">
   <div class="svc2" id="svc2">
     <div class="svc2-marquee-wrap" aria-hidden="true">
-      <div class="svc2-marquee">
-        <span class="m-inner"><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span></span><span class="m-inner"><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span><span class="m-o">ECCHO</span><span class="round-dot"></span><span class="m-e">ECCHO</span><span class="round-dot"></span></span>
-      </div>
+      <div class="svc2-marquee" id="svc2Marquee"></div>
     </div>
     <div class="svc2-lead" id="svc2Lead">
       <div class="svc2-offer"><span class="dot" aria-hidden="true"></span><span>What we offer</span></div>
-      <p class="svc2-note" id="svc2Note">Hover a service to see what it means and what we set out to achieve.</p>
     </div>
+    <p class="svc2-note" id="svc2Note">Hover a service to see what it means and what we set out to achieve.</p>
     <div class="svc2-box" id="svc2Box" aria-hidden="true"></div>
     <ul class="svc2-list" id="svc2List">
-      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<span class="svc2-brk"></span>Visualization</span></li>
-      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<span class="svc2-brk"></span>Design</span></li>
-      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<span class="svc2-brk"></span>Design</span></li>
-      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<span class="svc2-brk"></span>Animation</span></li>
+      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<span class="svc2-brk"></span><br>Visualization</span></li>
+      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<span class="svc2-brk"></span><br>Design</span></li>
+      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<span class="svc2-brk"></span><br>Design</span></li>
+      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<span class="svc2-brk"></span><br>Animation</span></li>
     </ul>
     <ul class="svc2-mask" id="svc2Mask" aria-hidden="true">
-      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<span class="svc2-brk"></span>Visualization</span></li>
-      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<span class="svc2-brk"></span>Design</span></li>
-      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<span class="svc2-brk"></span>Design</span></li>
-      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<span class="svc2-brk"></span>Animation</span></li>
+      <li class="svc2-item" data-svc="product-viz"><span class="svc2-name">Product<span class="svc2-brk"></span><br>Visualization</span></li>
+      <li class="svc2-item" data-svc="3d-motion"><span class="svc2-name">3D Motion<span class="svc2-brk"></span><br>Design</span></li>
+      <li class="svc2-item" data-svc="2d-motion"><span class="svc2-name">2D Motion<span class="svc2-brk"></span><br>Design</span></li>
+      <li class="svc2-item" data-svc="logo-animation"><span class="svc2-name">Logo<span class="svc2-brk"></span><br>Animation</span></li>
     </ul>
   </div>
 </section>
@@ -4247,7 +4246,27 @@
   var boxEl   = document.getElementById('svc2Box');
   var noteEl  = document.getElementById('svc2Note');
   var leadEl  = document.getElementById('svc2Lead');
+  var marqueeEl   = document.getElementById('svc2Marquee');
+  var marqueeWrap = document.querySelector('.svc2-marquee-wrap');
   if (!section || !listEl || !boxEl) return;
+
+  // Build the ECCHO marquee long enough to span the widest screen (each half ≥ 1
+  // viewport → the -50% loop is seamless).
+  function buildMarquee() {
+    if (!marqueeEl) return;
+    var per = Math.ceil(window.innerWidth / 90) + 4;
+    function half(hidden) {
+      var inner = document.createElement('span'); inner.className = 'm-inner';
+      if (hidden) inner.setAttribute('aria-hidden', 'true');
+      for (var i = 0; i < per; i++) {
+        var e = document.createElement('span'); e.className = i % 2 ? 'm-e' : 'm-o'; e.textContent = 'ECCHO'; inner.appendChild(e);
+        var d = document.createElement('span'); d.className = 'round-dot'; inner.appendChild(d);
+      }
+      return inner;
+    }
+    marqueeEl.innerHTML = ''; marqueeEl.appendChild(half(false)); marqueeEl.appendChild(half(true));
+  }
+  buildMarquee();
 
   var items = [].slice.call(listEl.querySelectorAll('.svc2-item'));
   // Placeholder image per service (from the 3D-designs stills). Swap for the real ones.
@@ -4302,17 +4321,16 @@
     if (!noteEl) return;
     noteEl.textContent = '';
     var frag = document.createDocumentFragment(), spans = [], words = text.split(' ');
-    var letters = text.replace(/\s/g, '').length, idx = 0;
-    var WINDOW = 0.34, eo = t => 1 - Math.pow(1 - t, 3);   // eased stagger envelope
+    var idx = 0, STEP = 0.016;   // steady per-letter delay → each glyph is visibly its own beat
     words.forEach(function (word, wi) {
       var w = document.createElement('span');
       w.style.cssText = 'display:inline-block;white-space:nowrap';   // word stays intact (letters can't break mid-word)
       for (var i = 0; i < word.length; i++) {
         var s = document.createElement('span');
         s.textContent = word[i];
-        var d = (WINDOW * eo(letters > 1 ? idx / (letters - 1) : 0)).toFixed(3);
-        s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(0.55em);' +
-          'transition:opacity .4s var(--ease),transform .5s var(--ease);transition-delay:' + d + 's';
+        var d = (idx * STEP).toFixed(3);
+        s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(0.6em);' +
+          'transition:opacity .32s var(--ease),transform .38s var(--ease);transition-delay:' + d + 's';
         w.appendChild(s); spans.push(s); idx++;
       }
       frag.appendChild(w);
@@ -4327,6 +4345,11 @@
     if (k === curKey) return;   // already active — don't retype on re-enter
     items.forEach(function (x) { x.classList.toggle('hot', x === it); });
     for (var key in layers) layers[key].classList.toggle('on', key === k);
+    // move the note to the hovered title's height (centred on it), then type it in
+    if (noteEl) {
+      var sr = wrap.getBoundingClientRect(), ir = it.getBoundingClientRect();
+      noteEl.style.top = Math.round((ir.top - sr.top) + ir.height / 2) + 'px';
+    }
     if (NOTE[k]) typeNote(NOTE[k]);
     targetTop = targetTopFor(it);
     if (!shown) { shown = true; wrap.classList.add('show-box'); curTop = targetTop; }  // first appear: no slide
@@ -4337,11 +4360,17 @@
     items.forEach(function (x) { x.classList.remove('hot'); });
     curKey = null; kick();
   }
-  // Align the "What we offer" + note package with the TOP of the first service tab.
+  // Align "What we offer" with the first tab; centre the marquee in the empty space
+  // above the titles.
   function alignLead() {
-    if (!leadEl || !items[0]) return;
+    if (!items[0]) return;
     var sr = wrap.getBoundingClientRect(), ir = items[0].getBoundingClientRect();
-    leadEl.style.top = Math.round(ir.top - sr.top) + 'px';
+    var titleTop = ir.top - sr.top;
+    if (leadEl) leadEl.style.top = Math.round(titleTop) + 'px';
+    if (marqueeWrap) {
+      var mh = marqueeWrap.offsetHeight || 24;
+      marqueeWrap.style.top = Math.max(6, Math.round(titleTop / 2 - mh / 2)) + 'px';
+    }
   }
   items.forEach(function (it) { it.addEventListener('mouseenter', function () { hover(it); }); });
   listEl.addEventListener('mouseleave', leave);
@@ -4349,10 +4378,14 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignLead);
   if (items[0]) hover(items[0]);   // first service + its image is highlighted on arrival
   window.addEventListener('resize', function () {
-    alignLead();
-    if (!curKey) return;
-    var it = items.filter(function (x) { return x.dataset.svc === curKey; })[0];
-    if (it) { targetTop = targetTopFor(it); curTop = targetTop; boxEl.style.top = curTop + 'px'; kick(); }
+    buildMarquee(); alignLead();
+    var it = curKey && items.filter(function (x) { return x.dataset.svc === curKey; })[0];
+    if (it) {
+      targetTop = targetTopFor(it); curTop = targetTop; boxEl.style.top = curTop + 'px';
+      var sr = wrap.getBoundingClientRect(), ir = it.getBoundingClientRect();
+      if (noteEl) noteEl.style.top = Math.round((ir.top - sr.top) + ir.height / 2) + 'px';
+      kick();
+    }
   });
 })();
 </script>
