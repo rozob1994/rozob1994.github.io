@@ -2723,29 +2723,39 @@
       c.text.style.opacity = c.rev.toFixed(3);
       c.text.style.setProperty('--ty', ((1 - c.rev) * TXTOFF).toFixed(1) + 'px');
       if (c.horizontal) { placeDome(c); return; }   // carousel 3 — its own overhaul comes later
-      // ── Carousels 1 & 2: conveyor. The hero sits centred on the anchor; the next
-      //    card EXPANDS from the middle with a fade, the outgoing one FADES away
-      //    downward. Motion eased with the standard cubic-bezier. The cursor pan/3D
-      //    tilt is preserved (rotateY/rotateX from panX/panY). ──
+      // ── Carousels 1 & 2: the upcoming cards still fan along the ARC up to the hero
+      //    slot; but the hero, once passed, drops straight DOWN and fades as the next
+      //    card rises into its place. Eased with the standard cubic-bezier. Cursor
+      //    pan / 3D tilt preserved. ──
       for (let i = 0; i < N; i++) {
         const u = i - c.cur, a = Math.abs(u);
         const card = c.cards[i];
-        let x = 0, y = 0, s = 1, o = 0, zi = 300;
-        if (a >= 1) { o = 0; }
-        else if (u > 0) {                       // incoming — expand from the middle, fade in
-          const t = bez(1 - u);
-          s = 0.24 + 0.76 * t; o = t; zi = 292;
-        } else {                                // hero / outgoing — fade + slide down
-          const t = bez(-u);
-          s = 1 - 0.12 * t; o = 1 - t; y = t * CONV_DOWN; zi = 300;
+        let x, y, s, o, ry, rot, z;
+        if (u >= 0) {                             // hero + upcoming — the arc
+          const pop = Math.exp(-a * a * 0.8);
+          x = c.dir * (a * a * BVX) - c.dir * PULLX * pop;
+          y = -u * SPY;
+          rot = c.dir * u * 0.6;
+          z = -a * DZ;
+          ry = Math.max(-34, Math.min(34, -c.dir * u * 5));
+          s = 0.92 + 0.12 * Math.exp(-a * a * 0.7);
+          o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));
+        } else {                                  // outgoing hero — lingers, then drops down + fades
+          const t = Math.min(1, a);
+          x = -c.dir * PULLX;
+          y = t * t * CONV_DOWN;                  // ease-in drop: holds at the slot, then falls away
+          rot = 0; z = 0; ry = 0;
+          s = 1.04 - 0.16 * t;
+          o = 1 - t;                              // steady fade over the hand-off
         }
-        const hw = Math.max(0, 1 - a);          // pan tilt only on the visible cards
-        const ty = c.panX * 8 * hw;             // cursor Y-tilt (3D preserved)
+        const shade = Math.min(0.6, a * 0.08 + Math.abs(ry) / 78);
+        const hw = Math.exp(-a * a * 0.6);
+        const ty = ry + c.panX * 7 * hw;          // cursor Y-tilt (3D preserved)
         const tx = -c.panY * 6 * hw;
         card.style.opacity = (o * c.vis).toFixed(3);
-        card.style.setProperty('--shade', (0.12 * (1 - o)).toFixed(3));
-        card.style.zIndex = zi;
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
+        card.style.setProperty('--shade', shade.toFixed(3));
+        card.style.zIndex = u < 0 ? 305 : (300 - Math.round(a * 6));
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
       }
     }
     // Carousel 3 (bottom/dome) — unchanged for now (solar-system overhaul is a later pass).
