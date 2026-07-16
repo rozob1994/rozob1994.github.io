@@ -1319,8 +1319,10 @@
     /* bottom (#3): hero at the top peak, cards fan down to the sides; text above.
        Raised up the screen so it doesn't snap to the bottom edge and #2's tail is
        pushed off the top. Title + subtext are centred. */
-    .side-bottom .pcar{left:50%;top:60%}
-    .side-bottom .pcar-text{left:50%;top:13%;transform:translate(-50%,0) translateY(var(--ty,0));text-align:center}
+    /* bottom (#3): a solar-system ring — cards orbit an elliptical path around the
+       title+subtext pinned in the centre. */
+    .side-bottom .pcar{left:50%;top:50%}
+    .side-bottom .pcar-text{left:50%;top:50%;transform:translate(-50%,-50%) translateY(var(--ty,0));text-align:center;z-index:340}
     .side-bottom .pcar-sub{text-align:center}
 
     @media(max-width:760px){
@@ -2669,13 +2671,13 @@
         stage: stage, text: text, sub: sub, subFull: cfg.sub || '', subN: -1,
         pcarEl: car, cards: cards, cur: -ENTRANCE, target: -ENTRANCE, heroIdx: -1,
         ax: ANCH[cfg.side][0], ay: ANCH[cfg.side][1], panX: 0, panY: 0, panTX: 0, panTY: 0,
-        rev: 0, revT: 0, isActive: false, typer: 0, vis: 1
+        rev: 0, revT: 0, isActive: false, typer: 0, vis: 1, exitP: 0
       };
     });
 
     const N = cars[0].cards.length;
     const M = cars.length;
-    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, TAIL, CONV_DOWN, gaps, cycStart;
+    let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, TAIL, CONV_DOWN, RX, RY, gaps, cycStart;
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
@@ -2692,6 +2694,7 @@
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
       TAIL = Math.round(vh * 0.42);   // after #3, roll the gallery up and out over this scroll → gridded breathing space before About
       CONV_DOWN = Math.round(vh * 0.62);   // carousels 1&2: how far the outgoing hero slides DOWN as it fades
+      RX = Math.min(Math.round(vw * 0.34), 640); RY = Math.min(Math.round(vh * 0.30), 340);   // carousel 3 solar-system ellipse radii
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2720,9 +2723,9 @@
       // Title fades + slides up on its own smooth ease (c.rev, driven in frame()),
       // independent of the exact scroll position — no snap. The subtext is typed
       // in / out by a timer (setActiveCar), so it reads letter-by-letter smoothly.
-      c.text.style.opacity = c.rev.toFixed(3);
+      c.text.style.opacity = (c.rev * (1 - (c.exitP || 0))).toFixed(3);   // centre text fades as the ring exits
       c.text.style.setProperty('--ty', ((1 - c.rev) * TXTOFF).toFixed(1) + 'px');
-      if (c.horizontal) { placeDome(c); return; }   // carousel 3 — its own overhaul comes later
+      if (c.horizontal) { placeRing(c); return; }   // carousel 3 — solar-system ring
       // ── Carousels 1 & 2: the upcoming cards still fan along the ARC up to the hero
       //    slot; but the hero, once passed, drops straight DOWN and fades as the next
       //    card rises into its place. Eased with the standard cubic-bezier. Cursor
@@ -2758,27 +2761,36 @@
         card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
       }
     }
-    // Carousel 3 (bottom/dome) — unchanged for now (solar-system overhaul is a later pass).
-    function placeDome(c) {
+    // Carousel 3 — SOLAR SYSTEM. All cards orbit an elliptical ring around the centre
+    // title/subtext; scrolling rotates the ring (~one revolution over the cycle). When
+    // the cycle ends the cards peel off the ring and curve DOWN out of the section
+    // (front cards leading), handing off to the hero ball in the next section.
+    function placeRing(c) {
+      const rot = (c.cur / (N - 1)) * Math.PI * 2;   // scroll-scrubbed rotation, one full turn
+      const exitP = c.exitP || 0;
       for (let i = 0; i < N; i++) {
-        const u = i - c.cur, a = Math.abs(u);
-        const pop = Math.exp(-a * a * 0.8);
-        const x = u * SPX;
-        const y = a * a * BVY - PULLY * pop;
-        const rot = (u < 0 ? -1 : 1) * a * 1.2;
-        const z = -a * DZ;
-        const ry = Math.max(-34, Math.min(34, -c.dir * u * 5));
-        const s = 0.92 + 0.12 * Math.exp(-a * a * 0.7);
-        const o = Math.max(0, Math.min(1, (4.0 - a) / 1.1));
-        const shade = Math.min(0.6, a * 0.08 + Math.abs(ry) / 78);
-        const hw = Math.exp(-a * a * 0.6);
-        const ty = ry + c.panX * 7 * hw;
-        const tx = -c.panY * 6 * hw;
+        const th = (i / N) * Math.PI * 2 - rot;
+        const ex = Math.cos(th), ey = Math.sin(th);
+        const depth = (ey + 1) / 2;                  // 0 = back (top) → 1 = front (bottom)
+        let x = RX * ex, y = RY * ey;
+        let s = 0.34 + 0.30 * depth;                 // near cards bigger
+        let o = 0.5 + 0.5 * depth;
+        if (exitP > 0) {                             // curve DOWN + out (front cards lead)
+          const lead = (1 - depth) * 0.32;
+          const le = clamp((exitP - lead) / (1 - lead), 0, 1);
+          x = x * (1 - le);                          // drift toward centre x …
+          y = y + le * le * (RY + vhPx * 0.95);      // … while falling away (accelerating → curved path)
+          o = o * (1 - le);
+          s = s * (1 - 0.22 * le);
+        }
+        const hw = 0.6 + 0.4 * depth;
+        const ty = ex * 14 + c.panX * 6 * hw;        // slight facing turn + cursor pan (3D preserved)
+        const tx = -c.panY * 5 * hw;
         const card = c.cards[i];
-        card.style.opacity = o * c.vis;
-        card.style.setProperty('--shade', shade.toFixed(3));
-        card.style.zIndex = 300 - Math.round(a * 6);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translateZ(' + z.toFixed(0) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg) rotate(' + rot.toFixed(2) + 'deg)';
+        card.style.opacity = (o * c.vis).toFixed(3);
+        card.style.setProperty('--shade', (0.20 * (1 - depth)).toFixed(3));
+        card.style.zIndex = 300 + Math.round(ey * 40);
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ') rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
 
@@ -2793,10 +2805,9 @@
           return (k - 1) + (g - (cs - gaps[k])) / gaps[k];   // sliding (k-1) → k
         }
       }
-      // Past the last cycle: roll the whole gallery up and out over TAIL, leaving the
-      // grid alone on screen (gridded breathing space) before the About section.
-      const cycEnd = cycStart[M - 1] + CYCLE;
-      return (M - 1) + Math.min(1, Math.max(0, (g - cycEnd) / TAIL));
+      // Past the last cycle: HOLD the track on the last carousel — it exits via its
+      // own downward curve (exitP), leaving the grid alone (breathing) before About.
+      return (M - 1);
     }
     function carTarget(k, g) {
       const cs = cycStart[k];
@@ -2882,11 +2893,13 @@
       drawGrid(-curG * 0.5);   // grid drifts with the scroll (canvas → crisp, seamless)
       const tu = trackUnits(curG);
       const activeK = clamp(Math.round(tu), 0, M - 1);
+      const cycEnd = cycStart[M - 1] + CYCLE;
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
       for (let k = 0; k < M; k++) {
         cars[k].target = carTarget(k, k === 0 ? raw : curG);
         setActiveCar(cars[k], k === activeK);
         cars[k].vis = clamp((1 - (tu - k)) / 0.3, 0, 1);   // 1 until parked ~0.7 screen up, →0 by a full screen up
+        cars[k].exitP = (k === M - 1) ? clamp((curG - cycEnd) / (TAIL * 0.82), 0, 1) : 0;   // carousel 3 curves out over TAIL
       }
       kick();
     }
