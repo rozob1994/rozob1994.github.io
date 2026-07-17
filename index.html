@@ -33,6 +33,7 @@
     body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-weight:300;line-height:1.6;cursor:none;overflow-x:hidden}
 
     #cursor-dot{position:fixed;width:8px;height:8px;background:var(--yellow);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference}
+    body.hide-cursor-dot #cursor-dot{opacity:0}   /* hidden over the hero-ball grid so it doesn't tangle with the dots */
     #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(245,217,78,0.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .4s var(--ease),height .4s,border-color .3s}
     body.hovering #cursor-ring{width:60px;height:60px;border-color:var(--yellow)}
     /* over bright surfaces (e.g. the light work section) the ring goes dark so it stays visible */
@@ -240,7 +241,7 @@
        The old tabs / featured / grid are hidden; the 3D carousel below is untouched. ═══ */
     #work .work-header{display:none}
     #work #mofidFeatured,#work #mofidRestBlock,#work #personalPanel{display:none!important}
-    .works2{position:relative;z-index:6;margin-top:clamp(6px,2vh,22px)}
+    .works2{position:relative;z-index:6;margin-top:clamp(6px,2vh,22px);padding-bottom:clamp(72px,11vh,150px)}
     .works2-lead{display:flex;align-items:center;gap:13px;margin-bottom:16px}
     .works2-lead .dot{width:clamp(11px,1vw,15px);height:clamp(11px,1vw,15px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
     .works2-lead span:last-child{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(21,22,29,0.6)}
@@ -254,6 +255,7 @@
     .w2f-btn{font-family:var(--font-body);font-size:15px;color:rgba(21,22,29,0.5);background:transparent;border:1px solid transparent;border-radius:7px;padding:5px 12px;cursor:none;transition:color .2s,border-color .2s;text-align:left}
     .w2f-btn:hover{color:#15161d}
     .w2f-btn.active{color:#15161d;border-color:rgba(21,22,29,0.65)}
+    .w2f-btn:disabled,.w2f-btn.is-void{opacity:.3;pointer-events:none;text-decoration:line-through;text-decoration-color:rgba(21,22,29,0.3)}
     .works2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,1.8vw,34px) clamp(16px,1.4vw,26px)}
     .w2card{cursor:none;display:flex;flex-direction:column;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
     .w2card.in{opacity:1;transform:none}
@@ -1368,6 +1370,7 @@
     /* carousel 3 cards are flat faces (no 3D thickness) so they round cleanly into
        balls; the card box-shadow follows the border-radius set per-frame in JS. */
     .side-bottom .pcar-back,.side-bottom .pcar-edge{display:none}
+    .side-bottom .pcar-face,.side-bottom .pcar-face::after{border-radius:0}   /* carousel 3 cards: no rounding */
 
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
@@ -2847,54 +2850,24 @@
     // (front cards leading), handing off to the hero ball in the next section.
     function placeRing(c) {
       const TAU = Math.PI * 2;
-      const rot = (c.cur / (N - 1)) * Math.PI;       // scroll-scrubbed rotation, HALF a turn
-      const gatherP = c.gatherP || 0;                // cards gather into the centre column (pinned, screen still)
-      const dropP = c.dropP || 0;                    // then the column pours down, staggered (as the ball descends)
-      const conv = gatherP;                          // the gather tween eases this symmetrically already (up == down)
-      const COLGAP = vhPx * 0.05;
-      const COIL = vhPx * 0.05;                       // helix pitch — opens the flat ring into a coil
-      const SEAM = Math.PI * 0.75;                    // the overlap seam (where a card climbs on top) sits bottom-left
+      const rot = spinAngle;                          // AUTO-rotates on its own (not scroll-driven)
+      const COIL = vhPx * 0.05;                        // helix pitch — opens the flat ring into a coil
+      const SEAM = Math.PI * 0.75;                     // winding seam sits bottom-left
       const ZR = 42;
-      const STAG = 0.05, WIN = 0.42;                  // per-card drop offset
-      const STACK_TILT = 30;                          // column lean so the stack reads as 3D, not flat
-      const ringW = RCARD_W * 0.6, ringH = RCARD_H * 0.6;
       for (let i = 0; i < N; i++) {
         const th = (i / N) * TAU - rot;
-        // Winding phase relative to the seam: monotonic 0→1 around the loop, with a
-        // single jump at the seam. This makes the overlap wind ONE way (a helix), and
-        // the card just before the seam rides on top of everything at bottom-left.
-        const phase = ((((th - SEAM) % TAU) + TAU) % TAU) / TAU;   // 0..1
+        const phase = ((((th - SEAM) % TAU) + TAU) % TAU) / TAU;   // 0..1 winding phase
         const rx = RX * Math.cos(th), ry = RY * Math.sin(th);
-        const coilY = (phase - 0.5) * COIL;                        // spiral rise → reads as 3D helix, not a flat disc
-        const colY = (i - (N - 1) / 2) * COLGAP;                   // slot in the centre column
-        // Drop: the BOTTOM card of the column (largest colY, i=N-1) leads; the rest follow.
-        const ld = bez(clamp((dropP - (N - 1 - i) * STAG) / WIN, 0, 1));
-        const dropAmt = ld * (vhPx * 1.7);
-        const x = rx * (1 - conv);                                 // → 0 (centre axis)
-        const y = (ry + coilY) * (1 - conv) + colY * conv + dropAmt;   // helix → column, then down (staggered)
-        // Size: ring (4/3, 0.6×) → gathered column (4/3, hero-ball width) → drop
-        // (square, rounded to a full ball). Set via width/height (no image squash).
-        const W = ringW + (ballDia - ringW) * conv;
-        const Hcol = ringH + (ballDia * 0.75 - ringH) * conv;
-        const H = Hcol + (ballDia - Hcol) * ld;                    // squares up as it rounds into a ball
-        const brPct = 3 + 47 * ld;                                 // rounded card → 50% circle (ball)
-        const stack = STACK_TILT * conv * (1 - ld);                // lean while stacked; flattens as it becomes a ball
-        const ty = c.panX * 3;                       // pan/tilt reduced ~50% for this carousel
-        const tx = -c.panY * 2.5 - stack;
+        const coilY = (phase - 0.5) * COIL;
+        const ty = c.panX * 3;                         // pan/tilt (reduced ~50% for this carousel)
+        const tx = -c.panY * 2.5;
         const card = c.cards[i];
         const face = card._face || (card._face = card.querySelector('.pcar-face'));
-        card.style.width = W.toFixed(1) + 'px';
-        card.style.height = H.toFixed(1) + 'px';
-        card.style.borderRadius = brPct.toFixed(1) + '%';        // box-shadow rounds with the ball
-        if (face) face.style.borderRadius = brPct.toFixed(1) + '%';
-        card.style.opacity = c.vis.toFixed(3);       // uniform, never fades on exit
+        if (card.style.width) { card.style.width = ''; card.style.height = ''; card.style.borderRadius = ''; if (face) face.style.borderRadius = ''; }
+        card.style.opacity = c.vis.toFixed(3);
         card.style.setProperty('--shade', '0');
-        // Helix winding z (front of the coil over the back, seam at bottom-left) → in
-        // the gathered column the BOTTOM card (i=N-1) sits at the TOP of the z-stack.
-        const zRing = phase * ZR;
-        const zCol = (i / (N - 1)) * ZR;
-        card.style.zIndex = 300 + Math.round(zRing * (1 - conv) + zCol * conv);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
+        card.style.zIndex = 300 + Math.round(phase * ZR);   // winding z (helix)
+        card.style.transform = 'translate(-50%,-50%) translate(' + rx.toFixed(1) + 'px,' + (ry + coilY).toFixed(1) + 'px) scale(0.6) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
 
@@ -2929,7 +2902,7 @@
     }
 
     let started = false, inView = false, raf = 0, curG = 0;
-    let gatherVal = 0, gatherTween = 0, gatherLock = false, lastGatherY = 0;   // triggered (locked) gather beat
+    let spinAngle = 0;   // carousel 3 rotates on its own; advanced each frame while it's on screen
     const echoFieldEl = document.getElementById('echoField');   // ring exit is timed to the About section (hero ball) rising below
     // Cursor pan: each carousel shifts its perspective-origin (camera-angle change
     // → depth parallax) + translates toward the cursor. Independent per carousel —
@@ -2954,6 +2927,9 @@
         c.pcarEl.style.transform = 'translate(' + (-c.panX * PANT * ps).toFixed(1) + 'px,' + (-c.panY * PANT * ps).toFixed(1) + 'px)';
         placeCar(c);            // placeCar also reads c.panX/panY for the per-card tilt
       }
+      // Carousel 3 spins continuously on its own while it's on screen.
+      const c3 = cars[M - 1];
+      if (inView && c3 && c3.horizontal && c3.vis > 0.01) { spinAngle += 0.0032; moving = true; }
       if (moving) raf = requestAnimationFrame(frame);
     }
     function kick() { if (!raf) raf = requestAnimationFrame(frame); }
@@ -3001,66 +2977,17 @@
       const tu = trackUnits(curG);
       const activeK = clamp(Math.round(tu), 0, M - 1);
       // Carousel 3 exit in two stages: the cards GATHER into the centre column while
-      // still pinned (driven by curG over the tail — the screen isn't moving), then the
-      // column POURS DOWN, staggered, driven by the About section rising below (so it's
-      // timed to the hero ball descending).
-      // gatherP is NOT scrubbed by scroll on desktop — it's a locked, triggered tween
-      // (gatherVal, driven below), so the collapse always plays in full at a fixed
-      // pace. Without Lenis (touch / reduced-motion) there's no lock, so fall back to a
-      // scroll-scrubbed gather over the tail. The drop afterwards is always scroll-driven.
-      const efTop = echoFieldEl ? (echoFieldEl.getBoundingClientRect().top) : Infinity;
-      const dropP = clamp((vhPx - efTop) / (vhPx * 1.35), 0, 1);
-      const gatherOut = window.__lenis ? gatherVal
-                        : clamp((curG - (cycStart[M - 1] + CYCLE)) / TAIL, 0, 1);
-      // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
+      // Carousel 3 no longer gathers/pours — it spins on its own and the About section
+      // simply rises over it. The track still slides the carousels; #1 reads the signed
+      // value so its swipe-in can begin before the pin, the rest use curG.
       for (let k = 0; k < M; k++) {
         cars[k].target = carTarget(k, k === 0 ? raw : curG);
         setActiveCar(cars[k], k === activeK);
         cars[k].vis = clamp((1 - (tu - k)) / 0.3, 0, 1);   // 1 until parked ~0.7 screen up, →0 by a full screen up
-        cars[k].gatherP = (k === M - 1) ? gatherOut : 0;
-        cars[k].dropP = (k === M - 1) ? dropP : 0;
       }
       kick();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
-
-    // ── Gather beat (triggered, not scrubbed) ────────────────────────────────
-    // Rotating the ring is scroll-driven; but the instant the cycle ends, a LOCKED
-    // snap holds the scroll and auto-animates the cards gathering into the centre
-    // column over a fixed time (mirrors the hero-ball shrink) — it can't be rushed
-    // or left half-done. Scrolling back up past the trigger reverses it. The drop
-    // that follows stays scroll-driven. Desktop / Lenis only.
-    const gEase = x => 1 - Math.pow(1 - x, 3);                                   // easeOutCubic (scroll lock)
-    const gEaseIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;   // easeInOutCubic (symmetric)
-    function tweenGather(to) {
-      const from = gatherVal, t0 = performance.now(), dur = 720;
-      if (gatherTween) cancelAnimationFrame(gatherTween);
-      (function stepG() {
-        const p = Math.min(1, (performance.now() - t0) / dur);
-        // Symmetric ease → the collapse (down) and the return to the ring (up) play at
-        // exactly the same pace.
-        gatherVal = from + (to - from) * gEaseIO(p);
-        if (M > 0) cars[M - 1].gatherP = gatherVal;
-        kick();
-        gatherTween = p < 1 ? requestAnimationFrame(stepG) : 0;
-      })();
-    }
-    window.addEventListener('scroll', function () {
-      const lenis = window.__lenis;
-      const y = window.scrollY, dir = y - lastGatherY; lastGatherY = y;
-      if (gatherLock || !lenis || !started) return;
-      const trigY = (host.getBoundingClientRect().top + y) + cycStart[M - 1] + CYCLE;   // scrollY where the cycle ends
-      const dz = vhPx * 0.03;
-      let to = null;
-      if (dir > 0 && gatherVal < 0.5 && y > trigY - dz) to = 1;         // scroll down → gather
-      else if (dir < 0 && gatherVal > 0.5 && y < trigY + dz) to = 0;    // scroll up → un-gather
-      if (to != null) {
-        gatherLock = true;
-        lenis.scrollTo(to === 1 ? trigY + 2 : trigY - 2, { duration: 0.68, lock: true, easing: gEase,
-          onComplete: () => { gatherLock = false; lastGatherY = window.scrollY; } });
-        tweenGather(to);
-      }
-    }, { passive: true });
 
     window.addEventListener('resize', function () { dims(); onScroll(); cars.forEach(placeCar); });
 
@@ -3069,7 +2996,7 @@
     new IntersectionObserver(function (es) {
       es.forEach(function (x) {
         inView = x.isIntersecting;
-        if (inView && !started) { started = true; lastGatherY = window.scrollY; sizeGrid(); cars.forEach(placeCar); onScroll(); }
+        if (inView && !started) { started = true; sizeGrid(); cars.forEach(placeCar); onScroll(); }
         if (!inView) { cars.forEach(function (c) { c.panTX = 0; c.panTY = 0; }); kick(); }   // ease back to neutral when scrolled away
       });
     }, { threshold: 0 }).observe(sticky);
@@ -3082,21 +3009,20 @@
   const WORKS2_SVC = { 'product-viz': 'Product Visualization', '3d-motion': '3D Motion', '2d-motion': '2D Motion', 'logo-animation': 'Logo Animation' };
   function eProjIdx(id) { for (var i = 0; i < ECCHO_PROJECTS.length; i++) { if (ECCHO_PROJECTS[i].id === id) return i; } return -1; }
   const WORKS2_CARDS = [
-    { col: 'mofid', title: 'Mofid Card',            desc: 'Concept motion for Mofid’s card — material, light and identity resolved in a single loop.',            poster: 'media/mofid/mofid-card-concept-motion/main.jpg',                             svc: ['3d-motion'],                   click: { mofidSlug: 'main',                                       mofidKey: 'mofid-card-concept-motion' } },
-    { col: 'mofid', title: 'Mofid 4.0',             desc: 'Identity in motion — glass-and-light loops of how the Mofid mark builds and breathes.',               poster: 'media/mofid/mofid-ident-r-d/mofid-4-9-glass-motion.jpg',                     svc: ['3d-motion', 'logo-animation'], click: { mofidSlug: 'mofid-4-9-glass-motion',                      mofidKey: 'mofid-ident-r-d' } },
-    { col: 'mofid', title: 'Jahat 1404',            desc: 'Teaser for the 1404 edition of Mofid’s annual Jahat festival.',                                        poster: 'media/mofid/annual-jahat-festival/jahat-1404-teaser.jpg',                    svc: ['2d-motion', 'logo-animation'], click: { mofidSlug: 'jahat-1404-teaser',                          mofidKey: 'annual-jahat-festival' } },
-    { col: 'mofid', title: 'Jahat 1403',            desc: 'Teaser for the 1403 edition of the Jahat festival — energetic and on-brand.',                          poster: 'media/mofid/annual-jahat-festival/jahat-1403-teaser.jpg',                    svc: ['2d-motion', 'logo-animation'], click: { mofidSlug: 'jahat-1403-teaser',                          mofidKey: 'annual-jahat-festival' } },
-    { col: 'mofid', title: 'AIX Event',             desc: 'Large-format identity for AIX, Mofid’s AI-in-industry event — machine-driven and intelligent.',        poster: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.jpg', svc: ['3d-motion'],                   click: { mofidSlug: 'aix-3d-loop-pollished-glitched-edited-2-4k',  mofidKey: 'aix-exhibitions' } },
-    { col: 'mofid', title: 'Identity R&D',          desc: 'Identity research in motion — a run of loops testing how the mark behaves before lock.',              poster: 'media/mofid/mofid-ident-r-d/gallery/05.jpg',                                 svc: ['3d-motion', 'logo-animation'], click: { mofidSlug: '__ident__',                                  mofidKey: 'mofid-ident-r-d' } },
-    { col: 'mofid', title: 'Tavan Fund',            desc: '3D pre-roll giving Mofid’s Tavan fund its own tactile, high-finish signature.',                        poster: 'media/mofid/pre-rolls/main-version-2-fixed-loop.jpg',                        svc: ['3d-motion'],                   click: { mofidSlug: 'main-version-2-fixed-loop',                  mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Octane Fund',           desc: '3D pre-roll giving the Octane fund its own material and motion.',                                      poster: 'media/mofid/pre-rolls/octane-kv-test-6.jpg',                                 svc: ['3d-motion'],                   click: { mofidSlug: 'octane-kv-test-6',                           mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Ayar — Gold Fund',      desc: '3D pre-roll for the Ayar gold fund — gold, red cloth and light in motion.',                            poster: 'media/mofid/pre-rolls/ayar-pre-roll-red-cloth-7.jpg',                        svc: ['3d-motion'],                   click: { mofidSlug: 'ayar-pre-roll-red-cloth-7',                  mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Khodran Fund',          desc: '3D pre-roll for Mofid’s Khodran fund, built around weight and material.',                               poster: 'media/mofid/pre-rolls/khodran-pre-roll-edited-2.jpg',                        svc: ['3d-motion'],                   click: { mofidSlug: 'khodran-pre-roll-edited-2',                  mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Aram Fund',             desc: '3D pre-roll giving the Aram fund a calm, premium sense of movement.',                                   poster: 'media/mofid/pre-rolls/aram-pre-roll.jpg',                                    svc: ['3d-motion'],                   click: { mofidSlug: 'aram-pre-roll',                              mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Atlas Fund',            desc: '3D pre-roll for the Atlas fund — structured, precise and high-finish.',                                 poster: 'media/mofid/pre-rolls/atlas-pre-roll-edited-2.jpg',                          svc: ['3d-motion'],                   click: { mofidSlug: 'atlas-pre-roll-edited-2',                    mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Avand Fund',            desc: '3D pre-roll for Mofid’s Avand fund, tuned for launch and social.',                                      poster: 'media/mofid/pre-rolls/ayar-pre-roll-edited-2.jpg',                           svc: ['3d-motion'],                   click: { mofidSlug: 'ayar-pre-roll-edited-2',                     mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Sector Funds',          desc: '3D pre-roll covering Mofid’s sector funds as one coherent motion family.',                              poster: 'media/mofid/pre-rolls/bakhshi-pre-roll-edited.jpg',                          svc: ['3d-motion'],                   click: { mofidSlug: 'bakhshi-pre-roll-edited',                    mofidKey: 'pre-rolls' } },
-    { col: 'mofid', title: 'Daroono Fund',          desc: '3D pre-roll for the Daroono fund with a bold, on-brand feel.',                                          poster: 'media/mofid/pre-rolls/daroono-pre-roll-with-sound.jpg',                      svc: ['3d-motion'],                   click: { mofidSlug: 'daroono-pre-roll-with-sound',                mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Mofid Card',            desc: 'Concept motion for Mofid’s card — material, light and identity resolved in a single loop.',            poster: 'media/mofid/mofid-card-concept-motion/main.jpg',                             svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'main',                                       mofidKey: 'mofid-card-concept-motion' } },
+    { col: 'mofid', title: 'Mofid 4.0',             desc: 'Identity in motion — glass-and-light loops of how the Mofid mark builds and breathes.',               poster: 'media/mofid/mofid-ident-r-d/mofid-4-9-glass-motion.jpg',                     svc: ['3d-motion'],                   click: { mofidSlug: 'mofid-4-9-glass-motion',                      mofidKey: 'mofid-ident-r-d' } },
+    { col: 'mofid', title: 'Jahat 1404',            desc: 'Teaser for the 1404 edition of Mofid’s annual Jahat festival.',                                        poster: 'media/mofid/annual-jahat-festival/jahat-1404-teaser.jpg',                    svc: ['3d-motion'],                   click: { mofidSlug: 'jahat-1404-teaser',                          mofidKey: 'annual-jahat-festival' } },
+    { col: 'mofid', title: 'Jahat 1403',            desc: 'Teaser for the 1403 edition of the Jahat festival — energetic and on-brand.',                          poster: 'media/mofid/annual-jahat-festival/jahat-1403-teaser.jpg',                    svc: ['3d-motion', '2d-motion'],      click: { mofidSlug: 'jahat-1403-teaser',                          mofidKey: 'annual-jahat-festival' } },
+    { col: 'mofid', title: 'AIX Event',             desc: 'Large-format identity for AIX, Mofid’s AI-in-industry event — machine-driven and intelligent.',        poster: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.jpg', svc: ['3d-motion', '2d-motion'],      click: { mofidSlug: 'aix-3d-loop-pollished-glitched-edited-2-4k',  mofidKey: 'aix-exhibitions' } },
+    { col: 'mofid', title: 'Identity R&D',          desc: 'Identity research in motion — a run of loops testing how the mark behaves before lock.',              poster: 'media/mofid/mofid-ident-r-d/gallery/05.jpg',                                 svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: '__ident__',                                  mofidKey: 'mofid-ident-r-d' } },
+    { col: 'mofid', title: 'Tavan Fund',            desc: '3D pre-roll giving Mofid’s Tavan fund its own tactile, high-finish signature.',                        poster: 'media/mofid/pre-rolls/main-version-2-fixed-loop.jpg',                        svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'main-version-2-fixed-loop',                  mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Octane Fund',           desc: '3D pre-roll giving the Octane fund its own material and motion.',                                      poster: 'media/mofid/pre-rolls/octane-kv-test-6.jpg',                                 svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'octane-kv-test-6',                           mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Ayar — Gold Fund',      desc: '3D pre-roll for the Ayar gold fund — gold, red cloth and light in motion.',                            poster: 'media/mofid/pre-rolls/ayar-pre-roll-red-cloth-7.jpg',                        svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'ayar-pre-roll-red-cloth-7',                  mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Khodran Fund',          desc: '3D pre-roll for Mofid’s Khodran fund, built around weight and material.',                               poster: 'media/mofid/pre-rolls/khodran-pre-roll-edited-2.jpg',                        svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'khodran-pre-roll-edited-2',                  mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Atlas Fund',            desc: '3D pre-roll for the Atlas fund — structured, precise and high-finish.',                                 poster: 'media/mofid/pre-rolls/atlas-pre-roll-edited-2.jpg',                          svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'atlas-pre-roll-edited-2',                    mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Avand Fund',            desc: '3D pre-roll for Mofid’s Avand fund, tuned for launch and social.',                                      poster: 'media/mofid/pre-rolls/ayar-pre-roll-edited-2.jpg',                           svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'ayar-pre-roll-edited-2',                     mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Sector Funds',          desc: '3D pre-roll covering Mofid’s sector funds as one coherent motion family.',                              poster: 'media/mofid/pre-rolls/bakhshi-pre-roll-edited.jpg',                          svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'bakhshi-pre-roll-edited',                    mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'Daroono Fund',          desc: '3D pre-roll for the Daroono fund with a bold, on-brand feel.',                                          poster: 'media/mofid/pre-rolls/daroono-pre-roll-with-sound.jpg',                      svc: ['3d-motion', 'product-viz'],    click: { mofidSlug: 'daroono-pre-roll-with-sound',                mofidKey: 'pre-rolls' } },
     { col: 'mofid', title: 'Funds Explainer',       desc: 'A clean animated explainer that turns Mofid’s fund line-up into an easy on-screen story.',              poster: 'media/mofid/exhibition-explainer-motion/safe-motion-expo-ready.jpg',        svc: ['2d-motion'],                   click: { mofidSlug: 'safe-motion-expo-ready',                     mofidKey: 'exhibition-explainer-motion' } },
     { col: 'mofid', title: 'Jahat 1402 Teaser',     desc: 'Logomotion and teaser for the 1402 edition of the Jahat festival.',                                    poster: 'media/mofid/annual-jahat-festival/jahat-logomotion-final.jpg',               svc: ['2d-motion', 'logo-animation'], click: { mofidSlug: 'jahat-logomotion-final',                     mofidKey: 'annual-jahat-festival' } },
     { col: 'personal', id: 'amirkabir-hotel', title: 'Amirkabir Hotel', desc: '2D motion launching a hotel rebrand — logo, type and motion language in one confident rhythm.',                     svc: ['2d-motion', 'logo-animation'] },
@@ -3105,7 +3031,7 @@
     { col: 'personal', id: 'daal-campaign',   title: 'Daal Campaigns',  desc: 'Campaign work for an insurer — a 2D report piece plus high-finish 3D visuals that make a dry field feel premium.', svc: ['product-viz', '2d-motion'] },
     { col: 'personal', id: 'arya',            title: 'Arya',            desc: 'A playful concept identity for a children’s toy and art brand — colour, texture and hands-on play.',           svc: ['2d-motion', 'logo-animation'] },
     { col: 'personal', id: 'chillchasht',     title: 'Chillchasht',     desc: 'Bold, appetising brand motion for a small-batch sauce maker with plenty of shelf character.',                     svc: ['2d-motion', 'logo-animation'] },
-    { col: 'personal', id: 'ashianeh',        title: 'Ashianeh',        desc: 'Concept identity for an interior studio meaning “nest” — shelter, structure and quiet confidence.',        svc: ['2d-motion'] },
+    { col: 'personal', id: 'ashianeh',        title: 'Ashianeh',        desc: 'Concept identity for an interior studio meaning “nest” — shelter, structure and quiet confidence.',        svc: ['2d-motion', 'logo-animation'] },
     { col: 'personal', id: 'biotask',         title: 'Biotask',         desc: 'Identity for an app that plans your day around your biological clock and energy peaks.',                         svc: ['2d-motion'] },
     { col: 'personal', id: 'red-dot-cafe',    title: 'Red Dot Cafe',    desc: 'A full identity built from one confident red dot — a simple idea taken far, alive in motion.',                    svc: ['2d-motion', 'logo-animation'] },
     { col: 'personal', id: 'dream-catcher',   title: 'Dream Catcher',   desc: 'Atmospheric concept for a lucid-dreaming app — awareness and control inside the dream.',                         svc: ['2d-motion'] },
@@ -3148,6 +3074,29 @@
     cardEls.forEach(function (el) { rev.observe(el); });
 
     const COL_LABEL = { all: 'All Projects', mofid: 'Mofid Securities', personal: 'Personal Work' };
+    const colBtns = filtersEl.querySelectorAll('.w2f-group[data-axis="collection"] .w2f-btn');
+    const svcBtns = filtersEl.querySelectorAll('.w2f-group[data-axis="service"] .w2f-btn');
+    function countMatch(colVal, svcVal) {
+      let n = 0;
+      WORKS2_CARDS.forEach(function (c) {
+        if (colVal !== 'all' && c.col !== colVal) return;
+        if (svcVal !== 'all' && c.svc.indexOf(svcVal) < 0) return;
+        n++;
+      });
+      return n;
+    }
+    // Grey out any option that would leave the grid empty given the OTHER axis's
+    // current selection (e.g. Mofid selected but no Logo Animation in Mofid).
+    function refreshAvail() {
+      svcBtns.forEach(function (b) {
+        const dead = b.dataset.val !== 'all' && countMatch(state.collection, b.dataset.val) === 0;
+        b.classList.toggle('is-void', dead); b.disabled = dead;
+      });
+      colBtns.forEach(function (b) {
+        const dead = b.dataset.val !== 'all' && countMatch(b.dataset.val, state.service) === 0;
+        b.classList.toggle('is-void', dead); b.disabled = dead;
+      });
+    }
     function apply() {
       let vis = 0;
       cardEls.forEach(function (el) {
@@ -3161,6 +3110,7 @@
       if (state.service !== 'all') label = WORKS2_SVC[state.service] + (state.collection !== 'all' ? ' — ' + COL_LABEL[state.collection] : '');
       if (titleEl) titleEl.textContent = label;
       if (countEl) countEl.textContent = '(' + ('0' + vis).slice(-2) + ')';
+      refreshAvail();
     }
     filtersEl.querySelectorAll('.w2f-group').forEach(function (group) {
       const axis = group.dataset.axis;
@@ -4709,7 +4659,7 @@
     var sr = wrap.getBoundingClientRect(), ir = items[0].getBoundingClientRect();
     tx = cx = (ir.left + ir.width / 2) - sr.left; ty = cy = (ir.top + ir.height / 2) - sr.top;
   })();
-  if (items[0]) hover(items[0]);   // first service + its image highlighted on arrival
+  // No service highlighted on arrival — everything stays off until the user hovers.
   window.addEventListener('resize', function () {
     buildMarquee(); alignLead();
     var it = curKey && items.filter(function (x) { return x.dataset.svc === curKey; })[0];
@@ -4735,7 +4685,7 @@
   if (!ctx) return;
 
   var DOT = '#ffffff', LINE = '#8ea6ff';
-  var GAP = 34, R = 208, PULL = (4 / 10) * 4;   // spacing / attraction radius (−20%) / strength(4)
+  var GAP = 34, R = 312, PULL = (4 / 10) * 4;   // spacing / attraction radius (highlight zone, +50%) / strength(4)
   var coarse = window.matchMedia('(pointer:coarse)').matches;
 
   var W = 1, H = 1, cols = [], dots = [];
@@ -4970,6 +4920,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const slotEl = document.getElementById('aboutBallSlot');
   if (!canvas || !stage || !host || !aboutSec) return;
   const section = stage;   // canvas sizing / observers use the pinned stage
+  // Hide the little cursor dot while over this section — it tangles with the grid dots.
+  stage.addEventListener('pointerenter', function () { document.body.classList.add('hide-cursor-dot'); });
+  stage.addEventListener('pointerleave', function () { document.body.classList.remove('hide-cursor-dot'); });
 
   let renderer;
   try {
@@ -5012,7 +4965,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   // metalness: the HDRI gives soft diffuse light only, never glossy reflections.
   // envMapIntensity slightly under 1 so the bright side stays saturated yellow.
   const matte = new THREE.MeshStandardMaterial({color: 0xf5d94e, metalness: 0, roughness: 1.0, envMapIntensity: 0.78});
-  const COL_BLUE = new THREE.Color(0x5c7cff);   // loose spheres are matte BLUE …
+  const COL_BLUE = new THREE.Color(0x2233e6);   // loose spheres are matte BLUE (close to the bg, not washed out) …
   const COL_GOLD = new THREE.Color(0xf5d94e);   // … tinting toward the brand gold as they near the hero (never fully — they're pushed off)
   // One shape family: spheres only, assorted modest sizes, 10 total
   const defs = [];
@@ -5105,8 +5058,11 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     const bx = t => 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
     const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
     return x => { let lo = 0, hi = 1, t = x; for (let i = 0; i < 22; i++) { t = (lo + hi) / 2; if (bx(t) < x) lo = t; else hi = t; } return by(t); };
-  })(0.65, 0.0, 0.35, 1.0);   // smooth ease-in-out — no snap
+  })(0.6, 0.0, 0.6, 1.0);   // gentle ease for the shrink/grow
   let settled = false, shrinkP = 0;   // shrinkP: 0 = 3× (entering) → 1 = 1× (settled)
+  // ~5-frame offset between the ball and the taglines (ball leads the shrink, text
+  // leads the grow), so they never move in perfect lockstep.
+  let prevShrinkP = 0; const shrinkHist = []; const OFFSET_FRAMES = 5;
   const introEl = document.querySelector('#about .about-intro');
   const bodyEl  = document.querySelector('#about .about-body');
   // Split each tagline into per-letter spans so they can swipe in from off-screen.
@@ -5252,7 +5208,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     else if (dir < 0 && y < settleY - dz && y > arriveY + dz) target = arriveY;   // scroll up → grow
     if (target != null) {
       snapping = true;
-      lenis.scrollTo(target, { duration: 0.7, lock: true, easing: snapEase,
+      lenis.scrollTo(target, { duration: 1.3, lock: true, easing: snapEase,
         onComplete: () => { snapping = false; lastScrollY = window.scrollY; } });
     }
   }, { passive: true });
@@ -5279,7 +5235,15 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     // when you scroll up. Being pure scroll, it never lags or desyncs from the descent
     // on fast scrolling, and Services (much further down) can't arrive mid-shrink.
     shrinkP = Math.max(0, Math.min(1, (descRaw - 1.0) / SHRINK_SCROLL));
-    const shrinkEased = shrinkEase(shrinkP);
+    // Offset the ball and the text by ~5 frames. On shrink (shrinkP rising) the ball
+    // leads and the text trails; on grow (falling) the text leads and the ball trails.
+    shrinkHist.push(shrinkP); if (shrinkHist.length > OFFSET_FRAMES + 1) shrinkHist.shift();
+    const laggedP = shrinkHist[0];
+    let ballP, textP;
+    if (shrinkP >= prevShrinkP) { ballP = shrinkP; textP = laggedP; }   // shrinking → ball first
+    else { textP = shrinkP; ballP = laggedP; }                          // growing  → text first
+    prevShrinkP = shrinkP;
+    const shrinkEased = shrinkEase(ballP);
     hero.scale.setScalar(HERO_START + (1 - HERO_START) * shrinkEased);
     settled = shrinkP >= 0.999;
     // Ground shadow: fades in as it shrinks into place, out as it grows/rises.
@@ -5300,7 +5264,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     // Taglines swipe in from OFF-SCREEN — the left line from the left edge, the right
     // line from the right edge — letter by letter into position, as the ball shrinks
     // into place (rvBase = the ball's eased scale). Reverses as it grows.
-    const rvBase = shrinkEased;
+    const rvBase = shrinkEase(textP);   // taglines use the offset (text) copy
     const eo = x => 1 - Math.pow(1 - x, 3);
     const OFF = (window.innerWidth || 1200) * 1.15;   // off-screen start distance
     // Stagger spread + reveal window, normalised per line: SPAN + WINL < 1 guarantees
