@@ -490,7 +490,7 @@
     .ct-icon.in{transform:scale(1)}
     .ct-icon svg{width:100%;height:100%;display:block}
     .contact-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto}
-    .contact-photo{position:relative;aspect-ratio:3/4;background:#0a0b12;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;max-height:500px}
+    .contact-photo{position:relative;aspect-ratio:3/4;background:transparent;overflow:visible;display:flex;align-items:center;justify-content:center;max-height:500px}
     .contact-photo img{width:100%;height:100%;object-fit:cover;display:block}
     #contactRevealCanvas{position:absolute;left:0;top:0;pointer-events:none}
     .contact-photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:16px}
@@ -1305,7 +1305,7 @@
     .pcar-face img{width:100%;height:100%;object-fit:cover;display:block}
     /* Light falloff: the face darkens as the card turns / recedes, so the turn
        reads as a real surface catching light (set per card via --shade). */
-    .pcar-face::after{content:'';position:absolute;inset:0;border-radius:4px;pointer-events:none;
+    .pcar-face::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
       background:linear-gradient(110deg,rgba(0,0,0,0) 30%,rgba(6,8,16,.92));opacity:var(--shade,0)}
     .pcar-back{position:absolute;inset:0;border-radius:4px;background:#0e1120;transform:translateZ(calc(-1 * var(--t)))}
     .pcar-edge{position:absolute;
@@ -1330,6 +1330,9 @@
     .side-bottom .pcar{left:50%;top:50%}
     .side-bottom .pcar-text{left:50%;top:50%;transform:translate(-50%,-50%) translateY(var(--ty,0));text-align:center;z-index:340}
     .side-bottom .pcar-sub{text-align:center}
+    /* carousel 3 cards are flat faces (no 3D thickness) so they round cleanly into
+       balls; the card box-shadow follows the border-radius set per-frame in JS. */
+    .side-bottom .pcar-back,.side-bottom .pcar-edge{display:none}
 
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
@@ -2688,6 +2691,7 @@
     const N = cars[0].cards.length;
     const M = cars.length;
     let vhPx, SPY, BVX, SPX, BVY, PULLX, PULLY, DZ, TXTOFF, STEP, CYCLE, SHIFT, SHIFT23, LEADIN, IN0, TAIL, CONV_DOWN, RX, RY, gaps, cycStart;
+    let RCARD_W, RCARD_H, ballDia;   // carousel-3 card size + the hero-ball diameter it collapses/rounds to match
     function dims() {
       const vw = window.innerWidth, vh = window.innerHeight;
       vhPx = vh;
@@ -2705,6 +2709,9 @@
       TAIL = Math.round(vh * 0.5);   // pinned hold after #3 — the cards gather into the centre column here (screen still)
       CONV_DOWN = Math.round(vh * 0.62);   // carousels 1&2: how far the outgoing hero slides DOWN as it fades
       RX = Math.min(Math.round(vw * 0.51), 950); RY = Math.min(Math.round(vh * 0.345), 392);   // carousel 3 ring radii (wider + a bit larger)
+      RCARD_W = Math.min(vw * 0.40, vh * 0.54); RCARD_H = RCARD_W * 0.75;   // carousel card box (matches .pcar-card CSS, 4/3)
+      const slotPx = Math.min(120, Math.max(88, vw * 0.08));               // hero-ball slot (clamp 88–120)
+      ballDia = 3 * slotPx;                                                // ball descends at 3× → cards collapse/round to this
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
       gaps = []; for (let k = 0; k < M; k++) gaps[k] = k === 0 ? LEADIN : (k === M - 1 ? SHIFT23 : SHIFT);
       cycStart = []; cycStart[0] = gaps[0];
@@ -2780,12 +2787,14 @@
       const rot = (c.cur / (N - 1)) * Math.PI;       // scroll-scrubbed rotation, HALF a turn
       const gatherP = c.gatherP || 0;                // cards gather into the centre column (pinned, screen still)
       const dropP = c.dropP || 0;                    // then the column pours down, staggered (as the ball descends)
-      const conv = bez(gatherP);
+      const conv = gatherP;                          // the gather tween eases this symmetrically already (up == down)
       const COLGAP = vhPx * 0.05;
       const COIL = vhPx * 0.05;                       // helix pitch — opens the flat ring into a coil
       const SEAM = Math.PI * 0.75;                    // the overlap seam (where a card climbs on top) sits bottom-left
       const ZR = 42;
       const STAG = 0.05, WIN = 0.42;                  // per-card drop offset
+      const STACK_TILT = 30;                          // column lean so the stack reads as 3D, not flat
+      const ringW = RCARD_W * 0.6, ringH = RCARD_H * 0.6;
       for (let i = 0; i < N; i++) {
         const th = (i / N) * TAU - rot;
         // Winding phase relative to the seam: monotonic 0→1 around the loop, with a
@@ -2800,9 +2809,21 @@
         const dropAmt = ld * (vhPx * 1.7);
         const x = rx * (1 - conv);                                 // → 0 (centre axis)
         const y = (ry + coilY) * (1 - conv) + colY * conv + dropAmt;   // helix → column, then down (staggered)
-        const ty = c.panX * 6;                       // always facing the camera; only the cursor pan tilts
-        const tx = -c.panY * 5;
+        // Size: ring (4/3, 0.6×) → gathered column (4/3, hero-ball width) → drop
+        // (square, rounded to a full ball). Set via width/height (no image squash).
+        const W = ringW + (ballDia - ringW) * conv;
+        const Hcol = ringH + (ballDia * 0.75 - ringH) * conv;
+        const H = Hcol + (ballDia - Hcol) * ld;                    // squares up as it rounds into a ball
+        const brPct = 3 + 47 * ld;                                 // rounded card → 50% circle (ball)
+        const stack = STACK_TILT * conv * (1 - ld);                // lean while stacked; flattens as it becomes a ball
+        const ty = c.panX * 3;                       // pan/tilt reduced ~50% for this carousel
+        const tx = -c.panY * 2.5 - stack;
         const card = c.cards[i];
+        const face = card._face || (card._face = card.querySelector('.pcar-face'));
+        card.style.width = W.toFixed(1) + 'px';
+        card.style.height = H.toFixed(1) + 'px';
+        card.style.borderRadius = brPct.toFixed(1) + '%';        // box-shadow rounds with the ball
+        if (face) face.style.borderRadius = brPct.toFixed(1) + '%';
         card.style.opacity = c.vis.toFixed(3);       // uniform, never fades on exit
         card.style.setProperty('--shade', '0');
         // Helix winding z (front of the coil over the back, seam at bottom-left) → in
@@ -2810,7 +2831,7 @@
         const zRing = phase * ZR;
         const zCol = (i / (N - 1)) * ZR;
         card.style.zIndex = 300 + Math.round(zRing * (1 - conv) + zCol * conv);
-        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(0.6) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
+        card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
 
@@ -2865,8 +2886,9 @@
         if (Math.abs(c.revT - c.rev) < 0.002) c.rev = c.revT; else moving = true;
         c.panX += (c.panTX - c.panX) * 0.06; c.panY += (c.panTY - c.panY) * 0.06;
         if (Math.abs(c.panTX - c.panX) > 0.001 || Math.abs(c.panTY - c.panY) > 0.001) moving = true;
-        c.pcarEl.style.perspectiveOrigin = (50 - c.panX * PANO).toFixed(2) + '% ' + (50 - c.panY * PANO).toFixed(2) + '%';
-        c.pcarEl.style.transform = 'translate(' + (-c.panX * PANT).toFixed(1) + 'px,' + (-c.panY * PANT).toFixed(1) + 'px)';
+        const ps = c.horizontal ? 0.5 : 1;   // carousel 3: pan/tilt reduced ~50%
+        c.pcarEl.style.perspectiveOrigin = (50 - c.panX * PANO * ps).toFixed(2) + '% ' + (50 - c.panY * PANO * ps).toFixed(2) + '%';
+        c.pcarEl.style.transform = 'translate(' + (-c.panX * PANT * ps).toFixed(1) + 'px,' + (-c.panY * PANT * ps).toFixed(1) + 'px)';
         placeCar(c);            // placeCar also reads c.panX/panY for the per-card tilt
       }
       if (moving) raf = requestAnimationFrame(frame);
@@ -2945,13 +2967,16 @@
     // column over a fixed time (mirrors the hero-ball shrink) — it can't be rushed
     // or left half-done. Scrolling back up past the trigger reverses it. The drop
     // that follows stays scroll-driven. Desktop / Lenis only.
-    const gEase = x => 1 - Math.pow(1 - x, 3);
+    const gEase = x => 1 - Math.pow(1 - x, 3);                                   // easeOutCubic (scroll lock)
+    const gEaseIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;   // easeInOutCubic (symmetric)
     function tweenGather(to) {
-      const from = gatherVal, t0 = performance.now(), dur = 640;
+      const from = gatherVal, t0 = performance.now(), dur = 720;
       if (gatherTween) cancelAnimationFrame(gatherTween);
       (function stepG() {
         const p = Math.min(1, (performance.now() - t0) / dur);
-        gatherVal = from + (to - from) * gEase(p);
+        // Symmetric ease → the collapse (down) and the return to the ring (up) play at
+        // exactly the same pace.
+        gatherVal = from + (to - from) * gEaseIO(p);
         if (M > 0) cars[M - 1].gatherP = gatherVal;
         kick();
         gatherTween = p < 1 ? requestAnimationFrame(stepG) : 0;
@@ -4418,6 +4443,18 @@
     var bw = boxEl.offsetWidth, bh = boxEl.offsetHeight;
     boxEl.style.left = (cx - bw / 2).toFixed(1) + 'px';   // centred on the cursor
     boxEl.style.top  = (cy - bh / 2).toFixed(1) + 'px';
+    // The hovered title's WHITE copy (mask) is clipped to the box rect: over the box it
+    // reads white, and outside the box the yellow base title shows through instead.
+    if (maskEl) {
+      if (shown) {
+        var mr = maskEl.getBoundingClientRect(), br = boxEl.getBoundingClientRect();
+        var t = Math.max(0, br.top - mr.top), r = Math.max(0, mr.right - br.right),
+            b = Math.max(0, mr.bottom - br.bottom), l = Math.max(0, br.left - mr.left);
+        maskEl.style.clipPath = 'inset(' + t + 'px ' + r + 'px ' + b + 'px ' + l + 'px)';
+      } else {
+        maskEl.style.clipPath = 'inset(0 0 100% 0)';
+      }
+    }
     if (Math.abs(tx - cx) > 0.4 || Math.abs(ty - cy) > 0.4) raf = requestAnimationFrame(loop);
   }
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
@@ -4534,7 +4571,7 @@
   if (!ctx) return;
 
   var DOT = '#ffffff', LINE = '#8ea6ff';
-  var GAP = 34, R = 260, PULL = (4 / 10) * 4;   // spacing / attraction radius / strength(4)
+  var GAP = 34, R = 208, PULL = (4 / 10) * 4;   // spacing / attraction radius (−20%) / strength(4)
   var coarse = window.matchMedia('(pointer:coarse)').matches;
 
   var W = 1, H = 1, cols = [], dots = [];
@@ -4811,6 +4848,8 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   // metalness: the HDRI gives soft diffuse light only, never glossy reflections.
   // envMapIntensity slightly under 1 so the bright side stays saturated yellow.
   const matte = new THREE.MeshStandardMaterial({color: 0xf5d94e, metalness: 0, roughness: 1.0, envMapIntensity: 0.78});
+  const COL_BLUE = new THREE.Color(0x5c7cff);   // loose spheres are matte BLUE …
+  const COL_GOLD = new THREE.Color(0xf5d94e);   // … tinting toward the brand gold as they near the hero (never fully — they're pushed off)
   // One shape family: spheres only, assorted modest sizes, 10 total
   const defs = [];
   for (let i = 0; i < 10; i++) {
@@ -4821,7 +4860,8 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   let halfW = 8, halfH = 5;                                     // world-space bounds, set on resize
   let aboutTopY = 5, aboutBotY = -5, aboutCenterY = 0;          // world-y band of the About portion (top of the field)
   const bodies = defs.map((d, i) => {
-    const mesh = new THREE.Mesh(d.geo, matte);
+    const mesh = new THREE.Mesh(d.geo, matte.clone());
+    mesh.material.color.copy(COL_BLUE);
     // Wide z-spread so depth of field is visible: near spheres (toward the
     // camera) and far spheres both fall outside the focal plane at z=0.
     mesh.position.set((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 7, (Math.random() - 0.5) * 40);
@@ -5099,19 +5139,23 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     const rvBase = shrinkEased;
     const eo = x => 1 - Math.pow(1 - x, 3);
     const OFF = (window.innerWidth || 1200) * 1.15;   // off-screen start distance
-    const STAGL = 0.026, WINL = 0.42;
+    // Stagger spread + reveal window, normalised per line: SPAN + WINL < 1 guarantees
+    // that at full settle (rvBase = 1) even the outermost letter reaches p = 1 and
+    // lands exactly in place — no letter is left parked short.
+    const SPAN = 0.5, WINL = 0.42;
     const Ni = introLetters.length, Nb = bodyLetters.length;
-    // Both lines reveal from the INNER letter (the one nearest the ball) outward to
-    // the screen edge. Because each in-flight letter only sweeps across positions of
-    // letters that haven't revealed yet (the more-outer ones), nothing overlaps a
-    // visible glyph → no scramble.
+    // Both lines reveal from the INNER letter (nearest the ball) outward to the screen
+    // edge. Each in-flight letter only sweeps across positions of letters that haven't
+    // revealed yet (the more-outer ones), so nothing overlaps a visible glyph.
     for (let i = 0; i < Ni; i++) {   // left line: rightmost (inner) letter first
-      const p = eo(Math.max(0, Math.min(1, (rvBase - (Ni - 1 - i) * STAGL) / WINL)));
+      const st = Ni > 1 ? SPAN * ((Ni - 1 - i) / (Ni - 1)) : 0;
+      const p = eo(Math.max(0, Math.min(1, (rvBase - st) / WINL)));
       introLetters[i].style.transform = 'translateX(' + (-(1 - p) * OFF).toFixed(0) + 'px)';
       introLetters[i].style.opacity = p.toFixed(3);
     }
     for (let i = 0; i < Nb; i++) {    // right line: leftmost (inner) letter first
-      const p = eo(Math.max(0, Math.min(1, (rvBase - i * STAGL) / WINL)));
+      const st = Nb > 1 ? SPAN * (i / (Nb - 1)) : 0;
+      const p = eo(Math.max(0, Math.min(1, (rvBase - st) / WINL)));
       bodyLetters[i].style.transform = 'translateX(' + ((1 - p) * OFF).toFixed(0) + 'px)';
       bodyLetters[i].style.opacity = p.toFixed(3);
     }
@@ -5133,9 +5177,13 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       tmpH.subVectors(hero.position, b.mesh.position); tmpH.z = 0;
       const dH = tmpH.length();
       const CLOSE = heroR + 4.5;                                   // resonance zone — no pushback outside this
+      const shell = heroR + b.r + 0.2;
+      // Tint toward the brand gold with proximity to the hero. The keep-out field
+      // shoves the sphere back before it arrives, so this never quite reaches 1.
+      const near = dH > 0.001 ? Math.max(0, Math.min(1, (CLOSE - dH) / (CLOSE - shell))) : 0;
+      b.mesh.material.color.copy(COL_BLUE).lerp(COL_GOLD, near);
       if (dH > 0.001 && dH < CLOSE) {
         tmpH.multiplyScalar(1 / dH);                               // unit vector ball→hero
-        const shell = heroR + b.r + 0.2;
         if (dH < shell) b.vel.addScaledVector(tmpH, -(shell - dH) * 0.011);   // thin hard shell — no overlap
         b.vel.x += -tmpH.y * 0.0010; b.vel.y += tmpH.x * 0.0010;             // gentle curl
         for (const rg of rings) { if (rg.active && Math.abs(rg.rad - dH) < 0.7) { b.vel.addScaledVector(tmpH, -0.006); break; } }  // a passing pulse pushes it back
