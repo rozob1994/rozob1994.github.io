@@ -327,7 +327,7 @@
     #aboutStage{position:sticky;top:0;height:100vh;overflow:hidden}
     /* Runway: the hero scene stays pinned and fully performs (descend → settle →
        pulse → taglines) across this scroll before the Services card rises over it. */
-    #aboutRunway{height:150vh;pointer-events:none}
+    #aboutRunway{height:240vh;pointer-events:none}   /* descent + settle + a dead-scroll hold so a full pulse plays before Services */
     /* Stacking (back→front): pulse rings, then the taglines, then the 3D balls on top —
        so the taglines are always BEHIND the hero ball (they emerge from behind it). */
     #aboutPulse{position:absolute;inset:0;pointer-events:none;z-index:0}   /* pulse rings drawn in 2D (real thickness) */
@@ -395,12 +395,13 @@
     /* Blue frosted glass: same hero blue, a clean thin top edge, blurring whatever
        (balls, rings) drifts behind it. */
     #services{display:block;position:relative;min-height:100vh;color:#fff;
-      padding:7vh 0 12vh;overflow:hidden;isolation:isolate;   /* reduced top lead-in + bottom breathing space */
+      padding:4.9vh 0 8.4vh;overflow:hidden;isolation:isolate;   /* top lead-in + bottom breathing (both trimmed ~30%) */
       background:rgba(13,31,212,0.5);border-top:1px solid rgba(255,255,255,0.22);
       -webkit-backdrop-filter:blur(34px) saturate(1.05);backdrop-filter:blur(34px) saturate(1.05)}
     .svc2{position:relative;height:100vh;width:100%}
     /* ECCHO marquee across the top of the card (replaces the single wordmark) */
     .svc2-marquee-wrap{position:absolute;top:clamp(18px,2.4vh,38px);left:0;right:0;z-index:6;overflow:hidden;pointer-events:none}
+    .svc2-marquee-wrap.bottom{top:auto;bottom:clamp(18px,2.4vh,38px)}
     .svc2-marquee{display:inline-flex;white-space:nowrap;will-change:transform;animation:marqueeLeft 55s linear infinite}
     .svc2-marquee .m-inner{display:inline-flex;align-items:center;font-family:var(--font-display);font-weight:700;
       font-size:clamp(15px,1.25vw,19px);letter-spacing:.04em}
@@ -427,14 +428,16 @@
     .svc2-box img.on{opacity:1}
     /* the two overlaid lists (base = coloured, mask = dark, clipped to the box) */
     .svc2-list,.svc2-mask{position:absolute;left:28%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
-    .svc2-list{z-index:3}
-    .svc2-mask{z-index:4;pointer-events:none;clip-path:inset(0 0 100% 0)}   /* hidden until box shows */
+    .svc2-list{z-index:1}   /* every title sits BEHIND the image box */
+    .svc2-mask{z-index:3;pointer-events:none}   /* only the hovered title, in white, ABOVE the box */
+    .svc2-mask .svc2-item{opacity:0;transition:opacity .28s var(--ease)}
+    .svc2-mask .svc2-item.hot{opacity:1}
     .svc2-item{cursor:none;margin:0 0 clamp(4px,0.7vw,16px)}
     .svc2-item:last-child{margin-bottom:0}
     .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
       font-size:clamp(30px,4.5vw,66px);line-height:.92;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
     .svc2-item.hot .svc2-name{color:var(--yellow)}
-    .svc2-mask .svc2-name{color:#fff}
+    .svc2-mask .svc2-name,.svc2-mask .svc2-item.hot .svc2-name{color:#fff}   /* the copy above the box is always WHITE */
     /* thin line trailing the FIRST line of each title, marking the sentence break
        (e.g. PRODUCT ——— / VISUALIZATION); follows the title colour */
     .svc2-brk{display:inline-block;height:3px;width:clamp(56px,6vw,120px);vertical-align:middle;
@@ -1476,6 +1479,9 @@
   <div class="svc2" id="svc2">
     <div class="svc2-marquee-wrap" aria-hidden="true">
       <div class="svc2-marquee" id="svc2Marquee"></div>
+    </div>
+    <div class="svc2-marquee-wrap bottom" aria-hidden="true">
+      <div class="svc2-marquee" id="svc2MarqueeB"></div>
     </div>
     <div class="svc2-lead" id="svc2Lead">
       <div class="svc2-offer"><span class="dot" aria-hidden="true"></span><span>What we offer</span></div>
@@ -2766,26 +2772,40 @@
     // the cycle ends the cards peel off the ring and curve DOWN out of the section
     // (front cards leading), handing off to the hero ball in the next section.
     function placeRing(c) {
+      const TAU = Math.PI * 2;
       const rot = (c.cur / (N - 1)) * Math.PI;       // scroll-scrubbed rotation, HALF a turn
       const gatherP = c.gatherP || 0;                // cards gather into the centre column (pinned, screen still)
       const dropP = c.dropP || 0;                    // then the column pours down, staggered (as the ball descends)
       const conv = bez(gatherP);
       const COLGAP = vhPx * 0.05;
-      const STAG = 0.045, WIN = 0.42;                // per-card offset → first card first, the rest follow
+      const COIL = vhPx * 0.05;                       // helix pitch — opens the flat ring into a coil
+      const SEAM = Math.PI * 0.75;                    // the overlap seam (where a card climbs on top) sits bottom-left
+      const ZR = 42;
+      const STAG = 0.05, WIN = 0.42;                  // per-card drop offset
       for (let i = 0; i < N; i++) {
-        const th = (i / N) * Math.PI * 2 - rot;
+        const th = (i / N) * TAU - rot;
+        // Winding phase relative to the seam: monotonic 0→1 around the loop, with a
+        // single jump at the seam. This makes the overlap wind ONE way (a helix), and
+        // the card just before the seam rides on top of everything at bottom-left.
+        const phase = ((((th - SEAM) % TAU) + TAU) % TAU) / TAU;   // 0..1
         const rx = RX * Math.cos(th), ry = RY * Math.sin(th);
-        const colY = (i - (N - 1) / 2) * COLGAP;                         // slot in the centre column
-        const ld = bez(clamp((dropP - i * STAG) / WIN, 0, 1));           // this card's own downward progress
+        const coilY = (phase - 0.5) * COIL;                        // spiral rise → reads as 3D helix, not a flat disc
+        const colY = (i - (N - 1) / 2) * COLGAP;                   // slot in the centre column
+        // Drop: the BOTTOM card of the column (largest colY, i=N-1) leads; the rest follow.
+        const ld = bez(clamp((dropP - (N - 1 - i) * STAG) / WIN, 0, 1));
         const dropAmt = ld * (vhPx * 1.7);
-        const x = rx * (1 - conv);                                       // → 0 (centre axis)
-        const y = ry * (1 - conv) + colY * conv + dropAmt;              // ring → column, then down (staggered)
+        const x = rx * (1 - conv);                                 // → 0 (centre axis)
+        const y = (ry + coilY) * (1 - conv) + colY * conv + dropAmt;   // helix → column, then down (staggered)
         const ty = c.panX * 6;                       // always facing the camera; only the cursor pan tilts
         const tx = -c.panY * 5;
         const card = c.cards[i];
         card.style.opacity = c.vis.toFixed(3);       // uniform, never fades on exit
         card.style.setProperty('--shade', '0');
-        card.style.zIndex = 300 + Math.round(Math.sin(th) * 40 * (1 - conv) + (N - i) * conv);   // leading (dropping) card stays in front
+        // Helix winding z (front of the coil over the back, seam at bottom-left) → in
+        // the gathered column the BOTTOM card (i=N-1) sits at the TOP of the z-stack.
+        const zRing = phase * ZR;
+        const zCol = (i / (N - 1)) * ZR;
+        card.style.zIndex = 300 + Math.round(zRing * (1 - conv) + zCol * conv);
         card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(0.6) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
@@ -2821,6 +2841,7 @@
     }
 
     let started = false, inView = false, raf = 0, curG = 0;
+    let gatherVal = 0, gatherTween = 0, gatherLock = false, lastGatherY = 0;   // triggered (locked) gather beat
     const echoFieldEl = document.getElementById('echoField');   // ring exit is timed to the About section (hero ball) rising below
     // Cursor pan: each carousel shifts its perspective-origin (camera-angle change
     // → depth parallax) + translates toward the cursor. Independent per carousel —
@@ -2894,21 +2915,61 @@
       // still pinned (driven by curG over the tail — the screen isn't moving), then the
       // column POURS DOWN, staggered, driven by the About section rising below (so it's
       // timed to the hero ball descending).
-      const cycEnd = cycStart[M - 1] + CYCLE;
-      const gatherP = clamp((curG - cycEnd) / TAIL, 0, 1);
+      // gatherP is NOT scrubbed by scroll on desktop — it's a locked, triggered tween
+      // (gatherVal, driven below), so the collapse always plays in full at a fixed
+      // pace. Without Lenis (touch / reduced-motion) there's no lock, so fall back to a
+      // scroll-scrubbed gather over the tail. The drop afterwards is always scroll-driven.
       const efTop = echoFieldEl ? (echoFieldEl.getBoundingClientRect().top) : Infinity;
       const dropP = clamp((vhPx - efTop) / (vhPx * 1.35), 0, 1);
+      const gatherOut = window.__lenis ? gatherVal
+                        : clamp((curG - (cycStart[M - 1] + CYCLE)) / TAIL, 0, 1);
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
       for (let k = 0; k < M; k++) {
         cars[k].target = carTarget(k, k === 0 ? raw : curG);
         setActiveCar(cars[k], k === activeK);
         cars[k].vis = clamp((1 - (tu - k)) / 0.3, 0, 1);   // 1 until parked ~0.7 screen up, →0 by a full screen up
-        cars[k].gatherP = (k === M - 1) ? gatherP : 0;
+        cars[k].gatherP = (k === M - 1) ? gatherOut : 0;
         cars[k].dropP = (k === M - 1) ? dropP : 0;
       }
       kick();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ── Gather beat (triggered, not scrubbed) ────────────────────────────────
+    // Rotating the ring is scroll-driven; but the instant the cycle ends, a LOCKED
+    // snap holds the scroll and auto-animates the cards gathering into the centre
+    // column over a fixed time (mirrors the hero-ball shrink) — it can't be rushed
+    // or left half-done. Scrolling back up past the trigger reverses it. The drop
+    // that follows stays scroll-driven. Desktop / Lenis only.
+    const gEase = x => 1 - Math.pow(1 - x, 3);
+    function tweenGather(to) {
+      const from = gatherVal, t0 = performance.now(), dur = 640;
+      if (gatherTween) cancelAnimationFrame(gatherTween);
+      (function stepG() {
+        const p = Math.min(1, (performance.now() - t0) / dur);
+        gatherVal = from + (to - from) * gEase(p);
+        if (M > 0) cars[M - 1].gatherP = gatherVal;
+        kick();
+        gatherTween = p < 1 ? requestAnimationFrame(stepG) : 0;
+      })();
+    }
+    window.addEventListener('scroll', function () {
+      const lenis = window.__lenis;
+      const y = window.scrollY, dir = y - lastGatherY; lastGatherY = y;
+      if (gatherLock || !lenis || !started) return;
+      const trigY = (host.getBoundingClientRect().top + y) + cycStart[M - 1] + CYCLE;   // scrollY where the cycle ends
+      const dz = vhPx * 0.03;
+      let to = null;
+      if (dir > 0 && gatherVal < 0.5 && y > trigY - dz) to = 1;         // scroll down → gather
+      else if (dir < 0 && gatherVal > 0.5 && y < trigY + dz) to = 0;    // scroll up → un-gather
+      if (to != null) {
+        gatherLock = true;
+        lenis.scrollTo(to === 1 ? trigY + 2 : trigY - 2, { duration: 0.68, lock: true, easing: gEase,
+          onComplete: () => { gatherLock = false; lastGatherY = window.scrollY; } });
+        tweenGather(to);
+      }
+    }, { passive: true });
+
     window.addEventListener('resize', function () { dims(); onScroll(); cars.forEach(placeCar); });
 
     // Hold everything until the canvas is first reached, so carousel #1 actually
@@ -2916,7 +2977,7 @@
     new IntersectionObserver(function (es) {
       es.forEach(function (x) {
         inView = x.isIntersecting;
-        if (inView && !started) { started = true; sizeGrid(); cars.forEach(placeCar); onScroll(); }
+        if (inView && !started) { started = true; lastGatherY = window.scrollY; sizeGrid(); cars.forEach(placeCar); onScroll(); }
         if (!inView) { cars.forEach(function (c) { c.panTX = 0; c.panTY = 0; }); kick(); }   // ease back to neutral when scrolled away
       });
     }, { threshold: 0 }).observe(sticky);
@@ -4300,13 +4361,15 @@
   var noteEl  = document.getElementById('svc2Note');
   var leadEl  = document.getElementById('svc2Lead');
   var marqueeEl   = document.getElementById('svc2Marquee');
-  var marqueeWrap = document.querySelector('.svc2-marquee-wrap');
+  var marqueeElB  = document.getElementById('svc2MarqueeB');
+  var marqueeWrap  = document.querySelector('.svc2-marquee-wrap:not(.bottom)');
+  var marqueeWrapB = document.querySelector('.svc2-marquee-wrap.bottom');
   if (!section || !listEl || !boxEl) return;
 
   // Build the ECCHO marquee long enough to span the widest screen (each half ≥ 1
-  // viewport → the -50% loop is seamless).
-  function buildMarquee() {
-    if (!marqueeEl) return;
+  // viewport → the -50% loop is seamless). Two bands: one at the top, one at the bottom.
+  function fillMarquee(el) {
+    if (!el) return;
     var per = Math.ceil(window.innerWidth / 90) + 4;
     function half(hidden) {
       var inner = document.createElement('span'); inner.className = 'm-inner';
@@ -4317,11 +4380,13 @@
       }
       return inner;
     }
-    marqueeEl.innerHTML = ''; marqueeEl.appendChild(half(false)); marqueeEl.appendChild(half(true));
+    el.innerHTML = ''; el.appendChild(half(false)); el.appendChild(half(true));
   }
+  function buildMarquee() { fillMarquee(marqueeEl); fillMarquee(marqueeElB); }
   buildMarquee();
 
   var items = [].slice.call(listEl.querySelectorAll('.svc2-item'));
+  var maskItems = maskEl ? [].slice.call(maskEl.querySelectorAll('.svc2-item')) : [];
   // Placeholder image per service (from the 3D-designs stills). Swap for the real ones.
   var IMG = {
     'product-viz':    'media/mofid/3d-designs/01.jpg',
@@ -4349,16 +4414,6 @@
     var bw = boxEl.offsetWidth, bh = boxEl.offsetHeight;
     boxEl.style.left = (cx - bw / 2).toFixed(1) + 'px';   // centred on the cursor
     boxEl.style.top  = (cy - bh / 2).toFixed(1) + 'px';
-    if (maskEl) {
-      if (shown) {
-        var mr = maskEl.getBoundingClientRect(), br = boxEl.getBoundingClientRect();
-        var t = Math.max(0, br.top - mr.top), r = Math.max(0, mr.right - br.right),
-            b = Math.max(0, mr.bottom - br.bottom), l = Math.max(0, br.left - mr.left);
-        maskEl.style.clipPath = 'inset(' + t + 'px ' + r + 'px ' + b + 'px ' + l + 'px)';
-      } else {
-        maskEl.style.clipPath = 'inset(0 0 100% 0)';
-      }
-    }
     if (Math.abs(tx - cx) > 0.4 || Math.abs(ty - cy) > 0.4) raf = requestAnimationFrame(loop);
   }
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
@@ -4376,16 +4431,22 @@
     if (!noteEl) return;
     noteEl.textContent = '';
     var frag = document.createDocumentFragment(), spans = [], words = text.split(' ');
-    var idx = 0, STEP = 0.016;   // steady per-letter delay → each glyph is visibly its own beat
+    var total = text.replace(/\s/g, '').length;   // letter count → normalise the stagger
+    // Standard ease-out per glyph (fast start, slow settle); the stagger itself is
+    // distributed ease-in over a fixed window, so the paragraph floods in quickly at
+    // first and trails off at the end regardless of length.
+    var EASE_OUT = 'cubic-bezier(0.33,1,0.68,1)', WINDOW = 0.85;
+    var idx = 0;
     words.forEach(function (word, wi) {
       var w = document.createElement('span');
       w.style.cssText = 'display:inline-block;white-space:nowrap';   // word stays intact (letters can't break mid-word)
       for (var i = 0; i < word.length; i++) {
         var s = document.createElement('span');
         s.textContent = word[i];
-        var d = (idx * STEP).toFixed(3);
+        var frac = total > 1 ? idx / (total - 1) : 0;
+        var d = (WINDOW * frac * frac).toFixed(3);   // ease-in spacing → quick at the start
         s.style.cssText = 'display:inline-block;opacity:0;transform:translateY(0.6em);' +
-          'transition:opacity .32s var(--ease),transform .38s var(--ease);transition-delay:' + d + 's';
+          'transition:opacity .3s ' + EASE_OUT + ',transform .42s ' + EASE_OUT + ';transition-delay:' + d + 's';
         w.appendChild(s); spans.push(s); idx++;
       }
       frag.appendChild(w);
@@ -4399,6 +4460,7 @@
     var k = it.dataset.svc;
     if (k === curKey) return;   // already active — don't retype on re-enter
     items.forEach(function (x) { x.classList.toggle('hot', x === it); });
+    maskItems.forEach(function (x) { x.classList.toggle('hot', x.dataset.svc === k); });   // white copy above the box
     for (var key in layers) layers[key].classList.toggle('on', key === k);
     // move the note to the hovered title's height (centred on it), then type it in
     if (noteEl) {
@@ -4412,6 +4474,7 @@
   function leave() {
     shown = false; wrap.classList.remove('show-box');
     items.forEach(function (x) { x.classList.remove('hot'); });
+    maskItems.forEach(function (x) { x.classList.remove('hot'); });
     curKey = null; kick();
   }
   // Align "What we offer" with the first tab; centre the marquee in the empty space
@@ -4423,7 +4486,12 @@
     if (leadEl) leadEl.style.top = Math.round(titleTop) + 'px';
     if (marqueeWrap) {
       var mh = marqueeWrap.offsetHeight || 24;
-      marqueeWrap.style.top = Math.max(6, Math.round(titleTop / 2 - mh / 2)) + 'px';
+      // Centre the top band in the gap above the titles, then pull it up ~30% (less
+      // dead space above it). The bottom band mirrors it — the same distance from the
+      // bottom edge as the top band is from the top.
+      var gap = Math.max(6, Math.round((titleTop / 2 - mh / 2) * 0.7));
+      marqueeWrap.style.top = gap + 'px';
+      if (marqueeWrapB) { marqueeWrapB.style.top = 'auto'; marqueeWrapB.style.bottom = gap + 'px'; }
     }
   }
   items.forEach(function (it) { it.addEventListener('mouseenter', function () { hover(it); }); });
@@ -4822,14 +4890,18 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     const eo = x => 1 - Math.pow(1 - x, 3);
     const OFF = (window.innerWidth || 1200) * 1.15;   // off-screen start distance
     const STAGL = 0.026, WINL = 0.42;
-    for (let i = 0; i < introLetters.length; i++) {   // left line: from the LEFT, outer letter first
-      const p = eo(Math.max(0, Math.min(1, (rvBase - i * STAGL) / WINL)));
+    const Ni = introLetters.length, Nb = bodyLetters.length;
+    // Both lines reveal from the INNER letter (the one nearest the ball) outward to
+    // the screen edge. Because each in-flight letter only sweeps across positions of
+    // letters that haven't revealed yet (the more-outer ones), nothing overlaps a
+    // visible glyph → no scramble.
+    for (let i = 0; i < Ni; i++) {   // left line: rightmost (inner) letter first
+      const p = eo(Math.max(0, Math.min(1, (rvBase - (Ni - 1 - i) * STAGL) / WINL)));
       introLetters[i].style.transform = 'translateX(' + (-(1 - p) * OFF).toFixed(0) + 'px)';
       introLetters[i].style.opacity = p.toFixed(3);
     }
-    for (let i = 0; i < bodyLetters.length; i++) {    // right line: from the RIGHT, outer letter first
-      const j = bodyLetters.length - 1 - i;
-      const p = eo(Math.max(0, Math.min(1, (rvBase - j * STAGL) / WINL)));
+    for (let i = 0; i < Nb; i++) {    // right line: leftmost (inner) letter first
+      const p = eo(Math.max(0, Math.min(1, (rvBase - i * STAGL) / WINL)));
       bodyLetters[i].style.transform = 'translateX(' + ((1 - p) * OFF).toFixed(0) + 'px)';
       bodyLetters[i].style.opacity = p.toFixed(3);
     }
