@@ -236,6 +236,41 @@
     .work-header{display:flex;align-items:center;justify-content:space-between;padding:0;position:relative;z-index:2;margin-bottom:12px}
     .work-header .section-title{margin-bottom:0}
 
+    /* ═══ SELECTED WORK — v2 card grid with left filter stacks (replaces the tabs).
+       The old tabs / featured / grid are hidden; the 3D carousel below is untouched. ═══ */
+    #work .work-header{display:none}
+    #work #mofidFeatured,#work #mofidRestBlock,#work #personalPanel{display:none!important}
+    .works2{position:relative;z-index:6;margin-top:clamp(6px,2vh,22px)}
+    .works2-lead{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+    .works2-lead .dot{width:clamp(11px,1vw,15px);height:clamp(11px,1vw,15px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
+    .works2-lead span:last-child{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(21,22,29,0.6)}
+    .works2-headrow{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:1px solid rgba(21,22,29,0.14);padding-bottom:20px;margin-bottom:32px}
+    .works2-title{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.8vw,56px);line-height:.98;letter-spacing:-.02em;color:#15161d;margin:0}
+    .works2-count{font-family:var(--font-display);font-weight:800;font-size:clamp(20px,2vw,30px);color:rgba(21,22,29,0.3);white-space:nowrap;line-height:1}
+    .works2-body{display:grid;grid-template-columns:210px 1fr;gap:clamp(24px,3vw,56px);align-items:start}
+    .works2-filters{position:sticky;top:100px;display:flex;flex-direction:column;gap:28px}
+    .w2f-group{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+    .w2f-title{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(21,22,29,0.4);margin-bottom:4px}
+    .w2f-btn{font-family:var(--font-body);font-size:15px;color:rgba(21,22,29,0.5);background:transparent;border:1px solid transparent;border-radius:7px;padding:5px 12px;cursor:none;transition:color .2s,border-color .2s;text-align:left}
+    .w2f-btn:hover{color:#15161d}
+    .w2f-btn.active{color:#15161d;border-color:rgba(21,22,29,0.65)}
+    .works2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,1.8vw,34px) clamp(16px,1.4vw,26px)}
+    .w2card{cursor:none;display:flex;flex-direction:column;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+    .w2card.in{opacity:1;transform:none}
+    .w2card-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:rgba(21,22,29,0.06);border-radius:2px}
+    .w2card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+    .w2card:hover .w2card-media img{transform:scale(1.045)}
+    .w2card-title{font-family:var(--font-display);font-weight:700;font-size:clamp(17px,1.4vw,21px);color:#15161d;margin:15px 0 6px}
+    .w2card-desc{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:rgba(21,22,29,0.55);margin:0 0 13px;max-width:36ch}
+    .w2card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+    .w2tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--yellow);background:#0d1fd4;padding:4px 9px;border-radius:3px}
+    @media(max-width:1000px){
+      .works2-body{grid-template-columns:1fr;gap:26px}
+      .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px}
+      .works2-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:600px){.works2-grid{grid-template-columns:1fr}}
+
     /* Filter button wrapper — hover triggers expand */
     .work-burger-wrap{
       display:none;   /* filter removed */
@@ -1444,6 +1479,33 @@
       </button>
     </div>
   </div>
+  <!-- ═══ SELECTED WORK — v2 grid + left filter stacks ═══ -->
+  <div class="works2">
+    <div class="works2-lead"><span class="dot" aria-hidden="true"></span><span>selected work</span></div>
+    <div class="works2-headrow">
+      <h3 class="works2-title" id="works2Title">All Projects</h3>
+      <div class="works2-count" id="works2Count">(00)</div>
+    </div>
+    <div class="works2-body">
+      <aside class="works2-filters" id="works2Filters">
+        <div class="w2f-group" data-axis="collection">
+          <div class="w2f-title">Collections</div>
+          <button class="w2f-btn active" data-val="all">All</button>
+          <button class="w2f-btn" data-val="mofid">Mofid Securities</button>
+          <button class="w2f-btn" data-val="personal">Personal Work</button>
+        </div>
+        <div class="w2f-group" data-axis="service">
+          <div class="w2f-title">Services</div>
+          <button class="w2f-btn active" data-val="all">All</button>
+          <button class="w2f-btn" data-val="product-viz">Product Visualization</button>
+          <button class="w2f-btn" data-val="3d-motion">3D Motion</button>
+          <button class="w2f-btn" data-val="2d-motion">2D Motion</button>
+          <button class="w2f-btn" data-val="logo-animation">Logo Animation</button>
+        </div>
+      </aside>
+      <div class="works2-grid" id="works2Grid"></div>
+    </div>
+  </div>
   <!-- ═══ MOFID PANEL (default) ═══ -->
   <div id="mofidPanel" class="work-panel" role="tabpanel" aria-labelledby="tab-mofid">
     <div class="feat-grid" id="mofidFeatured"></div>
@@ -2041,7 +2103,8 @@
 
       window.addEventListener('scroll', onScroll, {passive:true});
       // Build the default (Mofid) work panel + its filter buttons.
-      if (window._switchWorkTab) window._switchWorkTab('mofid');
+      if (window._switchWorkTab) window._switchWorkTab('mofid');   // builds the 3D carousel (kept untouched)
+      buildWorksGallery();                                          // the new selected-work grid
       initContactScroll();
       initContactIcons();
       initNavSection();
@@ -3012,6 +3075,96 @@
     }, { threshold: 0 }).observe(sticky);
   }
 
+  // ── SELECTED WORK: one unified card grid, filtered by Collection × Service (AND).
+  //    Personal cards carry data-idx (→ personal overlay); Mofid cards carry
+  //    data-mofid-slug/key (→ Mofid overlay) — the existing global click handlers do
+  //    the opening. Copy + service tags are editable placeholders. ──
+  const WORKS2_SVC = { 'product-viz': 'Product Visualization', '3d-motion': '3D Motion', '2d-motion': '2D Motion', 'logo-animation': 'Logo Animation' };
+  function eProjIdx(id) { for (var i = 0; i < ECCHO_PROJECTS.length; i++) { if (ECCHO_PROJECTS[i].id === id) return i; } return -1; }
+  const WORKS2_CARDS = [
+    { col: 'mofid', title: 'Mofid Card',      desc: 'Concept motion for Mofid’s card — material, light and identity resolved in a single loop.',                    poster: 'media/mofid/mofid-card-concept-motion/main.jpg',                                      svc: ['3d-motion'],                click: { mofidSlug: 'main',                                        mofidKey: 'mofid-card-concept-motion' } },
+    { col: 'mofid', title: 'Mofid 4.0',       desc: 'Identity in motion — glass-and-light loops exploring how the Mofid mark builds and breathes.',                        poster: 'media/mofid/mofid-ident-r-d/mofid-4-9-glass-motion.jpg',                              svc: ['3d-motion', 'logo-animation'], click: { mofidSlug: 'mofid-4-9-glass-motion',                       mofidKey: 'mofid-ident-r-d' } },
+    { col: 'mofid', title: 'Fund Pre-rolls',  desc: 'A family of 3D fund pre-rolls, each giving a Mofid fund its own tactile, high-finish signature.',                          poster: 'media/mofid/pre-rolls/main-version-2-fixed-loop.jpg',                                 svc: ['3d-motion'],                click: { mofidSlug: 'main-version-2-fixed-loop',                   mofidKey: 'pre-rolls' } },
+    { col: 'mofid', title: 'AIX Exhibitions', desc: 'Large-format identity for AIX, Mofid’s AI-in-industry event — machine-driven and unmistakably intelligent.',        poster: 'media/mofid/aix-exhibitions/aix-3d-loop-pollished-glitched-edited-2-4k.jpg',          svc: ['3d-motion'],                click: { mofidSlug: 'aix-3d-loop-pollished-glitched-edited-2-4k',   mofidKey: 'aix-exhibitions' } },
+    { col: 'mofid', title: 'Jahat Festival',  desc: 'Teasers and logomotion for Mofid’s annual Jahat festival, carried across two editions.',                                poster: 'media/mofid/annual-jahat-festival/jahat-1404-teaser.jpg',                             svc: ['2d-motion', 'logo-animation'], click: { mofidSlug: 'jahat-1404-teaser',                           mofidKey: 'annual-jahat-festival' } },
+    { col: 'mofid', title: 'Funds Explainer', desc: 'A clean animated explainer that turns Mofid’s fund line-up into an easy on-screen story.',                              poster: 'media/mofid/exhibition-explainer-motion/safe-motion-expo-ready.jpg',                  svc: ['2d-motion'],                click: { mofidSlug: 'safe-motion-expo-ready',                      mofidKey: 'exhibition-explainer-motion' } },
+    { col: 'personal', id: 'amirkabir-hotel', title: 'Amirkabir Hotel', desc: '2D motion launching a hotel rebrand — logo, type and motion language in one confident rhythm.',                     svc: ['2d-motion', 'logo-animation'] },
+    { col: 'personal', id: 'kerosene',        title: 'Kerosene',        desc: '3D motion identity for a podcast on oil — a heavy subject rendered as striking, oil-slicked visuals.',              svc: ['3d-motion'] },
+    { col: 'personal', id: 'spad-foolad',     title: 'Spad Foolad',     desc: 'Logo animation for a steel brand — the story of the mark, built with heavy-industry precision.',                    svc: ['2d-motion', 'logo-animation'] },
+    { col: 'personal', id: 'daal-campaign',   title: 'Daal Campaigns',  desc: 'Campaign work for an insurer — a 2D report piece plus high-finish 3D visuals that make a dry field feel premium.', svc: ['product-viz', '2d-motion'] },
+    { col: 'personal', id: 'arya',            title: 'Arya',            desc: 'A playful concept identity for a children’s toy and art brand — colour, texture and hands-on play.',           svc: ['2d-motion', 'logo-animation'] },
+    { col: 'personal', id: 'chillchasht',     title: 'Chillchasht',     desc: 'Bold, appetising brand motion for a small-batch sauce maker with plenty of shelf character.',                     svc: ['2d-motion', 'logo-animation'] },
+    { col: 'personal', id: 'ashianeh',        title: 'Ashianeh',        desc: 'Concept identity for an interior studio meaning “nest” — shelter, structure and quiet confidence.',        svc: ['2d-motion'] },
+    { col: 'personal', id: 'biotask',         title: 'Biotask',         desc: 'Identity for an app that plans your day around your biological clock and energy peaks.',                         svc: ['2d-motion'] },
+    { col: 'personal', id: 'red-dot-cafe',    title: 'Red Dot Cafe',    desc: 'A full identity built from one confident red dot — a simple idea taken far, alive in motion.',                    svc: ['2d-motion', 'logo-animation'] },
+    { col: 'personal', id: 'dream-catcher',   title: 'Dream Catcher',   desc: 'Atmospheric concept for a lucid-dreaming app — awareness and control inside the dream.',                         svc: ['2d-motion'] },
+    { col: 'personal', id: 'rotbeyar',        title: 'Rotbeyar',        desc: 'Identity and motion for an exam-prep institution — supportive and modern, minus the anxiety.',                   svc: ['2d-motion'] }
+  ];
+  let works2Built = false;
+  function buildWorksGallery() {
+    if (works2Built) return;
+    const grid = document.getElementById('works2Grid');
+    const filtersEl = document.getElementById('works2Filters');
+    const titleEl = document.getElementById('works2Title');
+    const countEl = document.getElementById('works2Count');
+    if (!grid || !filtersEl) return;
+    works2Built = true;
+
+    const state = { collection: 'all', service: 'all' };
+    const cardEls = [];
+    WORKS2_CARDS.forEach(function (c) {
+      const el = document.createElement('div');
+      el.className = 'w2card';
+      el.setAttribute('role', 'button'); el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', 'View: ' + c.title);
+      if (c.col === 'personal') { const idx = eProjIdx(c.id); if (idx >= 0) el.dataset.idx = String(idx); }
+      else { el.dataset.mofidSlug = c.click.mofidSlug; el.dataset.mofidKey = c.click.mofidKey; }
+      el.dataset.col = c.col; el.dataset.svc = c.svc.join(' ');
+      const media = document.createElement('div'); media.className = 'w2card-media';
+      const im = new Image(); im.loading = 'lazy'; im.alt = c.title;
+      im.src = c.poster || ('media/' + c.id + '/poster.jpg'); media.appendChild(im);
+      const t = document.createElement('div'); t.className = 'w2card-title'; t.textContent = c.title;
+      const d = document.createElement('p'); d.className = 'w2card-desc'; d.textContent = c.desc;
+      const tags = document.createElement('div'); tags.className = 'w2card-tags';
+      c.svc.forEach(function (s) { const sp = document.createElement('span'); sp.className = 'w2tag'; sp.textContent = WORKS2_SVC[s] || s; tags.appendChild(sp); });
+      el.appendChild(media); el.appendChild(t); el.appendChild(d); el.appendChild(tags);
+      grid.appendChild(el); cardEls.push(el);
+    });
+
+    const rev = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rev.unobserve(e.target); } });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    cardEls.forEach(function (el) { rev.observe(el); });
+
+    const COL_LABEL = { all: 'All Projects', mofid: 'Mofid Securities', personal: 'Personal Work' };
+    function apply() {
+      let vis = 0;
+      cardEls.forEach(function (el) {
+        const okC = state.collection === 'all' || el.dataset.col === state.collection;
+        const okS = state.service === 'all' || (' ' + el.dataset.svc + ' ').indexOf(' ' + state.service + ' ') >= 0;
+        const show = okC && okS;
+        el.style.display = show ? '' : 'none';
+        if (show) { el.classList.add('in'); vis++; }
+      });
+      let label = COL_LABEL[state.collection];
+      if (state.service !== 'all') label = WORKS2_SVC[state.service] + (state.collection !== 'all' ? ' — ' + COL_LABEL[state.collection] : '');
+      if (titleEl) titleEl.textContent = label;
+      if (countEl) countEl.textContent = '(' + ('0' + vis).slice(-2) + ')';
+    }
+    filtersEl.querySelectorAll('.w2f-group').forEach(function (group) {
+      const axis = group.dataset.axis;
+      group.querySelectorAll('.w2f-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          group.querySelectorAll('.w2f-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          state[axis] = btn.dataset.val; apply();
+        });
+      });
+    });
+    apply();
+  }
+  window.buildWorksGallery = buildWorksGallery;
+
   function buildMofidPanel() {
     if (mofidPanelBuilt) return;
     mofidPanelBuilt = true;
@@ -3081,7 +3234,7 @@
 
   // Mofid cards (featured + grid) open the SAME overlay as personal projects.
   document.addEventListener('click', function(e) {
-    const item = e.target.closest('.wcard');
+    const item = e.target.closest('.wcard, .w2card');
     if (!item || !item.dataset.mofidSlug) return;
     if (typeof window.openMofidProject === 'function') {
       window.openMofidProject(item.dataset.mofidSlug, item.dataset.mofidKey);
@@ -3089,7 +3242,7 @@
   });
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const item = e.target.closest && e.target.closest('.wcard');
+    const item = e.target.closest && e.target.closest('.wcard, .w2card');
     if (!item || !item.dataset.mofidSlug) return;
     e.preventDefault();
     if (typeof window.openMofidProject === 'function') {
@@ -4209,12 +4362,12 @@
       if (!isNaN(idx) && idx < projects.length) { mode = 'personal'; open(idx); }
     }
     document.addEventListener('click', e => {
-      const item = e.target.closest('.wcard');
+      const item = e.target.closest('.wcard, .w2card');
       if (item && isPersonalItem(item)) openFromItem(item);
     });
     document.addEventListener('keydown', e => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const item = e.target.closest?.('.wcard');
+      const item = e.target.closest?.('.wcard, .w2card');
       if (item && isPersonalItem(item)) { e.preventDefault(); openFromItem(item); }
     });
 
