@@ -2692,7 +2692,7 @@
       SHIFT23 = Math.round(vh * 2.1); // bigger slide before carousel #3
       LEADIN = Math.round(vh * 0.20); // carousel #1 starts cycling shortly after the section pins
       IN0 = -Math.round(vh * 0.55);   // #1's arc swipe-in BEGINS this far before the pin (as the section enters) → no empty pinned screen
-      TAIL = Math.round(vh * 0.10);   // short hold after #3 — the ring exit is driven by the About section's approach (below)
+      TAIL = Math.round(vh * 0.5);   // pinned hold after #3 — the cards gather into the centre column here (screen still)
       CONV_DOWN = Math.round(vh * 0.62);   // carousels 1&2: how far the outgoing hero slides DOWN as it fades
       RX = Math.min(Math.round(vw * 0.51), 950); RY = Math.min(Math.round(vh * 0.345), 392);   // carousel 3 ring radii (wider + a bit larger)
       // gaps[k] = scroll before carousel k cycles (lead-in for #1, then the slides).
@@ -2723,7 +2723,7 @@
       // Title fades + slides up on its own smooth ease (c.rev, driven in frame()),
       // independent of the exact scroll position — no snap. The subtext is typed
       // in / out by a timer (setActiveCar), so it reads letter-by-letter smoothly.
-      c.text.style.opacity = (c.rev * (1 - (c.exitP || 0))).toFixed(3);   // centre text fades as the ring exits
+      c.text.style.opacity = (c.rev * (1 - (c.gatherP || 0))).toFixed(3);   // centre text fades as the cards gather
       c.text.style.setProperty('--ty', ((1 - c.rev) * TXTOFF).toFixed(1) + 'px');
       if (c.horizontal) { placeRing(c); return; }   // carousel 3 — solar-system ring
       // ── Carousels 1 & 2: the upcoming cards still fan along the ARC up to the hero
@@ -2766,26 +2766,26 @@
     // the cycle ends the cards peel off the ring and curve DOWN out of the section
     // (front cards leading), handing off to the hero ball in the next section.
     function placeRing(c) {
-      const rot = (c.cur / (N - 1)) * Math.PI * 2;   // scroll-scrubbed rotation, one full turn
-      const exitP = c.exitP || 0;
-      // Exit: the cards first LINE UP into a vertical column in the centre, then the
-      // whole column slides straight DOWN and out (no fade) — timed to the hero ball.
-      const conv = bez(clamp(exitP / 0.45, 0, 1));                       // ring → centre column
-      const COLGAP = vhPx * 0.055;
-      const colHalf = (N - 1) * COLGAP / 2;
-      const drop = Math.pow(clamp((exitP - 0.22) / 0.78, 0, 1), 1.25) * (vhPx * 1.5 + colHalf);
+      const rot = (c.cur / (N - 1)) * Math.PI;       // scroll-scrubbed rotation, HALF a turn
+      const gatherP = c.gatherP || 0;                // cards gather into the centre column (pinned, screen still)
+      const dropP = c.dropP || 0;                    // then the column pours down, staggered (as the ball descends)
+      const conv = bez(gatherP);
+      const COLGAP = vhPx * 0.05;
+      const STAG = 0.045, WIN = 0.42;                // per-card offset → first card first, the rest follow
       for (let i = 0; i < N; i++) {
         const th = (i / N) * Math.PI * 2 - rot;
         const rx = RX * Math.cos(th), ry = RY * Math.sin(th);
         const colY = (i - (N - 1) / 2) * COLGAP;                         // slot in the centre column
+        const ld = bez(clamp((dropP - i * STAG) / WIN, 0, 1));           // this card's own downward progress
+        const dropAmt = ld * (vhPx * 1.7);
         const x = rx * (1 - conv);                                       // → 0 (centre axis)
-        const y = ry * (1 - conv) + colY * conv + drop;                  // ring → column, then down
+        const y = ry * (1 - conv) + colY * conv + dropAmt;              // ring → column, then down (staggered)
         const ty = c.panX * 6;                       // always facing the camera; only the cursor pan tilts
         const tx = -c.panY * 5;
         const card = c.cards[i];
         card.style.opacity = c.vis.toFixed(3);       // uniform, never fades on exit
         card.style.setProperty('--shade', '0');
-        card.style.zIndex = 300 + Math.round(Math.sin(th) * 40 * (1 - conv) + i * conv);
+        card.style.zIndex = 300 + Math.round(Math.sin(th) * 40 * (1 - conv) + (N - i) * conv);   // leading (dropping) card stays in front
         card.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(0.6) rotateY(' + ty.toFixed(1) + 'deg) rotateX(' + tx.toFixed(1) + 'deg)';
       }
     }
@@ -2890,16 +2890,21 @@
       drawGrid(-curG * 0.5);   // grid drifts with the scroll (canvas → crisp, seamless)
       const tu = trackUnits(curG);
       const activeK = clamp(Math.round(tu), 0, M - 1);
-      // Ring exit is driven by the About section rising below, so the cards slide out
-      // exactly as the hero ball comes down in the next section.
+      // Carousel 3 exit in two stages: the cards GATHER into the centre column while
+      // still pinned (driven by curG over the tail — the screen isn't moving), then the
+      // column POURS DOWN, staggered, driven by the About section rising below (so it's
+      // timed to the hero ball descending).
+      const cycEnd = cycStart[M - 1] + CYCLE;
+      const gatherP = clamp((curG - cycEnd) / TAIL, 0, 1);
       const efTop = echoFieldEl ? (echoFieldEl.getBoundingClientRect().top) : Infinity;
-      const ringExit = clamp((vhPx - efTop) / (vhPx * 1.5), 0, 1);
+      const dropP = clamp((vhPx - efTop) / (vhPx * 1.35), 0, 1);
       // #1 reads the signed value so its swipe-in can begin before the pin; the rest use curG.
       for (let k = 0; k < M; k++) {
         cars[k].target = carTarget(k, k === 0 ? raw : curG);
         setActiveCar(cars[k], k === activeK);
         cars[k].vis = clamp((1 - (tu - k)) / 0.3, 0, 1);   // 1 until parked ~0.7 screen up, →0 by a full screen up
-        cars[k].exitP = (k === M - 1) ? ringExit : 0;
+        cars[k].gatherP = (k === M - 1) ? gatherP : 0;
+        cars[k].dropP = (k === M - 1) ? dropP : 0;
       }
       kick();
     }
@@ -4613,15 +4618,30 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   //    behind the top at a CONSTANT 3× size to the fixed centred slot. Only once it
   //    arrives does it shrink (smooth cubic-bezier) to 1× and start pulsing; the two
   //    taglines then appear one at a time with the first two pulses. ──
-  const HERO_START = 3, SHRINK_SCROLL = 0.42;   // shrink spans this slice of descRaw AFTER arrival (scroll-driven)
+  const HERO_START = 3, SHRINK_SCROLL = 0.62;   // shrink spans this slice of descRaw AFTER arrival (scroll-driven)
   const shrinkEase = (function (x1, y1, x2, y2) {
     const bx = t => 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t;
     const by = t => 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
     return x => { let lo = 0, hi = 1, t = x; for (let i = 0; i < 22; i++) { t = (lo + hi) / 2; if (bx(t) < x) lo = t; else hi = t; } return by(t); };
-  })(0.6, 0.0, 0.06, 1.0);
+  })(0.65, 0.0, 0.35, 1.0);   // smooth ease-in-out — no snap
   let settled = false, shrinkP = 0;   // shrinkP: 0 = 3× (entering) → 1 = 1× (settled)
   const introEl = document.querySelector('#about .about-intro');
   const bodyEl  = document.querySelector('#about .about-body');
+  // Split each tagline into per-letter spans so they can swipe in from off-screen.
+  function splitLetters(el) {
+    if (!el) return [];
+    const text = el.textContent; el.textContent = ''; el.style.clipPath = 'none';
+    const spans = [];
+    for (let i = 0; i < text.length; i++) {
+      const s = document.createElement('span');
+      s.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+      s.style.cssText = 'display:inline-block;will-change:transform,opacity';
+      el.appendChild(s); spans.push(s);
+    }
+    return spans;
+  }
+  const introLetters = splitLetters(introEl);
+  const bodyLetters  = splitLetters(bodyEl);
   function pinProgress() {
     const range = host.offsetHeight - window.innerHeight;   // pinned scroll distance
     if (range <= 0) return 1;
@@ -4709,8 +4729,9 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       ringTimer = RING_INTERVAL - 0.4;
       shrinkP = 0;
       if (pctx && pW) pctx.clearRect(0, 0, pW, pH);
-      if (introEl) introEl.style.clipPath = 'inset(-25% 0 -25% 100%)';
-      if (bodyEl)  bodyEl.style.clipPath  = 'inset(-25% 100% -25% 0)';
+      // Taglines hide themselves via per-letter opacity/translateX (rvBase→0); no
+      // clip-path reset here — re-applying the inset would clip the letters away
+      // for good, since nothing clears it on re-entry.
     }
     if (visible && !enteredOnce) {
       enteredOnce = true;
@@ -4741,8 +4762,8 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     if (snapping || !lenis || !visible) return;
     const vhh = window.innerHeight || 1;
     const top = host.getBoundingClientRect().top + y;      // echoField top in doc coords
-    const arriveY = top + 0.80 * vhh;                      // descRaw = 1.0 (ball arrived, big)
-    const settleY = top + 1.346 * vhh;                     // descRaw = 1 + SHRINK_SCROLL (settled)
+    const arriveY = top + 0.80 * vhh;                                  // descRaw = 1.0 (ball arrived, big)
+    const settleY = top + ((1 + SHRINK_SCROLL) * 1.3 - 0.5) * vhh;     // descRaw = 1 + SHRINK_SCROLL (settled)
     const dz = vhh * 0.04;                                 // dead-zone so tiny jitter can't trigger
     let target = null;
     if (dir > 0 && y > arriveY + dz && y < settleY - dz) target = settleY;        // scroll down → shrink
@@ -4794,15 +4815,24 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     } else {
       ringTimer = RING_INTERVAL - 0.4;       // first pulse fires shortly after it settles
     }
-    // Taglines wipe in as the ball SHRINKS into place and out as it grows. Driven by
-    // the ball's ACTUAL eased scale (shrinkEased), so the lines always match the
-    // rendered ball 1:1 — no lag/desync when scrolling up and down fast.
+    // Taglines swipe in from OFF-SCREEN — the left line from the left edge, the right
+    // line from the right edge — letter by letter into position, as the ball shrinks
+    // into place (rvBase = the ball's eased scale). Reverses as it grows.
     const rvBase = shrinkEased;
     const eo = x => 1 - Math.pow(1 - x, 3);
-    const rvL = eo(Math.min(1, rvBase / 0.82));
-    const rvR = eo(Math.max(0, Math.min(1, (rvBase - 0.16) / 0.82)));
-    if (introEl) introEl.style.clipPath = 'inset(-25% 0 -25% ' + ((1 - rvL) * 100).toFixed(1) + '%)';
-    if (bodyEl)  bodyEl.style.clipPath  = 'inset(-25% ' + ((1 - rvR) * 100).toFixed(1) + '% -25% 0)';
+    const OFF = (window.innerWidth || 1200) * 1.15;   // off-screen start distance
+    const STAGL = 0.026, WINL = 0.42;
+    for (let i = 0; i < introLetters.length; i++) {   // left line: from the LEFT, outer letter first
+      const p = eo(Math.max(0, Math.min(1, (rvBase - i * STAGL) / WINL)));
+      introLetters[i].style.transform = 'translateX(' + (-(1 - p) * OFF).toFixed(0) + 'px)';
+      introLetters[i].style.opacity = p.toFixed(3);
+    }
+    for (let i = 0; i < bodyLetters.length; i++) {    // right line: from the RIGHT, outer letter first
+      const j = bodyLetters.length - 1 - i;
+      const p = eo(Math.max(0, Math.min(1, (rvBase - j * STAGL) / WINL)));
+      bodyLetters[i].style.transform = 'translateX(' + ((1 - p) * OFF).toFixed(0) + 'px)';
+      bodyLetters[i].style.opacity = p.toFixed(3);
+    }
     for (const rg of rings) {
       if (!rg.active) continue;
       rg.rad += dt * RING_SPEED;
