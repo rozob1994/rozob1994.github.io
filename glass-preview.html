@@ -13,7 +13,9 @@
   <label>rotY <span id="vry"></span><input id="ry" type="range" min="-1.2" max="1.2" step="0.01" value="0.02"></label>
   <label>rotZ <span id="vrz"></span><input id="rz" type="range" min="-1.0" max="1.0" step="0.01" value="0.55"></label>
   <label>zoom <span id="vzm"></span><input id="zm" type="range" min="6" max="16" step="0.2" value="10.6"></label>
-  <label>dispersion <span id="vds"></span><input id="ds" type="range" min="0" max="16" step="0.1" value="8"></label>
+  <label>chromatic <span id="vds"></span><input id="ds" type="range" min="0" max="1.5" step="0.01" value="0.4"></label>
+  <label>blur <span id="vbl"></span><input id="bl" type="range" min="0" max="1" step="0.01" value="0.12"></label>
+  <label>distort <span id="vdt"></span><input id="dt" type="range" min="0" max="1" step="0.01" value="0.15"></label>
   <label>ior <span id="vio"></span><input id="io" type="range" min="1.1" max="2.2" step="0.01" value="1.5"></label>
   <label>exposure <span id="vex"></span><input id="ex" type="range" min="0.4" max="3" step="0.05" value="1.4"></label>
   <label>env bright <span id="vev"></span><input id="ev" type="range" min="0.5" max="8" step="0.1" value="3"></label>
@@ -29,6 +31,7 @@ import {FontLoader} from './vendor/FontLoader.hero.js';
 import {TextGeometry} from './vendor/TextGeometry.hero.js';
 import {RoomEnvironment} from './vendor/RoomEnvironment.hero.js';
 import {RGBELoader} from './vendor/RGBELoader.hero.js';
+import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransmissionMaterial.hero.js';
 
 const BLUE=0x0d1fd4;
 const canvas=document.getElementById('c');
@@ -72,13 +75,18 @@ let hdrTex=null;
 new RGBELoader().load('./vendor/studio_small_09_1k.hdr',tex=>{ tex.mapping=THREE.EquirectangularReflectionMapping; hdrTex=pmrem.fromEquirectangular(tex).texture; tex.dispose(); });
 scene.environment=studioTex;
 
-// crisp glass — low roughness so reflections read as glass, strong dispersion
-const glass=new THREE.MeshPhysicalMaterial({
-  color:0xffffff, metalness:0, roughness:0.06,
-  transmission:1, thickness:3, ior:1.5, dispersion:8,
-  clearcoat:0, envMapIntensity:3,
-  attenuationColor:new THREE.Color(0xffffff), attenuationDistance:1e4, transparent:true
-});
+// MeshTransmissionMaterial — real chromatic-aberration glass (refracts the scene buffer)
+const glass=new MeshTransmissionMaterialImpl(10, false);
+glass.color=new THREE.Color(0xffffff);
+glass.roughness=0.06; glass.ior=1.5; glass.thickness=3; glass.envMapIntensity=3;
+glass.chromaticAberration=0.4; glass.anisotropicBlur=0.12; glass.distortion=0.15; glass.distortionScale=0.4; glass.temporalDistortion=0.1;
+glass.attenuationColor=new THREE.Color(0xffffff); glass.attenuationDistance=1e4;
+// refraction buffer: the scene rendered WITHOUT the glass, which the glass then bends
+const DPR=Math.min(devicePixelRatio,2);
+const fbo=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType});
+const discardMat=new DiscardMaterial();
+function sizeFbo(){ fbo.setSize(Math.round(innerWidth*DPR),Math.round(innerHeight*DPR)); }
+sizeFbo(); addEventListener('resize',sizeFbo);
 const ballMat=new THREE.MeshStandardMaterial({color:0xf5d94e, metalness:0, roughness:1, envMapIntensity:0.7});
 
 const group=new THREE.Group();
@@ -145,6 +153,19 @@ function loop(now){
     m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
   });
   group.rotation.set(baseRX,baseRY,baseRZ);
+  // MTM: render the scene with the glass hidden into the buffer it refracts
+  if(text){
+    glass.time=t;
+    const prevTone=renderer.toneMapping;
+    text.material=discardMat;
+    renderer.toneMapping=THREE.NoToneMapping;
+    renderer.setRenderTarget(fbo);
+    renderer.render(scene,camera);
+    renderer.setRenderTarget(null);
+    renderer.toneMapping=prevTone;
+    text.material=glass;
+    glass.buffer=fbo.texture;
+  }
   renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
@@ -155,7 +176,9 @@ const $=id=>document.getElementById(id);
 function bind(id,fn){ const el=$(id),v=$('v'+id); const set=()=>{ const n=parseFloat(el.value); v.textContent=n.toFixed(2); fn(n); }; el.addEventListener('input',set); set(); }
 bind('rx',n=>baseRX=n); bind('ry',n=>baseRY=n); bind('rz',n=>baseRZ=n);
 bind('zm',n=>{ ZOOM=n; resize(); });
-bind('ds',n=>glass.dispersion=n);
+bind('ds',n=>glass.chromaticAberration=n);
+bind('bl',n=>glass.anisotropicBlur=n);
+bind('dt',n=>glass.distortion=n);
 bind('io',n=>glass.ior=n);
 bind('ex',n=>renderer.toneMappingExposure=n);
 bind('ev',n=>glass.envMapIntensity=n);
@@ -165,5 +188,5 @@ bind('fg',n=>{ scene.fog.far=n; scene.fog.near=Math.max(10,n-18); });
 const envKeys=['studio','room','hdri']; let envIdx=0;
 function applyEnv(){ const k=envKeys[envIdx]; scene.environment = k==='hdri'?(hdrTex||studioTex):(k==='room'?roomTex:studioTex); $('envbtn').textContent='env: '+k; }
 $('envbtn').addEventListener('click',()=>{ envIdx=(envIdx+1)%envKeys.length; applyEnv(); });
-$('dump').addEventListener('click',()=>{ const s='rot('+baseRX+','+baseRY+','+baseRZ+') zoom='+ZOOM+' env='+envKeys[envIdx]+' dispersion='+glass.dispersion+' ior='+glass.ior+' exposure='+renderer.toneMappingExposure+' envBright='+glass.envMapIntensity+' thickness='+glass.thickness+' roughness='+glass.roughness+' fog='+scene.fog.far; $('out').textContent=s; if(navigator.clipboard) navigator.clipboard.writeText(s); });
+$('dump').addEventListener('click',()=>{ const s='rot('+baseRX+','+baseRY+','+baseRZ+') zoom='+ZOOM+' env='+envKeys[envIdx]+' chromatic='+glass.chromaticAberration+' blur='+glass.anisotropicBlur+' distort='+glass.distortion+' ior='+glass.ior+' exposure='+renderer.toneMappingExposure+' envBright='+glass.envMapIntensity+' thickness='+glass.thickness+' roughness='+glass.roughness+' fog='+scene.fog.far; $('out').textContent=s; if(navigator.clipboard) navigator.clipboard.writeText(s); });
 </script></body></html>
