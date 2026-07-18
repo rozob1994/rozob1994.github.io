@@ -2899,7 +2899,7 @@
     const tiles = [];
     function spawn() {
       const el = document.createElement('div'); el.className = 'evoid-tile';
-      const w = 260 + Math.random() * 200; el.style.width = w + 'px'; el.style.height = (w * 0.68) + 'px'; el.style.opacity = '0';
+      const w = 1300 + Math.random() * 1000; el.style.width = w + 'px'; el.style.height = (w * 0.68) + 'px'; el.style.opacity = '0';
       const img = document.createElement('img'); img.src = imgs[ii % imgs.length]; ii++; img.loading = 'lazy'; img.decoding = 'async'; el.appendChild(img);
       const ang = Math.random() * Math.PI * 2;
       const R = Math.max(layer.clientWidth, layer.clientHeight) * 0.6 + 180;
