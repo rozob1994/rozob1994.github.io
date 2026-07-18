@@ -1388,7 +1388,7 @@
     .ecar:not(.mirror) .ecar-panel .es-txt{align-items:flex-end;text-align:right}
     .ecar.mirror .ecar-panel .es-txt{align-items:flex-start;text-align:left}
     .es-sub{font-family:var(--font-mono);font-size:clamp(11px,0.85vw,14px);letter-spacing:.22em;text-transform:lowercase;color:rgba(255,255,255,0.6)}
-    .es-title{font-family:var(--font-display);font-weight:700;font-variation-settings:'wght' 700;text-transform:uppercase;
+    .es-title{font-family:var(--font-display);font-weight:800;font-variation-settings:'wght' 800;text-transform:uppercase;
       font-size:clamp(58px,8vw,150px);line-height:.9;letter-spacing:-.02em;color:#fff;margin:0}
     .es-title .es-w{display:inline-block;white-space:nowrap}   /* keep each word whole; wrap only between words */
     .es-title .es-l{display:inline-block;will-change:font-variation-settings}
@@ -2864,8 +2864,10 @@
   function ecInitWeight(letters, gate) {
     if (!letters.length) return;
     ecWireMouse();
-    const WFAR = 600, WNEAR = 800, RAD = 190, EASE = 0.14;
-    const state = letters.map(function () { return 700; });
+    // Rest at the brand display weight (800, matching the site's Syne headings);
+    // the cursor subtly thins the letters it passes over.
+    const WFAR = 800, WNEAR = 500, RAD = 190, EASE = 0.14;
+    const state = letters.map(function () { return 800; });
     let vis = false, raf = 0;
     function loop() {
       if (!vis) { raf = 0; return; }
