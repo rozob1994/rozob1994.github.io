@@ -838,6 +838,12 @@
     /* Live 3D glass "eccho" intro — replaces the Motion frame sequence on capable
        desktops (falls back to #framesCanvas otherwise). Dark backdrop, own layer. */
     #heroGlass{position:fixed;inset:0;width:100vw;height:100vh;z-index:10;pointer-events:none;opacity:0;background:#05060b;display:block}
+    /* Persistent glass hero: it becomes a fixed base layer (z1) and the reel +
+       work are pushed down one screen so they scroll up OVER it (the overpass). */
+    body.glass-hero #heroGlass{z-index:1}
+    body.glass-hero #hero{position:relative;z-index:2}
+    body.glass-hero #work{position:relative;z-index:3}
+    #glassSpacer{height:100vh;position:relative;z-index:0;pointer-events:none}
 
     /* ── PROJECT OVERLAY ─────────────────────────────────────────────────────── */
     #projectOverlay{
@@ -1924,10 +1930,22 @@
       setTimeout(function(){ cancelAnimationFrame(raf); }, 450);
     };
   })();
-  // A ready glass intro can start without waiting for all 91 fallback frames.
+  // Prefer the live glass intro on capable desktops: even if the fallback frames
+  // finish first, wait (up to a deadline) for the glass rather than let frames win.
   function glassReady() { return !!(window.__heroGlass && window.__heroGlass.ok); }
-  window.__onHeroGlassReady = function () { if (minTimePassed && !burstFired) triggerBurst(); };
-  setTimeout(() => { minTimePassed = true; if (!burstFired && (allFramesLoaded || glassReady())) triggerBurst(); }, 900);
+  const GLASS_LIKELY = !SKIP_INTRO
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    && !window.matchMedia('(pointer:coarse)').matches
+    && (function(){ try { return !!document.createElement('canvas').getContext('webgl2'); } catch(e){ return false; } })();
+  let glassDeadline = false;
+  function tryBurst() {
+    if (burstFired || !minTimePassed) return;
+    if (glassReady()) { triggerBurst(); return; }
+    if (allFramesLoaded && (!GLASS_LIKELY || glassDeadline)) triggerBurst();
+  }
+  window.__onHeroGlassReady = tryBurst;
+  if (GLASS_LIKELY) setTimeout(function(){ glassDeadline = true; tryBurst(); }, 3200);   // frames fallback if glass never readies
+  setTimeout(() => { minTimePassed = true; tryBurst(); }, 900);
 
   function triggerBurst() {
     burstFired = true;
@@ -2012,7 +2030,7 @@
     if (loadPctEl) loadPctEl.textContent = pct + '%';
     const sz = 8 + (pct / 100) * 20;
     if (loadDotEl) { loadDotEl.style.width = sz + 'px'; loadDotEl.style.height = sz + 'px'; }
-    if (loadCount === FRAME_COUNT) { allFramesLoaded = true; if (minTimePassed && !burstFired) triggerBurst(); }
+    if (loadCount === FRAME_COUNT) { allFramesLoaded = true; tryBurst(); }
   }
   fImgs.forEach((img, i) => {
     img.onload = () => onFrameResult(i);
@@ -2113,10 +2131,30 @@
 
     // Everything starts moving at t=0
     fCanvas.style.opacity          = '0';         // canvas dissolves
-    if (useGlass && heroGlassEl) {                // live glass intro dissolves into the reel
-      heroGlassEl.style.transition = 'opacity 0.65s var(--ease)';
-      heroGlassEl.style.opacity    = '0';
-      setTimeout(function(){ if (window.__heroGlass) window.__heroGlass.stop(); heroGlassEl.remove(); }, 820);
+    if (useGlass && heroGlassEl) {
+      // The glass "eccho" STAYS as the hero. It becomes a fixed base layer; the
+      // reel + work are pushed down one screen so they scroll up OVER it (the
+      // reels "pull over," then projects come out from below).
+      heroGlassEl.style.opacity = '1';
+      document.body.classList.add('glass-hero');
+      // Real 100vh spacer (a margin-top collapses through <body>) so the fixed
+      // glass has a screen to itself before the reel scrolls up over it.
+      if (!document.getElementById('glassSpacer')) {
+        var sp = document.createElement('div'); sp.id = 'glassSpacer';
+        heroEl.parentNode.insertBefore(sp, heroEl);
+      }
+      window.__glassHero = true;
+      // Fade + pause the glass as the reel rises over it; resume near the top.
+      var glassGate = function(){
+        var vh = window.innerHeight;
+        var op = Math.max(0, Math.min(1, 1 - (window.scrollY - vh*0.45) / (vh*0.55)));
+        heroGlassEl.style.opacity = op.toFixed(3);
+        if (op <= 0.02) { if (window.__heroGlass && window.__heroGlass.running) window.__heroGlass.stop(); }
+        else { if (window.__heroGlass && !window.__heroGlass.running) window.__heroGlass.resume(); }
+      };
+      window.addEventListener('scroll', glassGate, {passive:true});
+      window.addEventListener('resize', glassGate, {passive:true});
+      glassGate();
     }
     canvasBg.style.opacity         = '0';         // blue cover fades — hero animation now visible
     heroEl.style.height            = 'max(55vh, calc((100vh - 420px) * 0.85))';  // reel; floored at 55vh so it stays tall enough on short (13") laptops
@@ -4003,6 +4041,9 @@
       if (es[0].isIntersecting) { if (reel.play) reel.play().catch(function(){}); }
       else if (reel.pause) reel.pause();
     }, { threshold: 0.02 }).observe(hero);
+    // With the glass hero the reel is a scroll overpass — it stays opaque instead
+    // of fading against scrollY (which is now offset by the 100vh glass screen).
+    if (window.__glassHero) return;
     function fade() {
       var h = hero.offsetHeight || window.innerHeight;
       reel.style.opacity = Math.max(0, 1 - window.scrollY / (h * 0.85)).toFixed(2);
@@ -5785,7 +5826,11 @@ import {TextGeometry} from './vendor/TextGeometry.js';
   let mx = 0, my = 0;
   addEventListener('pointermove', e => { mx = e.clientX/innerWidth - 0.5; my = e.clientY/innerHeight - 0.5; }, {passive:true});
 
-  const api = { ok:false, start(cb){ if(running) return; settleCb = cb; running = true; flyStart = performance.now(); raf = requestAnimationFrame(loop); }, stop(){ running = false; if(raf) cancelAnimationFrame(raf); raf = 0; } };
+  const api = { ok:false,
+    start(cb){ if(running) return; settleCb = cb; running = true; flyStart = performance.now(); raf = requestAnimationFrame(loop); },
+    stop(){ running = false; if(raf) cancelAnimationFrame(raf); raf = 0; },       // pause (scene kept)
+    resume(){ if(running) return; running = true; raf = requestAnimationFrame(loop); },
+    get running(){ return running; } };
   window.__heroGlass = api;
 
   new FontLoader().load('./vendor/helvetiker_bold.typeface.json', font => {
