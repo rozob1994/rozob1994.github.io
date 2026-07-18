@@ -1,21 +1,25 @@
 <!doctype html><html><head><meta charset="utf-8">
-<style>html,body{margin:0;height:100%;background:#070d20;overflow:hidden}
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#0d1fd4}
 #c{position:fixed;inset:0;width:100vw;height:100vh}
-/* subtle floating tiles feel via a dark radial vignette on a blue base */
-body{background:radial-gradient(120% 90% at 50% 40%, #0d1838 0%, #070c1c 60%, #04060f 100%)}</style>
+#panel{position:fixed;top:12px;left:12px;z-index:10;font:12px/1.5 monospace;color:#fff;background:rgba(0,0,0,.55);padding:12px 14px;border-radius:10px;width:236px;backdrop-filter:blur(6px)}
+#panel label{display:block}#panel input{width:100%}</style>
 <script type="importmap">{"imports":{"three-hero":"./vendor/three.hero.module.min.js"}}</script>
 </head><body>
 <canvas id="c"></canvas>
-<div id="panel" style="position:fixed;top:12px;left:12px;z-index:10;font:12px/1.5 monospace;color:#fff;background:rgba(0,0,0,.55);padding:12px 14px;border-radius:10px;width:230px;backdrop-filter:blur(6px)">
-  <div style="font-weight:bold;margin-bottom:6px">glass controls — drag, then send me the values</div>
-  <label>rotX <span id="vrx"></span><input id="rx" type="range" min="-1.2" max="0.4" step="0.01" value="-0.35" style="width:100%"></label>
-  <label>rotY <span id="vry"></span><input id="ry" type="range" min="-1.2" max="1.2" step="0.01" value="0.45" style="width:100%"></label>
-  <label>rotZ <span id="vrz"></span><input id="rz" type="range" min="-0.6" max="0.6" step="0.01" value="-0.05" style="width:100%"></label>
-  <label>dispersion <span id="vds"></span><input id="ds" type="range" min="0" max="12" step="0.1" value="5" style="width:100%"></label>
-  <label>exposure <span id="vex"></span><input id="ex" type="range" min="0.4" max="3" step="0.05" value="1.25" style="width:100%"></label>
-  <label>env bright <span id="vev"></span><input id="ev" type="range" min="0.5" max="6" step="0.1" value="2.2" style="width:100%"></label>
-  <label>thickness <span id="vth"></span><input id="th" type="range" min="0.1" max="4" step="0.1" value="1.2" style="width:100%"></label>
-  <label>roughness <span id="vrg"></span><input id="rg" type="range" min="0" max="0.4" step="0.005" value="0.02" style="width:100%"></label>
+<div id="panel">
+  <div style="font-weight:bold;margin-bottom:6px">glass controls — drag, then hit copy &amp; send me</div>
+  <button id="envbtn" style="width:100%;padding:6px;margin-bottom:6px;cursor:pointer">env: panels</button>
+  <label>rotX <span id="vrx"></span><input id="rx" type="range" min="-1.6" max="0.4" step="0.01" value="-0.82"></label>
+  <label>rotY <span id="vry"></span><input id="ry" type="range" min="-1.2" max="1.2" step="0.01" value="0.02"></label>
+  <label>rotZ <span id="vrz"></span><input id="rz" type="range" min="-1.0" max="1.0" step="0.01" value="0.6"></label>
+  <label>zoom <span id="vzm"></span><input id="zm" type="range" min="6" max="16" step="0.2" value="10.5"></label>
+  <label>dispersion <span id="vds"></span><input id="ds" type="range" min="0" max="14" step="0.1" value="6.3"></label>
+  <label>ior <span id="vio"></span><input id="io" type="range" min="1.1" max="2.2" step="0.01" value="1.5"></label>
+  <label>exposure <span id="vex"></span><input id="ex" type="range" min="0.4" max="3" step="0.05" value="1.3"></label>
+  <label>env bright <span id="vev"></span><input id="ev" type="range" min="0.5" max="8" step="0.1" value="2.6"></label>
+  <label>thickness <span id="vth"></span><input id="th" type="range" min="0.1" max="10" step="0.1" value="4"></label>
+  <label>roughness <span id="vrg"></span><input id="rg" type="range" min="0" max="0.4" step="0.005" value="0"></label>
+  <label>fog depth <span id="vfg"></span><input id="fg" type="range" min="30" max="100" step="1" value="55"></label>
   <button id="dump" style="margin-top:8px;width:100%;padding:6px;cursor:pointer">copy values</button>
   <div id="out" style="margin-top:6px;word-break:break-all;color:#8fd"></div>
 </div>
@@ -24,101 +28,112 @@ import * as THREE from 'three-hero';
 import {FontLoader} from './vendor/FontLoader.hero.js';
 import {TextGeometry} from './vendor/TextGeometry.hero.js';
 import {RoomEnvironment} from './vendor/RoomEnvironment.hero.js';
+import {RGBELoader} from './vendor/RGBELoader.hero.js';
 
+const BLUE=0x0d1fd4;
 const canvas=document.getElementById('c');
-const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+const renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.25;
+renderer.toneMappingExposure=1.3;
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0d1fd4);   // solid brand blue (also gives transmission something to refract)
+scene.background=new THREE.Color(BLUE);
+scene.fog=new THREE.Fog(BLUE, 37, 55);
 
-// Perspective TELEPHOTO ≈ isometric look WITHOUT breaking transmission
-// (a true orthographic camera renders the glass opaque/matte).
-const camera=new THREE.PerspectiveCamera(15,1,0.1,200);
-camera.position.set(0,0,44);
+// ── TRUE orthographic (full isometric, zero perspective) ──
+let ZOOM=10.5;
+const camera=new THREE.OrthographicCamera(-1,1,1,-1,-100,200);
+camera.position.set(0,0,20);
 function resize(){
-  const w=innerWidth,h=innerHeight;
-  camera.aspect=w/h; camera.updateProjectionMatrix();
-  renderer.setSize(w,h,false);
+  const w=innerWidth,h=innerHeight,a=w/h;
+  camera.left=-ZOOM*a/2; camera.right=ZOOM*a/2; camera.top=ZOOM/2; camera.bottom=-ZOOM/2;
+  camera.updateProjectionMatrix(); renderer.setSize(w,h,false);
 }
 addEventListener('resize',resize); resize();
 
-// bright neutral studio + a couple of extra softbox panels for crisp chrome
+// bright softbox studio → crisp chrome reflections
 function extraPanels(){
   const s=new THREE.Scene();
-  function panel(w,h,x,y,z,rx,ry,col,inten){
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({emissive:col,emissiveIntensity:inten,color:0}));
-    m.position.set(x,y,z); m.rotation.set(rx,ry,0); s.add(m); }
-  panel(30,10,0,14,4,Math.PI/2,0,0xffffff,10);   // ceiling
-  panel(30,22,0,2,22,0,Math.PI,0xeef4ff,5);       // front (bright front faces)
-  panel(14,20,-16,3,4,0,Math.PI/2,0xcfe0ff,7);    // left cool
-  panel(14,20,16,3,4,0,-Math.PI/2,0xffe9d0,4);     // right warm
+  const panel=(w,h,x,y,z,rx,ry,col,i)=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({emissive:col,emissiveIntensity:i,color:0})); m.position.set(x,y,z); m.rotation.set(rx,ry,0); s.add(m); };
+  panel(30,10,0,14,4,Math.PI/2,0,0xffffff,10);
+  panel(30,22,0,2,22,0,Math.PI,0xeef4ff,5);
+  panel(14,20,-16,3,4,0,Math.PI/2,0xcfe0ff,7);
+  panel(14,20,16,3,4,0,-Math.PI/2,0xffe9d0,4);
   return s;
 }
 const pmrem=new THREE.PMREMGenerator(renderer);
-const roomTex=pmrem.fromScene(new RoomEnvironment(),0.02).texture;
 const panelTex=pmrem.fromScene(extraPanels(),0.02).texture;
-scene.environment=panelTex;   // start with the crisp panels
+const roomTex=pmrem.fromScene(new RoomEnvironment(),0.02).texture;
+let hdrTex=null;
+new RGBELoader().load('./vendor/studio_small_09_1k.hdr',tex=>{ tex.mapping=THREE.EquirectangularReflectionMapping; hdrTex=pmrem.fromEquirectangular(tex).texture; tex.dispose(); });
+scene.environment=panelTex;
 
 const glass=new THREE.MeshPhysicalMaterial({
-  color:0xf4f8ff, metalness:0, roughness:0.02,
-  transmission:1, thickness:1.2, ior:1.5, dispersion:5.0,
-  iridescence:0.35, iridescenceIOR:1.3,
-  clearcoat:1, clearcoatRoughness:0.02, envMapIntensity:2.2,
-  specularIntensity:1, attenuationColor:new THREE.Color(0xcfe0ff), attenuationDistance:8, transparent:true
+  color:0xf4f8ff, metalness:0, roughness:0,
+  transmission:1, thickness:4, ior:1.5, dispersion:6.3,
+  iridescence:0.3, iridescenceIOR:1.3,
+  clearcoat:1, clearcoatRoughness:0.02, envMapIntensity:2.6,
+  specularIntensity:1, attenuationColor:new THREE.Color(0xd5e4ff), attenuationDistance:12, transparent:true
 });
 
 const group=new THREE.Group();
-let baseRX=-0.35, baseRY=0.45, baseRZ=-0.05;   // slider-controlled
+let baseRX=-0.82, baseRY=0.02, baseRZ=0.6;
 group.rotation.set(baseRX,baseRY,baseRZ);
 scene.add(group);
-const key=new THREE.DirectionalLight(0xffffff,1.2); key.position.set(4,7,6); scene.add(key);
+const key=new THREE.DirectionalLight(0xffffff,1.1); key.position.set(4,7,6); scene.add(key);
 const rim=new THREE.DirectionalLight(0x9fbcff,0.9); rim.position.set(-6,-2,4); scene.add(rim);
-scene.add(new THREE.AmbientLight(0x2a3a5a,0.4));
+scene.add(new THREE.AmbientLight(0x2a3a5a,0.35));
 
 let text=null; const balls=[];
 new FontLoader().load('./vendor/helvetiker_bold.typeface.json',font=>{
-  const geo=new TextGeometry('eccho',{font,size:2.6,height:1.1,curveSegments:18,
-    bevelEnabled:true,bevelThickness:0.34,bevelSize:0.30,bevelSegments:10});
+  const geo=new TextGeometry('eccho',{font,size:2.6,height:1.1,curveSegments:20,
+    bevelEnabled:true,bevelThickness:0.36,bevelSize:0.32,bevelSegments:12});
   geo.center();
   text=new THREE.Mesh(geo,glass); group.add(text);
-  const targets=[[-7.4,2.6,-0.4,0.66],[7.2,2.3,-0.5,0.8],[-8.4,-0.4,-0.6,0.46],[8.5,0.1,0.5,0.5],
-    [-6.4,-2.7,0.4,0.54],[6.6,-2.5,0.5,0.6]];
+  const targets=[
+    // ring the word (near)
+    [-7.4,2.6,0.4,0.66],[7.2,2.3,0.5,0.8],[-8.4,-0.4,0.6,0.46],[8.5,0.1,0.5,0.5],
+    [-6.4,-2.7,0.4,0.54],[6.6,-2.5,0.5,0.6],[0.6,3.6,0.2,0.5],[-1.2,-3.4,0.3,0.42],
+    // depth — far back, fog fades them into the blue
+    [-11,5,-11,0.85],[11,-5,-13,0.95],[-4,7,-15,0.7],[5,-7,-12,0.75],
+    [13,4,-9,0.6],[-13,-3,-14,0.8],[3,-9,-8,0.5],[-6,9,-16,0.65],[10,8,-17,0.75]
+  ];
   targets.forEach(t=>{ const m=new THREE.Mesh(new THREE.SphereGeometry(t[3],48,48),glass);
     m.position.set(t[0],t[1],t[2]); m.userData.by=t[1]; group.add(m); balls.push(m); });
 });
 
-// hover → extrude the letters more (scale along the extrusion axis)
-const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999); let over=false;
+// hover → extrude the letters
+const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999); let over=false, extrude=1;
 addEventListener('pointermove',e=>{ ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1; });
-let extrude=1, mx=0,my=0;
-addEventListener('pointermove',e=>{ mx=e.clientX/innerWidth-0.5; my=e.clientY/innerHeight-0.5; });
 
 function loop(now){
   const t=now*0.001;
   if(text){
     ray.setFromCamera(ptr,camera);
     over = ray.intersectObject(text,false).length>0;
-    const target = over?1.9:1.0;
-    extrude += (target-extrude)*0.12;
-    text.scale.z = extrude;
+    extrude += ((over?1.9:1.0)-extrude)*0.12; text.scale.z=extrude;
   }
-  balls.forEach((m,i)=>{ m.position.y = m.userData.by + Math.sin(t*0.7+i)*0.12; m.rotation.x=t*0.2; m.rotation.y=t*0.16; });
-  group.rotation.set(baseRX, baseRY, baseRZ);
+  balls.forEach((m,i)=>{ m.position.y=m.userData.by+Math.sin(t*0.7+i)*0.12; m.rotation.x=t*0.2; m.rotation.y=t*0.16; });
+  group.rotation.set(baseRX,baseRY,baseRZ);
   renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-// ── live controls ──
+// ── controls ──
 const $=id=>document.getElementById(id);
 function bind(id,fn){ const el=$(id),v=$('v'+id); const set=()=>{ const n=parseFloat(el.value); v.textContent=n.toFixed(2); fn(n); }; el.addEventListener('input',set); set(); }
 bind('rx',n=>baseRX=n); bind('ry',n=>baseRY=n); bind('rz',n=>baseRZ=n);
+bind('zm',n=>{ ZOOM=n; resize(); });
 bind('ds',n=>glass.dispersion=n);
+bind('io',n=>glass.ior=n);
 bind('ex',n=>renderer.toneMappingExposure=n);
 bind('ev',n=>glass.envMapIntensity=n);
 bind('th',n=>glass.thickness=n);
 bind('rg',n=>glass.roughness=n);
-$('dump').addEventListener('click',()=>{ const s='rot('+baseRX+', '+baseRY+', '+baseRZ+')  dispersion='+glass.dispersion+'  exposure='+renderer.toneMappingExposure+'  env='+glass.envMapIntensity+'  thickness='+glass.thickness+'  roughness='+glass.roughness; $('out').textContent=s; if(navigator.clipboard) navigator.clipboard.writeText(s); });
+bind("fg",n=>{ scene.fog.far=n; scene.fog.near=Math.max(10,n-18); });
+const envKeys=['panels','room','hdri']; let envIdx=0;
+function applyEnv(){ const k=envKeys[envIdx]; scene.environment = k==='hdri'?(hdrTex||panelTex):(k==='room'?roomTex:panelTex); $('envbtn').textContent='env: '+k; }
+$('envbtn').addEventListener('click',()=>{ envIdx=(envIdx+1)%envKeys.length; applyEnv(); });
+$('dump').addEventListener('click',()=>{ const s='rot('+baseRX+','+baseRY+','+baseRZ+') zoom='+ZOOM+' env='+envKeys[envIdx]+' dispersion='+glass.dispersion+' ior='+glass.ior+' exposure='+renderer.toneMappingExposure+' envBright='+glass.envMapIntensity+' thickness='+glass.thickness+' roughness='+glass.roughness+' fog='+scene.fog.far; $('out').textContent=s; if(navigator.clipboard) navigator.clipboard.writeText(s); });
 </script></body></html>
