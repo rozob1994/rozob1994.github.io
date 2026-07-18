@@ -1382,8 +1382,8 @@
     .ecar-media{background:#0b0b0e}
     .ecar-media .es-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
     /* tagline side — dark grey, with the wavy-dots canvas behind the type */
-    .ecar-panel{background:#1b1b20;display:flex;flex-direction:column;justify-content:center;padding:0 clamp(40px,6vw,110px)}
-    .ecar-panel .es-wave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    .ecar-panel{background:#0d0d10;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(40px,7vh,90px) clamp(28px,3.5vw,64px)}
+    .ecar-panel .es-wave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.7}
     .ecar-panel .es-txt{position:relative;z-index:2;display:flex;flex-direction:column;gap:clamp(14px,1.6vh,26px)}
     .ecar:not(.mirror) .ecar-panel .es-txt{align-items:flex-end;text-align:right}
     .ecar.mirror .ecar-panel .es-txt{align-items:flex-start;text-align:left}
@@ -1391,7 +1391,7 @@
     .es-title{font-family:var(--font-display);font-weight:800;font-variation-settings:'wght' 800;text-transform:uppercase;
       font-size:clamp(58px,8vw,150px);line-height:.9;letter-spacing:-.02em;color:#fff;margin:0}
     .es-title .es-w{display:inline-block;white-space:nowrap}   /* keep each word whole; wrap only between words */
-    .es-title .es-l{display:inline-block;will-change:font-variation-settings}
+    .es-title .es-l{display:inline-block;text-align:center;will-change:font-variation-settings}   /* fixed-width box (pinned in JS) so the weight morph never rewraps */
     /* carousel 3 — the void gallery */
     .ecar-void .ecar-pin{display:block}
     .evoid{position:absolute;inset:0;overflow:hidden;background:#0b0b0e}
@@ -2860,6 +2860,14 @@
     });
   }
 
+  // Pin each letter to its weight-800 (widest) box so the morph — which only
+  // ever thins letters — can't change advance widths and rewrap the title.
+  function ecPinWidths(scope) {
+    const ls = scope.querySelectorAll('.es-title .es-l');
+    ls.forEach(function (el) { el.style.width = ''; el.style.fontVariationSettings = "'wght' 800"; });
+    ls.forEach(function (el) { el.style.width = el.getBoundingClientRect().width.toFixed(2) + 'px'; });
+  }
+
   // Per-letter Syne weight morph — letters thicken as the cursor nears them.
   function ecInitWeight(letters, gate) {
     if (!letters.length) return;
@@ -2989,6 +2997,11 @@
     window.addEventListener('resize', onScroll);
     if (window.__lenis && window.__lenis.on) window.__lenis.on('scroll', onScroll);
     apply();
+
+    // Pin letter widths once the variable font is ready, and re-pin on resize.
+    function pin() { ecPinWidths(host); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(pin); else setTimeout(pin, 400);
+    let rz; window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(pin, 200); });
   }
 
   // ── Portfolio carousels: ONE huge pinned canvas. A vertical track holds the
