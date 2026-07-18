@@ -2899,18 +2899,18 @@
     const tiles = [];
     function spawn() {
       const el = document.createElement('div'); el.className = 'evoid-tile';
-      const w = 140 + Math.random() * 130; el.style.width = w + 'px'; el.style.height = (w * 0.68) + 'px'; el.style.opacity = '0';
+      const w = 260 + Math.random() * 200; el.style.width = w + 'px'; el.style.height = (w * 0.68) + 'px'; el.style.opacity = '0';
       const img = document.createElement('img'); img.src = imgs[ii % imgs.length]; ii++; img.loading = 'lazy'; img.decoding = 'async'; el.appendChild(img);
       const ang = Math.random() * Math.PI * 2;
-      const R = Math.max(layer.clientWidth, layer.clientHeight) * 0.58 + 140;
+      const R = Math.max(layer.clientWidth, layer.clientHeight) * 0.6 + 180;
       layer.appendChild(el);
-      tiles.push({ el: el, ang: ang, R: R, life: 0, dur: 2600 + Math.random() * 1500 });
+      tiles.push({ el: el, ang: ang, R: R, life: 0, dur: 5200 + Math.random() * 2800 });
     }
     function loop(now) {
       if (!vis) { raf = 0; return; }
       const dt = last ? Math.min(48, now - last) : 16; last = now;
       spawnT -= dt;
-      if (spawnT <= 0 && tiles.length < 26) { spawn(); spawnT = 330 + Math.random() * 260; }
+      if (spawnT <= 0 && tiles.length < 22) { spawn(); spawnT = 620 + Math.random() * 420; }
       for (let k = tiles.length - 1; k >= 0; k--) {
         const tl = tiles[k]; tl.life += dt; const p = tl.life / tl.dur;
         if (p >= 1) { tl.el.remove(); tiles.splice(k, 1); continue; }
