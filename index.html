@@ -13,7 +13,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230d1fd4'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23f5d94e'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400..800&family=DM+Sans:opsz,wght@9..40,300;9..40,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     /* Lenis smooth scroll */
@@ -1372,6 +1372,43 @@
     .side-bottom .pcar-back,.side-bottom .pcar-edge{display:none}
     .side-bottom .pcar-face,.side-bottom .pcar-face::after{border-radius:0}   /* carousel 3 cards: no rounding */
 
+    /* ═══ Editorial carousels (1 & 2): split screen — image swipe-stack + dark wavy
+       tagline panel. Carousel 3 = the void gallery. ═══ */
+    .ecar{position:relative}
+    .ecar-pin{position:sticky;top:0;height:100vh;overflow:hidden;display:flex}
+    .ecar-half{position:relative;width:50%;height:100%;overflow:hidden}
+    .ecar.mirror .ecar-pin{flex-direction:row-reverse}   /* carousel 2 mirrors the sides */
+    /* image side — a hard stack; each new image swipes up over the previous */
+    .ecar-media{background:#0b0b0e}
+    .ecar-media .es-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
+    /* tagline side — dark grey, with the wavy-dots canvas behind the type */
+    .ecar-panel{background:#1b1b20;display:flex;flex-direction:column;justify-content:center;padding:0 clamp(40px,6vw,110px)}
+    .ecar-panel .es-wave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    .ecar-panel .es-txt{position:relative;z-index:2;display:flex;flex-direction:column;gap:clamp(14px,1.6vh,26px)}
+    .ecar:not(.mirror) .ecar-panel .es-txt{align-items:flex-end;text-align:right}
+    .ecar.mirror .ecar-panel .es-txt{align-items:flex-start;text-align:left}
+    .es-sub{font-family:var(--font-mono);font-size:clamp(11px,0.85vw,14px);letter-spacing:.22em;text-transform:lowercase;color:rgba(255,255,255,0.6)}
+    .es-title{font-family:var(--font-display);font-weight:700;font-variation-settings:'wght' 700;text-transform:uppercase;
+      font-size:clamp(58px,8vw,150px);line-height:.9;letter-spacing:-.02em;color:#fff;margin:0}
+    .es-title .es-w{display:inline-block;white-space:nowrap}   /* keep each word whole; wrap only between words */
+    .es-title .es-l{display:inline-block;will-change:font-variation-settings}
+    /* carousel 3 — the void gallery */
+    .ecar-void .ecar-pin{display:block}
+    .evoid{position:absolute;inset:0;overflow:hidden;background:#0b0b0e}
+    .evoid::before{content:'';position:absolute;inset:0;opacity:.06;pointer-events:none;
+      background-image:radial-gradient(circle,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:40px 40px}
+    .evoid-tile{position:absolute;will-change:transform,opacity;pointer-events:none;translate:-50% -50%;top:50%;left:50%}
+    .evoid-tile img{width:100%;height:100%;object-fit:cover;display:block}
+    .evoid-text{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+    .evoid-text .ev-title{font-family:var(--font-display);font-weight:800;font-size:clamp(34px,4.4vw,74px);line-height:1;letter-spacing:-.02em;color:#fff;margin:0}
+    .evoid-text .ev-title em{font-style:normal;color:var(--yellow)}
+    .evoid-text .ev-sub{font-family:var(--font-mono);font-size:clamp(11px,0.9vw,14px);letter-spacing:.18em;color:rgba(255,255,255,0.55);margin-top:14px}
+    @media(max-width:760px){
+      .ecar-pin,.ecar.mirror .ecar-pin{flex-direction:column}
+      .ecar-half{width:100%;height:50%}
+      .ecar:not(.mirror) .ecar-panel .es-txt,.ecar.mirror .ecar-panel .es-txt{align-items:center;text-align:center}
+    }
+
     @media(max-width:760px){
       .pcar-card{width:min(74vw,420px)}
       .pcar-text{font-size:clamp(24px,7vw,40px)}
@@ -2690,6 +2727,268 @@
     return a;
   }
 
+  // ══ Editorial carousels (1 & 2) + void gallery (3) ═══════════════════════════
+  // Shared cursor position for the per-letter weight morph.
+  const EC_mouse = { x: -9999, y: -9999 };
+  let ecMouseWired = false;
+  function ecWireMouse() {
+    if (ecMouseWired) return; ecMouseWired = true;
+    window.addEventListener('pointermove', function (e) { EC_mouse.x = e.clientX; EC_mouse.y = e.clientY; }, { passive: true });
+  }
+  // Toggle a callback as an element enters / leaves the viewport (rAF gating).
+  function ecOnVisible(el, cb) {
+    if (!('IntersectionObserver' in window)) { cb(true); return; }
+    const io = new IntersectionObserver(function (es) { cb(es[0].isIntersecting); }, { rootMargin: '160px' });
+    io.observe(el); return io;
+  }
+  // Split plain text into per-letter <span class="es-l">, grouped by word so lines
+  // only ever break between words (never mid-word).
+  function ecSplitTitle(el, text) {
+    el.textContent = '';
+    const letters = [];
+    const words = text.split(' ');
+    words.forEach(function (word, wi) {
+      if (wi > 0) el.appendChild(document.createTextNode(' '));
+      const w = document.createElement('span'); w.className = 'es-w';
+      for (const ch of word) {
+        const s = document.createElement('span'); s.className = 'es-l'; s.textContent = ch;
+        w.appendChild(s); letters.push(s);
+      }
+      el.appendChild(w);
+    });
+    return letters;
+  }
+
+  // Raw-WebGL2 port of OriginKit "Chromatic Waves" (perlin → dot-halftone, 2-pass),
+  // gated to the panel's visibility. Draws white wavy dots over the dark panel.
+  function ecInitWave(canvas, opts) {
+    opts = opts || {};
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false, antialias: false });
+    if (!gl) return;
+    const host = canvas.parentElement;
+    function mapLinear(v, a, b, c, d) { if (b === a) return c; return c + ((v - a) / (b - a)) * (d - c); }
+    const uFrequency = mapLinear(opts.frequency == null ? 2 : opts.frequency, 1, 10, 0.3, 6);
+    const uSpeed = (opts.speed == null ? 1 : opts.speed) * 0.05;
+    const uCellSize = mapLinear(opts.cellSize == null ? 10 : opts.cellSize, 1, 100, 6, 60);
+    const uGamma = mapLinear(opts.gamma == null ? 8 : opts.gamma, 1, 20, 0.5, 8);
+    const uPaletteBias = (opts.paletteBias == null ? -4 : opts.paletteBias) * 0.05;
+    const colors = opts.colors || ['#ffffff'];
+    function hex(h) { h = h.replace('#', ''); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255]; }
+    const MAX = 10, palR = [], palA = [];
+    for (let i = 0; i < MAX; i++) { if (i < colors.length) { const c = hex(colors[i]); palR.push(c[0], c[1], c[2]); palA.push(1); } else { palR.push(0, 0, 0); palA.push(0); } }
+    const palCount = Math.min(MAX, Math.max(1, colors.length));
+    const VERT = '#version 300 es\nin vec2 position;in vec2 uv;out vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,0.,1.);}';
+    const PERLIN = '#version 300 es\n' +
+      'precision mediump float;\n' +
+      'uniform float uFrequency;uniform float uTime;uniform float uSpeed;uniform float uValue;uniform vec2 uResolution;\n' +
+      'in vec2 vUv;out vec4 fragColor;\n' +
+      'vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}\n' +
+      'vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}\n' +
+      'vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}\n' +
+      'vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}\n' +
+      'float snoise(vec3 v){\n' +
+      ' const vec2 C=vec2(1.0/6.0,1.0/3.0);const vec4 D=vec4(0.0,0.5,1.0,2.0);\n' +
+      ' vec3 i=floor(v+dot(v,C.yyy));vec3 x0=v-i+dot(i,C.xxx);\n' +
+      ' vec3 g=step(x0.yzx,x0.xyz);vec3 l=1.0-g;vec3 i1=min(g.xyz,l.zxy);vec3 i2=max(g.xyz,l.zxy);\n' +
+      ' vec3 x1=x0-i1+C.xxx;vec3 x2=x0-i2+C.yyy;vec3 x3=x0-D.yyy;i=mod289(i);\n' +
+      ' vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));\n' +
+      ' float n_=0.142857142857;vec3 ns=n_*D.wyz-D.xzx;\n' +
+      ' vec4 j=p-49.0*floor(p*ns.z*ns.z);vec4 x_=floor(j*ns.z);vec4 y_=floor(j-7.0*x_);\n' +
+      ' vec4 x=x_*ns.x+ns.yyyy;vec4 y=y_*ns.x+ns.yyyy;vec4 h=1.0-abs(x)-abs(y);\n' +
+      ' vec4 b0=vec4(x.xy,y.xy);vec4 b1=vec4(x.zw,y.zw);\n' +
+      ' vec4 s0=floor(b0)*2.0+1.0;vec4 s1=floor(b1)*2.0+1.0;vec4 sh=-step(h,vec4(0.0));\n' +
+      ' vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;\n' +
+      ' vec3 p0=vec3(a0.xy,h.x);vec3 p1=vec3(a0.zw,h.y);vec3 p2=vec3(a1.xy,h.z);vec3 p3=vec3(a1.zw,h.w);\n' +
+      ' vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));\n' +
+      ' p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;\n' +
+      ' vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);m=m*m;\n' +
+      ' return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));}\n' +
+      'vec3 hsv2rgb(vec3 c){vec4 K=vec4(1.0,2.0/3.0,1.0/3.0,3.0);vec3 p=abs(fract(c.xxx+K.xyz)*6.0-K.www);return c.z*mix(K.xxx,clamp(p-K.xxx,0.0,1.0),c.y);}\n' +
+      'void main(){vec2 uv=vUv;float aspect=uResolution.x/max(uResolution.y,1.0);uv=(uv-0.5)*vec2(aspect,1.0)+0.5;\n' +
+      ' float hue=abs(snoise(vec3(uv*uFrequency,uTime*uSpeed)));vec3 col=hsv2rgb(vec3(hue,1.0,uValue));fragColor=vec4(col,1.0);}';
+    const DOT = '#version 300 es\n' +
+      'precision highp float;\n' +
+      'uniform vec2 uResolution;uniform sampler2D uTexture;uniform int uPaletteCount;uniform vec3 uPalette[10];uniform float uPaletteAlpha[10];\n' +
+      'uniform float uCellSize;uniform float uGamma;uniform float uPaletteBias;out vec4 fragColor;\n' +
+      'void main(){vec2 pix=gl_FragCoord.xy;float cell=max(uCellSize,1.0);\n' +
+      ' vec2 cellIdx=floor(pix/cell);vec2 cellCenter=(cellIdx+0.5)*cell;\n' +
+      ' vec3 col=texture(uTexture,cellCenter/uResolution.xy).rgb;float gray=0.3*col.r+0.59*col.g+0.11*col.b;\n' +
+      ' gray=pow(clamp(gray,0.0001,1.0),uGamma);\n' +
+      ' vec2 cellUV=fract(pix/cell)-0.5;float dist=length(cellUV);\n' +
+      ' float radius=clamp(gray+uPaletteBias,0.0,1.0)*0.5;float aa=fwidth(dist)+1e-4;float mark=1.0-smoothstep(radius-aa,radius+aa,dist);\n' +
+      ' float g2=clamp(gray+uPaletteBias,0.0,1.0);int cnt=max(uPaletteCount,1);vec3 dotCol;float dotOpacity;\n' +
+      ' if(cnt<=1){dotCol=uPalette[0];dotOpacity=uPaletteAlpha[0];}else{float scaled=g2*float(cnt-1);int seg=int(floor(scaled));seg=clamp(seg,0,cnt-2);float f=clamp(scaled-float(seg),0.0,1.0);dotCol=mix(uPalette[seg],uPalette[seg+1],f);dotOpacity=mix(uPaletteAlpha[seg],uPaletteAlpha[seg+1],f);}\n' +
+      ' fragColor=vec4(dotCol,mark*dotOpacity);}';
+    function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.log('ec shader', gl.getShaderInfoLog(s)); return s; }
+    function prog(v, f) { const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, v)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, f)); gl.bindAttribLocation(p, 0, 'position'); gl.bindAttribLocation(p, 1, 'uv'); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.log('ec link', gl.getProgramInfoLog(p)); return p; }
+    const perlin = prog(VERT, PERLIN), dotP = prog(VERT, DOT);
+    const quad = gl.createVertexArray(); gl.bindVertexArray(quad);
+    const pos = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, pos); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const uvb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, uvb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(), fbo = gl.createFramebuffer();
+    let W = 1, H = 1; const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function size() {
+      const r = host.getBoundingClientRect();
+      W = Math.max(1, Math.round(r.width * dpr)); H = Math.max(1, Math.round(r.height * dpr));
+      canvas.width = W; canvas.height = H; canvas.style.width = r.width + 'px'; canvas.style.height = r.height + 'px';
+      gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    size(); window.addEventListener('resize', size);
+    const pu = { f: gl.getUniformLocation(perlin, 'uFrequency'), t: gl.getUniformLocation(perlin, 'uTime'), s: gl.getUniformLocation(perlin, 'uSpeed'), v: gl.getUniformLocation(perlin, 'uValue'), r: gl.getUniformLocation(perlin, 'uResolution') };
+    const du = { r: gl.getUniformLocation(dotP, 'uResolution'), tex: gl.getUniformLocation(dotP, 'uTexture'), cnt: gl.getUniformLocation(dotP, 'uPaletteCount'), pal: gl.getUniformLocation(dotP, 'uPalette'), pala: gl.getUniformLocation(dotP, 'uPaletteAlpha'), cell: gl.getUniformLocation(dotP, 'uCellSize'), gam: gl.getUniformLocation(dotP, 'uGamma'), bias: gl.getUniformLocation(dotP, 'uPaletteBias') };
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const t0 = performance.now(); let raf = 0;
+    function frame(now) {
+      const tSec = (now - t0) * 0.001;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.viewport(0, 0, W, H); gl.disable(gl.BLEND);
+      gl.useProgram(perlin); gl.bindVertexArray(quad);
+      gl.uniform1f(pu.f, uFrequency); gl.uniform1f(pu.t, tSec); gl.uniform1f(pu.s, uSpeed); gl.uniform1f(pu.v, 1); gl.uniform2f(pu.r, W, H);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H); gl.enable(gl.BLEND); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(dotP); gl.bindVertexArray(quad);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(du.tex, 0);
+      gl.uniform2f(du.r, W, H); gl.uniform1i(du.cnt, palCount); gl.uniform3fv(du.pal, palR); gl.uniform1fv(du.pala, palA);
+      gl.uniform1f(du.cell, uCellSize * dpr); gl.uniform1f(du.gam, uGamma); gl.uniform1f(du.bias, uPaletteBias);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      raf = requestAnimationFrame(frame);
+    }
+    ecOnVisible(host, function (v) {
+      if (v) { if (!raf) { size(); raf = requestAnimationFrame(frame); } }
+      else if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    });
+  }
+
+  // Per-letter Syne weight morph — letters thicken as the cursor nears them.
+  function ecInitWeight(letters, gate) {
+    if (!letters.length) return;
+    ecWireMouse();
+    const WFAR = 600, WNEAR = 800, RAD = 190, EASE = 0.14;
+    const state = letters.map(function () { return 700; });
+    let vis = false, raf = 0;
+    function loop() {
+      if (!vis) { raf = 0; return; }
+      const mx = EC_mouse.x, my = EC_mouse.y;
+      for (let i = 0; i < letters.length; i++) {
+        const r = letters[i].getBoundingClientRect();
+        const d = Math.hypot(mx - (r.left + r.width / 2), my - (r.top + r.height / 2));
+        const t = Math.max(0, 1 - d / RAD);
+        const target = WFAR + (WNEAR - WFAR) * t;
+        state[i] += (target - state[i]) * EASE;
+        letters[i].style.fontVariationSettings = "'wght' " + state[i].toFixed(0);
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    ecOnVisible(gate, function (v) { vis = v; if (v && !raf) raf = requestAnimationFrame(loop); });
+  }
+
+  // Void gallery — tiles drift in from outside, shrinking and fading into the centre.
+  function ecInitVoid(layer, imgs) {
+    let vis = false, raf = 0, last = 0, spawnT = 0, ii = 0;
+    const tiles = [];
+    function spawn() {
+      const el = document.createElement('div'); el.className = 'evoid-tile';
+      const w = 140 + Math.random() * 130; el.style.width = w + 'px'; el.style.height = (w * 0.68) + 'px'; el.style.opacity = '0';
+      const img = document.createElement('img'); img.src = imgs[ii % imgs.length]; ii++; img.loading = 'lazy'; img.decoding = 'async'; el.appendChild(img);
+      const ang = Math.random() * Math.PI * 2;
+      const R = Math.max(layer.clientWidth, layer.clientHeight) * 0.58 + 140;
+      layer.appendChild(el);
+      tiles.push({ el: el, ang: ang, R: R, life: 0, dur: 2600 + Math.random() * 1500 });
+    }
+    function loop(now) {
+      if (!vis) { raf = 0; return; }
+      const dt = last ? Math.min(48, now - last) : 16; last = now;
+      spawnT -= dt;
+      if (spawnT <= 0 && tiles.length < 26) { spawn(); spawnT = 330 + Math.random() * 260; }
+      for (let k = tiles.length - 1; k >= 0; k--) {
+        const tl = tiles[k]; tl.life += dt; const p = tl.life / tl.dur;
+        if (p >= 1) { tl.el.remove(); tiles.splice(k, 1); continue; }
+        const e = p * p * (3 - 2 * p);
+        const rad = tl.R * (1 - e);
+        const x = Math.cos(tl.ang) * rad, y = Math.sin(tl.ang) * rad;
+        const scale = 1 - 0.78 * e;
+        let op; if (p < 0.22) op = p / 0.22; else if (p > 0.62) op = Math.max(0, (1 - p) / 0.38); else op = 1;
+        tl.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + scale.toFixed(3) + ')';
+        tl.el.style.opacity = op.toFixed(3);
+      }
+      raf = requestAnimationFrame(loop);
+    }
+    ecOnVisible(layer, function (v) { vis = v; if (v && !raf) { last = 0; raf = requestAnimationFrame(loop); } });
+  }
+
+  // Build carousels 1 & 2 (editorial split) and 3 (void gallery).
+  const EC_STEP_VH = 40;   // viewport-heights of scroll per image swipe
+  function buildEditorialCarousels(host, configs) {
+    if (!host) return;
+    host.innerHTML = '';
+    const editorials = [];  // { el, imgEls, N } for the scroll-scrubbed swipe
+    configs.forEach(function (cfg, ci) {
+      const section = document.createElement('section');
+      const pin = document.createElement('div'); pin.className = 'ecar-pin';
+      if (ci === 2) {
+        // ── Void gallery ──
+        section.className = 'ecar ecar-void'; section.style.height = '180vh';
+        const layer = document.createElement('div'); layer.className = 'evoid';
+        const txt = document.createElement('div'); txt.className = 'evoid-text';
+        txt.innerHTML = '<h2 class="ev-title">' + cfg.text + '</h2><div class="ev-sub">' + cfg.sub + '</div>';
+        layer.appendChild(txt); pin.appendChild(layer); section.appendChild(pin); host.appendChild(section);
+        ecInitVoid(layer, cfg.imgs);
+        return;
+      }
+      // ── Editorial split (image swipe-stack + wavy tagline panel) ──
+      const N = cfg.imgs.length;
+      section.className = 'ecar' + (ci === 1 ? ' mirror' : '');
+      section.style.height = (100 + (N - 1) * EC_STEP_VH) + 'vh';
+      // panel first (dark wavy taglines), media second — flex order + row-reverse
+      // on the mirror put the image on the correct side.
+      const panel = document.createElement('div'); panel.className = 'ecar-half ecar-panel';
+      const wave = document.createElement('canvas'); wave.className = 'es-wave'; wave.setAttribute('aria-hidden', 'true');
+      const txt = document.createElement('div'); txt.className = 'es-txt';
+      const sub = document.createElement('div'); sub.className = 'es-sub'; sub.textContent = cfg.sub;
+      const title = document.createElement('h2'); title.className = 'es-title';
+      const letters = ecSplitTitle(title, cfg.text);
+      txt.appendChild(sub); txt.appendChild(title);
+      panel.appendChild(wave); panel.appendChild(txt);
+      const media = document.createElement('div'); media.className = 'ecar-half ecar-media';
+      const imgEls = [];
+      cfg.imgs.forEach(function (src, i) {
+        const im = document.createElement('img'); im.className = 'es-img'; im.src = src; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
+        im.style.zIndex = String(i);
+        if (i > 0) im.style.transform = 'translateY(100%)';
+        media.appendChild(im); imgEls.push(im);
+      });
+      pin.appendChild(panel); pin.appendChild(media);
+      section.appendChild(pin); host.appendChild(section);
+      ecInitWave(wave, { frequency: 2, speed: 1, cellSize: 10, gamma: 8, paletteBias: -4 });
+      ecInitWeight(letters, section);
+      editorials.push({ el: section, imgEls: imgEls, N: N });
+    });
+
+    // Scroll-scrub the swipe-stacks. Image i>0 rises from below over its segment;
+    // when the last image is fully in, the section ends → scroll moves onward.
+    let pending = false;
+    function apply() {
+      pending = false;
+      const vh = window.innerHeight, stepPx = EC_STEP_VH / 100 * vh;
+      for (let s = 0; s < editorials.length; s++) {
+        const sec = editorials[s], rect = sec.el.getBoundingClientRect();
+        if (rect.bottom < -200 || rect.top > vh + 200) continue;
+        const p = Math.min(sec.N - 1, Math.max(0, -rect.top / stepPx));
+        for (let i = 1; i < sec.imgEls.length; i++) {
+          const frac = Math.min(1, Math.max(0, p - (i - 1)));
+          const e = frac * frac * (3 - 2 * frac);
+          sec.imgEls[i].style.transform = 'translateY(' + ((1 - e) * 100).toFixed(2) + '%)';
+        }
+      }
+    }
+    function onScroll() { if (!pending) { pending = true; requestAnimationFrame(apply); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    if (window.__lenis && window.__lenis.on) window.__lenis.on('scroll', onScroll);
+    apply();
+  }
+
   // ── Portfolio carousels: ONE huge pinned canvas. A vertical track holds the
   //    three hero-stacks stacked one screen apart. Scrolling slides the track so
   //    each carousel cycles its hero, then rolls up and out while the next rises
@@ -3167,10 +3466,10 @@
       );
     }));
 
-    buildCarousels(document.getElementById('pcarAll'), [
-      { side: 'right',  text: 'be&nbsp;<em>bold</em>',                   sub: "Timid doesn't get remembered.", imgs: galleryImgs(1, 16)  },
-      { side: 'left',   text: 'tell your&nbsp;<em>story</em>',          sub: 'Motion that means something.',   imgs: galleryImgs(17, 16) },
-      { side: 'bottom', text: 'make your brand&nbsp;<em>Resonate</em>', sub: 'Felt long after the scroll.',    imgs: galleryImgs(33, 16) }
+    buildEditorialCarousels(document.getElementById('pcarAll'), [
+      { text: 'be bold',           sub: "timid doesn't get remembered", imgs: galleryImgs(1, 8) },
+      { text: 'tell your story',   sub: 'motion that means something',   imgs: galleryImgs(9, 8) },
+      { text: 'make your brand&nbsp;<em>Resonate</em>', sub: 'felt long after the scroll', imgs: galleryImgs(1, 24) }
     ]);
 
     const rev = makeRevealObserver();
