@@ -265,7 +265,7 @@
     .w2card-title{font-family:var(--font-display);font-weight:700;font-size:clamp(17px,1.4vw,21px);color:#15161d;margin:15px 0 6px}
     .w2card-desc{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:rgba(21,22,29,0.55);margin:0 0 13px;max-width:36ch}
     .w2card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
-    .w2tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--yellow);background:#0d1fd4;padding:4px 9px;border-radius:3px}
+    .w2tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:#0d1fd4;padding:4px 9px;border-radius:3px}
     @media(max-width:1000px){
       .works2-body{grid-template-columns:1fr;gap:26px}
       .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px}
@@ -4738,44 +4738,43 @@
     kick();
   }, { passive: true });
 
-  var visible = false, raf = 0;
-  function moving() {
-    if (mouse.active) return true;
-    for (var i = 0; i < dots.length; i++) {
-      var d = dots[i];
-      if (Math.abs(d.vx) > 0.01 || Math.abs(d.vy) > 0.01 ||
-          Math.abs(d.x - d.hx) > 0.1 || Math.abs(d.y - d.hy) > 0.1) return true;
-    }
-    return false;
-  }
+  var visible = false, raf = 0, centerAmp = 0;
   function frame() {
     raf = 0;
-    var m = mouse;
+    // Highlight source: the real cursor when it's over the section; otherwise it auto-
+    // homes to DEAD CENTRE (behind the ball), fading in with the ball's shrink — so the
+    // grid is already lit when you arrive, and only follows the cursor once you move it.
+    var target = (+window.__heroGridCenter || 0);
+    centerAmp += (target - centerAmp) * 0.08;
+    var mx, my, hact, amp;
+    if (mouse.active) { mx = mouse.x; my = mouse.y; hact = true; amp = 1; }
+    else if (centerAmp > 0.01) { mx = W / 2; my = H / 2; hact = true; amp = centerAmp; }
+    else { mx = 0; my = 0; hact = false; amp = 0; }
     ctx.clearRect(0, 0, W, H);
     for (var i = 0; i < dots.length; i++) {
       var d = dots[i];
       var ax = (d.hx - d.x) * 0.08, ay = (d.hy - d.y) * 0.08;
-      if (m.active) {
-        var dx = m.x - d.x, dy = m.y - d.y, dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < R && dist > 0.001) { var f = (1 - dist / R) * PULL; ax += (dx / dist) * f; ay += (dy / dist) * f; }
+      if (hact) {
+        var dx = mx - d.x, dy = my - d.y, dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < R && dist > 0.001) { var f = (1 - dist / R) * PULL * amp; ax += (dx / dist) * f; ay += (dy / dist) * f; }
       }
       d.vx = (d.vx + ax) * 0.82; d.vy = (d.vy + ay) * 0.82; d.x += d.vx; d.y += d.vy;
     }
     for (var c = 0; c < cols.length; c++) for (var ri = 0; ri < cols[c].length; ri++) {
       var d2 = cols[c][ri], right = cols[c + 1] && cols[c + 1][ri], down = cols[c][ri + 1];
-      var prox = m.active ? Math.max(0, 1 - Math.sqrt((m.x - d2.x) * (m.x - d2.x) + (m.y - d2.y) * (m.y - d2.y)) / R) : 0;
+      var prox = hact ? Math.max(0, 1 - Math.sqrt((mx - d2.x) * (mx - d2.x) + (my - d2.y) * (my - d2.y)) / R) * amp : 0;
       ctx.strokeStyle = LINE; ctx.globalAlpha = 0.05 + prox * 0.6; ctx.lineWidth = 0.5 + prox * 1.4;
       if (right) { ctx.beginPath(); ctx.moveTo(d2.x, d2.y); ctx.lineTo(right.x, right.y); ctx.stroke(); }
       if (down)  { ctx.beginPath(); ctx.moveTo(d2.x, d2.y); ctx.lineTo(down.x, down.y); ctx.stroke(); }
     }
     for (var j = 0; j < dots.length; j++) {
       var d3 = dots[j];
-      var p2 = m.active ? Math.max(0, 1 - Math.sqrt((m.x - d3.x) * (m.x - d3.x) + (m.y - d3.y) * (m.y - d3.y)) / R) : 0;
+      var p2 = hact ? Math.max(0, 1 - Math.sqrt((mx - d3.x) * (mx - d3.x) + (my - d3.y) * (my - d3.y)) / R) * amp : 0;
       ctx.globalAlpha = 0.16 + p2 * 0.8; ctx.fillStyle = DOT;
       ctx.beginPath(); ctx.arc(d3.x, d3.y, 0.8 + p2 * 2.0, 0, 6.2832); ctx.fill();
     }
     ctx.globalAlpha = 1;
-    if (visible && moving()) raf = requestAnimationFrame(frame);
+    if (visible) raf = requestAnimationFrame(frame);   // runs while the section is on screen (auto-centre needs no mouse)
   }
   function kick() { if (visible && !raf) raf = requestAnimationFrame(frame); }
   new IntersectionObserver(function (es) {
@@ -5063,6 +5062,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   // ~5-frame offset between the ball and the taglines (ball leads the shrink, text
   // leads the grow), so they never move in perfect lockstep.
   let prevShrinkP = 0; const shrinkHist = []; const OFFSET_FRAMES = 5;
+  let textSmooth = 0;   // the taglines follow their target with easing → a smoother, slower reveal
   const introEl = document.querySelector('#about .about-intro');
   const bodyEl  = document.querySelector('#about .about-body');
   // Split each tagline into per-letter spans so they can swipe in from off-screen.
@@ -5166,6 +5166,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       for (const rg of rings) { rg.active = false; rg.rad = 0; }
       ringTimer = RING_INTERVAL - 0.4;
       shrinkP = 0;
+      window.__heroGridCenter = 0;   // drop the grid's auto-centre highlight when the section leaves
       if (pctx && pW) pctx.clearRect(0, 0, pW, pH);
       // Taglines hide themselves via per-letter opacity/translateX (rvBase→0); no
       // clip-path reset here — re-applying the inset would clip the letters away
@@ -5243,6 +5244,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     if (shrinkP >= prevShrinkP) { ballP = shrinkP; textP = laggedP; }   // shrinking → ball first
     else { textP = shrinkP; ballP = laggedP; }                          // growing  → text first
     prevShrinkP = shrinkP;
+    window.__heroGridCenter = shrinkP;   // the kinetic grid auto-highlights dead-centre (behind the ball) as it shrinks
     const shrinkEased = shrinkEase(ballP);
     hero.scale.setScalar(HERO_START + (1 - HERO_START) * shrinkEased);
     settled = shrinkP >= 0.999;
@@ -5264,7 +5266,12 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     // Taglines swipe in from OFF-SCREEN — the left line from the left edge, the right
     // line from the right edge — letter by letter into position, as the ball shrinks
     // into place (rvBase = the ball's eased scale). Reverses as it grows.
-    const rvBase = shrinkEase(textP);   // taglines use the offset (text) copy
+    // Taglines follow their (offset) target with easing → a gentler, slower reveal that
+    // never snaps in, even on a fast scroll.
+    const textTarget = shrinkEase(textP);
+    textSmooth += (textTarget - textSmooth) * 0.07;
+    if (Math.abs(textTarget - textSmooth) < 0.001) textSmooth = textTarget;
+    const rvBase = textSmooth;
     const eo = x => 1 - Math.pow(1 - x, 3);
     const OFF = (window.innerWidth || 1200) * 1.15;   // off-screen start distance
     // Stagger spread + reveal window, normalised per line: SPAN + WINL < 1 guarantees
