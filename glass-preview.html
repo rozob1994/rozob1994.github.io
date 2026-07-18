@@ -87,7 +87,9 @@ const fbo=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType});
 const discardMat=new DiscardMaterial();
 function sizeFbo(){ fbo.setSize(Math.round(innerWidth*DPR),Math.round(innerHeight*DPR)); }
 sizeFbo(); addEventListener('resize',sizeFbo);
-const ballMat=new THREE.MeshStandardMaterial({color:0xf5d94e, metalness:0, roughness:1, envMapIntensity:0.7});
+// matte yellow balls — rendered flat (toneMapped:false = "zero exposure", their own look)
+const ballMat=new THREE.MeshStandardMaterial({color:0xf5d94e, metalness:0, roughness:1, envMapIntensity:0.35});
+ballMat.toneMapped=false;
 
 const group=new THREE.Group();
 let baseRX=-0.78, baseRY=0.02, baseRZ=0.55;
@@ -123,7 +125,7 @@ new FontLoader().load('./vendor/helvetiker_bold.typeface.json',font=>{
   seeds.forEach(s=>{ const r=s[2]; const m=new THREE.Mesh(new THREE.SphereGeometry(r,36,36), ballMat.clone());
     m.material.transparent=true;
     m.position.set(s[0], s[1], r + Math.random()*4);
-    m.userData={ r, vel:new THREE.Vector3((Math.random()-.5)*0.012,(Math.random()-.5)*0.012,(Math.random()-.5)*0.012),
+    m.userData={ r, vel:new THREE.Vector3((Math.random()-.5)*0.05,(Math.random()-.5)*0.05,(Math.random()-.5)*0.05),
       spin:new THREE.Vector3((Math.random()-.5)*0.006,(Math.random()-.5)*0.006,0) };
     group.add(m); balls.push(m); });
 });
@@ -140,16 +142,15 @@ function loop(now){
     extrude += ((over?1.9:1.0)-extrude)*0.12; text.scale.z=extrude;
   }
   balls.forEach(m=>{
+    // outer space: no gravity, constant slow drift, elastic bounce off walls/ground
     const u=m.userData, p=m.position, r=u.r;
-    u.vel.z -= 0.00035;                                            // barely any gravity → they float
-    u.vel.x += (Math.random()-.5)*0.0006; u.vel.y += (Math.random()-.5)*0.0006; u.vel.z += (Math.random()-.5)*0.0005;  // gentle organic drift
     p.add(u.vel);
-    if(p.z < r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.5; }           // slow soft bounce off the ground
-    if(p.z > 11) u.vel.z -= 0.0008;                                // soft ceiling so they don't drift away
-    const d=Math.hypot(p.x,p.y); if(d<7.5){ u.vel.x+=(p.x/(d||1))*0.0016; u.vel.y+=(p.y/(d||1))*0.0016; }  // keep off the sign
-    if(p.x<-16||p.x>16) u.vel.x*=-1;
-    if(p.y<-10||p.y>10) u.vel.y*=-1;
-    u.vel.multiplyScalar(0.985);                                   // damping keeps everything slow & airy
+    if(p.z < r){ p.z=r; u.vel.z=Math.abs(u.vel.z); }               // hit the ground → bounce right off
+    if(p.z > 12){ p.z=12; u.vel.z=-Math.abs(u.vel.z); }
+    if(p.x<-16){ p.x=-16; u.vel.x=Math.abs(u.vel.x); } if(p.x>16){ p.x=16; u.vel.x=-Math.abs(u.vel.x); }
+    if(p.y<-10){ p.y=-10; u.vel.y=Math.abs(u.vel.y); } if(p.y>10){ p.y=10; u.vel.y=-Math.abs(u.vel.y); }
+    const d=Math.hypot(p.x,p.y); if(d<7){ u.vel.x+=(p.x/(d||1))*0.0016; u.vel.y+=(p.y/(d||1))*0.0016; }  // drift off the sign
+    const sp=u.vel.length(); if(sp>0.055) u.vel.multiplyScalar(0.055/sp);   // keep it slow & even
     m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
   });
   group.rotation.set(baseRX,baseRY,baseRZ);

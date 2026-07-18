@@ -2155,6 +2155,21 @@
       window.addEventListener('scroll', glassGate, {passive:true});
       window.addEventListener('resize', glassGate, {passive:true});
       glassGate();
+      // Hide the top nav bar over the glass hero + reel; reveal it at the projects.
+      var navEl = document.getElementById('navbar');
+      if (navEl) {
+        navEl.style.transition = 'opacity .4s var(--ease), transform .45s var(--ease)';
+        var navGate = function(){
+          var w = document.getElementById('work');
+          var show = w && w.getBoundingClientRect().top < window.innerHeight * 0.55;
+          navEl.style.opacity = show ? '1' : '0';
+          navEl.style.transform = show ? 'translateY(0)' : 'translateY(-110%)';
+          navEl.style.pointerEvents = show ? 'all' : 'none';
+        };
+        window.addEventListener('scroll', navGate, {passive:true});
+        window.addEventListener('resize', navGate, {passive:true});
+        navGate();
+      }
     }
     canvasBg.style.opacity         = '0';         // blue cover fades — hero animation now visible
     heroEl.style.height            = 'max(55vh, calc((100vh - 420px) * 0.85))';  // reel; floored at 55vh so it stays tall enough on short (13") laptops
@@ -5294,7 +5309,7 @@
   if (mov) mo.observe(mov, { attributes: true, subtree: true, attributeFilter: ['class'] });
 })();
 </script>
-<script type="importmap">{"imports": {"three": "./vendor/three.module.min.js"}}</script>
+<script type="importmap">{"imports": {"three": "./vendor/three.module.min.js", "three-hero": "./vendor/three.hero.module.min.js"}}</script>
 <script type="module">
 // ── ALIVE: slow-floating 3D objects in About — drift, collide, dodge the mouse ──
 // Placeholder shapes for now; swap in the owner's .glb models later.
@@ -5758,117 +5773,142 @@ import {RGBELoader} from './vendor/RGBELoader.js';
 })();
 </script>
 <script type="module">
-// ══ HERO GLASS — live 3D "eccho" in iridescent glass, with balls that fly in
-//    from different angles and settle around the word. Replaces the pre-rendered
-//    "Motion" frame sequence as the opening (falls back to it if unsupported).
-import * as THREE from 'three';
-import {FontLoader} from './vendor/FontLoader.js';
-import {TextGeometry} from './vendor/TextGeometry.js';
+// ══ HERO GLASS — live 3D "eccho" in real MeshTransmissionMaterial glass, with
+//    matte-yellow balls floating in zero-g. Replaces the "Motion" frame sequence
+//    (falls back to it if unsupported). Uses the isolated newer Three build.
+import * as THREE from 'three-hero';
+import {FontLoader} from './vendor/FontLoader.hero.js';
+import {TextGeometry} from './vendor/TextGeometry.hero.js';
+import {RoomEnvironment} from './vendor/RoomEnvironment.hero.js';
+import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransmissionMaterial.hero.js';
 (function heroGlass(){
   const canvas = document.getElementById('heroGlass');
   if (!canvas) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;   // → frames fallback
   if (window.matchMedia('(pointer:coarse)').matches) return;
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true, powerPreference:'high-performance'}); }
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
   catch(e){ return; }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  const DPR = Math.min(window.devicePixelRatio||1, 1.75);
+  renderer.setPixelRatio(DPR);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.9;
-
+  renderer.toneMappingExposure = 1.4;
+  const BLUE = 0x0d1fd4;
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.set(0, 0, 14);
-  function resize(){ const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
-  addEventListener('resize', resize, {passive:true}); resize();
+  scene.background = new THREE.Color(BLUE);
+  scene.fog = new THREE.Fog(BLUE, 32, 50);
 
-  // Bright studio environment: emissive softbox panels reflect in the glass as
-  // chrome streaks (a plain neutral env reads flat grey).
-  function studioEnv(){
-    const s = new THREE.Scene();
-    s.add(new THREE.Mesh(new THREE.BoxGeometry(40,40,40),
-      new THREE.MeshStandardMaterial({side:THREE.BackSide, emissive:0x1c2438, emissiveIntensity:1, color:0x000000, roughness:1})));
-    function panel(w,h,x,y,z,rx,ry,col,inten){
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h),
-        new THREE.MeshStandardMaterial({emissive:col, emissiveIntensity:inten, color:0x000000}));
-      m.position.set(x,y,z); m.rotation.set(rx,ry,0); s.add(m);
-    }
-    panel(30,12, 0, 16, 2, Math.PI/2, 0, 0xffffff, 14);
-    panel(34,24, 0,  2,20, 0, Math.PI,  0xf3f7ff, 7);
-    panel(12,20,-17, 2, 4, 0, Math.PI/2, 0xd8e6ff, 9);
-    panel(12,20, 17, 2, 4, 0,-Math.PI/2, 0xfff0e0, 7);
-    panel(16, 9, 0,  1,-15, 0, 0,        0xbcd0ff, 5);
-    panel( 8, 6,-8, -10, 8, -Math.PI/3, 0, 0xffffff, 6);
+  let ZOOM = 10.6;
+  const camera = new THREE.OrthographicCamera(-1,1,1,-1,-100,200);
+  camera.position.set(0,0,20);
+
+  // rich studio env → real glass reflections
+  function studioScene(){
+    const s=new THREE.Scene();
+    const cv=document.createElement('canvas'); cv.width=8; cv.height=256;
+    const g=cv.getContext('2d'); const grd=g.createLinearGradient(0,0,0,256);
+    grd.addColorStop(0,'#ffffff'); grd.addColorStop(0.35,'#cfd9f2'); grd.addColorStop(0.62,'#5f73b0'); grd.addColorStop(1,'#0a1024');
+    g.fillStyle=grd; g.fillRect(0,0,8,256);
+    const tex=new THREE.CanvasTexture(cv); tex.colorSpace=THREE.SRGBColorSpace;
+    s.add(new THREE.Mesh(new THREE.SphereGeometry(60,32,24), new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide})));
+    const panel=(w,h,x,y,z,rx,ry,col,i)=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({emissive:col,emissiveIntensity:i,color:0})); m.position.set(x,y,z); m.rotation.set(rx,ry,0); s.add(m); };
+    panel(26,8,0,16,3,Math.PI/2,0,0xffffff,16); panel(10,14,-15,4,3,0,Math.PI/2,0xdfeaff,8);
+    panel(10,14,15,4,3,0,-Math.PI/2,0xffe9d0,5); panel(22,14,0,2,20,0,Math.PI,0xf2f6ff,7);
     return s;
   }
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(studioEnv(), 0.03).texture;
+  scene.environment = pmrem.fromScene(studioScene(),0.02).texture;
 
-  const glass = new THREE.MeshPhysicalMaterial({
-    color:0xffffff, metalness:0, roughness:0.0,
-    transmission:1, thickness:0.5, ior:1.47,
-    iridescence:1, iridescenceIOR:1.4, iridescenceThicknessRange:[140,500],
-    clearcoat:1, clearcoatRoughness:0.0, envMapIntensity:2.6,
-    specularIntensity:1, reflectivity:0.85,
-    transparent:true, attenuationColor:new THREE.Color(0xdbe6ff), attenuationDistance:24
-  });
+  // MeshTransmissionMaterial glass
+  const glass = new MeshTransmissionMaterialImpl(8, false);
+  glass.color=new THREE.Color(0xffffff); glass.roughness=0.06; glass.ior=1.5; glass.thickness=3; glass.envMapIntensity=3;
+  glass.chromaticAberration=0.4; glass.anisotropicBlur=0.12; glass.distortion=0.15; glass.distortionScale=0.4; glass.temporalDistortion=0.1;
+  glass.attenuationColor=new THREE.Color(0xffffff); glass.attenuationDistance=1e4;
+  const fbo = new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType});
+  const discardMat = new DiscardMaterial();
+  function resize(){ const w=innerWidth,h=innerHeight,a=w/h;
+    camera.left=-ZOOM*a/2; camera.right=ZOOM*a/2; camera.top=ZOOM/2; camera.bottom=-ZOOM/2;
+    camera.updateProjectionMatrix(); renderer.setSize(w,h,false); fbo.setSize(Math.round(w*DPR),Math.round(h*DPR)); }
+  resize(); addEventListener('resize', resize, {passive:true});
 
-  const group = new THREE.Group();
-  group.rotation.set(-0.40, 0.28, 0.05);
-  scene.add(group);
-  const keyL = new THREE.DirectionalLight(0xffffff, 1.4); keyL.position.set(4,7,7); scene.add(keyL);
-  const rimL = new THREE.DirectionalLight(0x9fbcff, 1.0); rimL.position.set(-7,-2,3); scene.add(rimL);
-  scene.add(new THREE.AmbientLight(0x334055, 0.3));
+  // flat matte-yellow balls (toneMapped:false = their own "zero exposure" look)
+  const ballMat = new THREE.MeshStandardMaterial({color:0xf5d94e, metalness:0, roughness:1, envMapIntensity:0.35}); ballMat.toneMapped=false;
 
-  const balls = [];
-  const DUR = 1.7, HOLD = 0.7;
-  let raf = 0, running = false, flyStart = 0, settled = false, settleCb = null;
-  let mx = 0, my = 0;
-  addEventListener('pointermove', e => { mx = e.clientX/innerWidth - 0.5; my = e.clientY/innerHeight - 0.5; }, {passive:true});
+  const group=new THREE.Group();
+  const baseRX=-0.78, baseRY=0.02, baseRZ=0.55;
+  group.rotation.set(baseRX,baseRY,baseRZ); scene.add(group);
+  const keyL=new THREE.DirectionalLight(0xffffff,1.1); keyL.position.set(4,7,6); scene.add(keyL);
+  const rimL=new THREE.DirectionalLight(0x9fbcff,0.9); rimL.position.set(-6,-2,4); scene.add(rimL);
+  scene.add(new THREE.AmbientLight(0x2a3a5a,0.4));
 
-  const api = { ok:false,
-    start(cb){ if(running) return; settleCb = cb; running = true; flyStart = performance.now(); raf = requestAnimationFrame(loop); },
-    stop(){ running = false; if(raf) cancelAnimationFrame(raf); raf = 0; },       // pause (scene kept)
-    resume(){ if(running) return; running = true; raf = requestAnimationFrame(loop); },
+  // ground grid + soft contact shadow
+  const grid=new THREE.GridHelper(60,60,0xcdd9ff,0x7f97ec);
+  grid.rotation.x=Math.PI/2; grid.material.transparent=true; grid.material.opacity=0.42; grid.material.depthWrite=false; group.add(grid);
+  (function(){ const cv=document.createElement('canvas'); cv.width=cv.height=256; const g=cv.getContext('2d');
+    const rg=g.createRadialGradient(128,128,10,128,128,128); rg.addColorStop(0,'rgba(2,6,26,0.6)'); rg.addColorStop(1,'rgba(2,6,26,0)');
+    g.fillStyle=rg; g.fillRect(0,0,256,256); const t=new THREE.CanvasTexture(cv);
+    const sh=new THREE.Mesh(new THREE.PlaneGeometry(20,8), new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));
+    sh.material.toneMapped=false; sh.position.set(0,-0.3,0.02); group.add(sh); })();
+
+  let text=null; const balls=[]; const DEPTH=0.77;
+  const DUR=1.7, HOLD=0.8; let raf=0, running=false, flyStart=0, settled=false, settleCb=null, extrude=1;
+  const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999);
+  addEventListener('pointermove',e=>{ ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1; },{passive:true});
+
+  const api={ ok:false,
+    start(cb){ if(running) return; settleCb=cb; running=true; flyStart=performance.now(); raf=requestAnimationFrame(loop); },
+    stop(){ running=false; if(raf) cancelAnimationFrame(raf); raf=0; },
+    resume(){ if(running) return; running=true; raf=requestAnimationFrame(loop); },
     get running(){ return running; } };
   window.__heroGlass = api;
 
-  new FontLoader().load('./vendor/helvetiker_bold.typeface.json', font => {
-    const geo = new TextGeometry('eccho', {font, size:2.6, height:1.15, curveSegments:16,
-      bevelEnabled:true, bevelThickness:0.36, bevelSize:0.32, bevelSegments:10});
-    geo.center();
-    group.add(new THREE.Mesh(geo, glass));
-    // Balls ring the word (kept clear of the letter faces so "eccho" reads).
-    const targets = [[-7.4,2.6,-0.4,0.66],[7.2,2.3,-0.5,0.8],[-8.4,-0.4,-0.6,0.46],[8.5,0.1,0.5,0.5],
-      [-6.4,-2.7,0.4,0.54],[6.6,-2.5,0.5,0.6],[0.6,3.5,-0.8,0.46],[-1.2,-3.3,0.6,0.42]];
-    targets.forEach((t,i)=>{
-      const m = new THREE.Mesh(new THREE.SphereGeometry(t[3],48,48), glass);
-      m.userData = { tx:t[0], ty:t[1], tz:t[2], delay:i*0.11, from:new THREE.Vector3(
-        (Math.random()<0.5?-1:1)*(15+Math.random()*9), (Math.random()-0.5)*24, (Math.random()-0.5)*10-6) };
-      m.position.copy(m.userData.from);
-      group.add(m); balls.push(m);
-    });
-    renderer.render(scene, camera);   // warm compile
-    api.ok = true;
-    if (window.__onHeroGlassReady) window.__onHeroGlassReady();   // may start the intro early
+  new FontLoader().load('./vendor/helvetiker_bold.typeface.json', font=>{
+    const geo=new TextGeometry('eccho',{font,size:2.6,height:DEPTH,curveSegments:20,bevelEnabled:false});
+    geo.center(); geo.translate(0,0,DEPTH/2);
+    text=new THREE.Mesh(geo,glass); group.add(text);
+    const seeds=[[-9,4,0.7],[9,3,0.85],[-11,-3,0.55],[11,-1,0.6],[-7,-5,0.55],[7,-5,0.6],
+      [0,6,0.5],[-3,-6,0.45],[13,5,0.7],[-13,2,0.6],[4,7,0.5],[-6,7,0.55],[12,-5,0.65],[-12,-6,0.6]];
+    seeds.forEach(s=>{ const r=s[2]; const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,32), ballMat.clone()); m.material.toneMapped=false;
+      m.userData={ r, home:new THREE.Vector3(s[0],s[1],r+Math.random()*5),
+        vel:new THREE.Vector3((Math.random()-.5)*0.05,(Math.random()-.5)*0.05,(Math.random()-.5)*0.05),
+        spin:new THREE.Vector3((Math.random()-.5)*0.006,(Math.random()-.5)*0.006,0),
+        from:new THREE.Vector3((Math.random()<.5?-1:1)*(18+Math.random()*10),(Math.random()-.5)*22,(Math.random()-.5)*12) };
+      m.position.copy(m.userData.home); group.add(m); balls.push(m); });
+    renderer.render(scene,camera);   // warm compile
+    api.ok=true; if(window.__onHeroGlassReady) window.__onHeroGlassReady();
   });
 
   function loop(now){
-    if (!running) return;
-    const t = (now - flyStart) * 0.001;
-    for (let i=0;i<balls.length;i++){
-      const m = balls[i], u = m.userData;
-      const p = Math.min(1, Math.max(0, (t - u.delay) / DUR));
-      const e = 1 - Math.pow(1 - p, 3);
-      const ty = u.ty + Math.sin(t*0.8 + i) * 0.12;
-      m.position.set(u.from.x + (u.tx - u.from.x)*e, u.from.y + (ty - u.from.y)*e, u.from.z + (u.tz - u.from.z)*e);
-      m.rotation.x = t*0.2; m.rotation.y = t*0.15;
+    if(!running) return;
+    const t=(now-flyStart)*0.001;
+    const fin=Math.min(1, t/DUR);
+    if(text){
+      ray.setFromCamera(ptr,camera);
+      const over = ray.intersectObject(text,false).length>0;
+      extrude += ((over?1.7:1.0)-extrude)*0.1; text.scale.z=extrude;
     }
-    group.rotation.y = 0.28 + Math.sin(t*0.25)*0.045 + mx*0.16;
-    group.rotation.x = -0.40 + my*0.10;
-    renderer.render(scene, camera);
-    if (!settled && t >= DUR + HOLD && location.search.indexOf('glasshold') < 0){ settled = true; if (settleCb) settleCb(); }
-    raf = requestAnimationFrame(loop);
+    balls.forEach(m=>{
+      const u=m.userData, p=m.position, r=u.r;
+      if(fin<1){ const e=1-Math.pow(1-fin,3); p.lerpVectors(u.from,u.home,e); }   // fly in from all directions
+      else {                                                                       // then float in zero-g
+        p.add(u.vel);
+        if(p.z<r){p.z=r;u.vel.z=Math.abs(u.vel.z);} if(p.z>12){p.z=12;u.vel.z=-Math.abs(u.vel.z);}
+        if(p.x<-16){p.x=-16;u.vel.x=Math.abs(u.vel.x);} if(p.x>16){p.x=16;u.vel.x=-Math.abs(u.vel.x);}
+        if(p.y<-10){p.y=-10;u.vel.y=Math.abs(u.vel.y);} if(p.y>10){p.y=10;u.vel.y=-Math.abs(u.vel.y);}
+        const d=Math.hypot(p.x,p.y); if(d<7){ u.vel.x+=(p.x/(d||1))*0.0016; u.vel.y+=(p.y/(d||1))*0.0016; }
+        const sp=u.vel.length(); if(sp>0.055) u.vel.multiplyScalar(0.055/sp);
+      }
+      m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
+    });
+    if(text){
+      glass.time=t; const pt=renderer.toneMapping;
+      text.material=discardMat; renderer.toneMapping=THREE.NoToneMapping;
+      renderer.setRenderTarget(fbo); renderer.render(scene,camera); renderer.setRenderTarget(null);
+      renderer.toneMapping=pt; text.material=glass; glass.buffer=fbo.texture;
+    }
+    renderer.render(scene,camera);
+    if(!settled && t>=DUR+HOLD && location.search.indexOf('glasshold')<0){ settled=true; if(settleCb) settleCb(); }
+    raf=requestAnimationFrame(loop);
   }
 })();
 </script>
