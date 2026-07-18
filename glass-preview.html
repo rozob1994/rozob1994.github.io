@@ -115,8 +115,8 @@ new FontLoader().load('./vendor/helvetiker_bold.typeface.json',font=>{
   seeds.forEach(s=>{ const r=s[2]; const m=new THREE.Mesh(new THREE.SphereGeometry(r,36,36), ballMat.clone());
     m.material.transparent=true;
     m.position.set(s[0], s[1], r + Math.random()*4);
-    m.userData={ r, vel:new THREE.Vector3((Math.random()-.5)*0.05,(Math.random()-.5)*0.05, 0.05+Math.random()*0.08),
-      spin:new THREE.Vector3((Math.random()-.5)*0.01,(Math.random()-.5)*0.01,0) };
+    m.userData={ r, vel:new THREE.Vector3((Math.random()-.5)*0.012,(Math.random()-.5)*0.012,(Math.random()-.5)*0.012),
+      spin:new THREE.Vector3((Math.random()-.5)*0.006,(Math.random()-.5)*0.006,0) };
     group.add(m); balls.push(m); });
 });
 
@@ -133,13 +133,15 @@ function loop(now){
   }
   balls.forEach(m=>{
     const u=m.userData, p=m.position, r=u.r;
-    u.vel.z -= 0.006;                    // gravity toward the grid (local -Z is "down")
+    u.vel.z -= 0.00035;                                            // barely any gravity → they float
+    u.vel.x += (Math.random()-.5)*0.0006; u.vel.y += (Math.random()-.5)*0.0006; u.vel.z += (Math.random()-.5)*0.0005;  // gentle organic drift
     p.add(u.vel);
-    if(p.z < r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.72; if(u.vel.z<0.08) u.vel.z=0.08+Math.random()*0.05; }  // bounce off ground
-    const d=Math.hypot(p.x,p.y); if(d<7.5){ u.vel.x+=(p.x/(d||1))*0.004; u.vel.y+=(p.y/(d||1))*0.004; }        // keep off the sign
+    if(p.z < r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.5; }           // slow soft bounce off the ground
+    if(p.z > 11) u.vel.z -= 0.0008;                                // soft ceiling so they don't drift away
+    const d=Math.hypot(p.x,p.y); if(d<7.5){ u.vel.x+=(p.x/(d||1))*0.0016; u.vel.y+=(p.y/(d||1))*0.0016; }  // keep off the sign
     if(p.x<-16||p.x>16) u.vel.x*=-1;
     if(p.y<-10||p.y>10) u.vel.y*=-1;
-    u.vel.x*=0.995; u.vel.y*=0.995;
+    u.vel.multiplyScalar(0.985);                                   // damping keeps everything slow & airy
     m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
   });
   group.rotation.set(baseRX,baseRY,baseRZ);
