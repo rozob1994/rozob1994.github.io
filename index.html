@@ -5877,7 +5877,10 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const EXIT=1.3;                // off-screen NDC margin at which a ball is recycled
   const GRAV=0.00022;            // light gravity — long, slow airborne arcs between ground touches
   const REST=0.012;              // below this rebound speed a ground touch rests instead of bouncing — kills the settling buzz (jitter)
-  const DUR=1.7, HOLD=0.8; let raf=0, running=false, flyStart=0, settled=false, settleCb=null, extrude=1;
+  const DUR=1.7, HOLD=0.8; let raf=0, running=false, flyStart=0, settled=false, settleCb=null;
+  // hover extrusion: spring with anticipation (eases in, overshoots a little, settles) + a slight dead-time delay
+  const EXT_HI=1.7, EXT_LO=1.0, EXT_K=0.04, EXT_C=0.22, EXT_DELAY=170;   // K/C → ~10% overshoot, ~0.75s settle; DELAY in ms
+  let extrude=1, extVel=0, extTarget=1, extOver=false, extSince=-1e9;
   const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999); let ptrX=0;
   const _w=new THREE.Vector3(), _n=new THREE.Vector3(), _sr=new THREE.Vector3(), _su=new THREE.Vector3(), _iq=new THREE.Quaternion();
   addEventListener('pointermove',e=>{ ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1; ptrX=e.clientX/innerWidth-0.5; },{passive:true});
@@ -5951,7 +5954,10 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     if(text){
       ray.setFromCamera(ptr,camera);
       const over = ray.intersectObject(text,false).length>0;
-      extrude += ((over?1.7:1.0)-extrude)*0.1; text.scale.z=extrude;
+      if(over!==extOver){ extOver=over; extSince=now; }                 // hover state flipped → (re)start the delay clock
+      if(now-extSince>=EXT_DELAY) extTarget = extOver?EXT_HI:EXT_LO;    // commit the target only after the slight delay — slow to start, both in and out
+      extVel += (extTarget-extrude)*EXT_K - extVel*EXT_C;               // under-damped spring → anticipation: eases in, overshoots a touch, settles to target
+      extrude += extVel; text.scale.z=extrude;
     }
     // very subtle, very smooth mouse Z-tilt (update first so containment uses this frame's orientation)
     rzCur += ((baseRZ + ptrX*0.12) - rzCur)*0.025;
