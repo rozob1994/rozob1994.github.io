@@ -5796,7 +5796,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const DPR = Math.min(window.devicePixelRatio||1, 1.75);
   renderer.setPixelRatio(DPR);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.4;
+  renderer.toneMappingExposure = 1.22;
   const BLUE = 0x0d1fd4;
   const scene = new THREE.Scene();
   // subtle radial-gradient background (gives the glass detail to refract)
@@ -5849,11 +5849,11 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const baseRX=-0.78, baseRY=0.02, baseRZ=0.55; let rzCur=baseRZ;
   group.rotation.set(baseRX,baseRY,baseRZ); scene.add(group);
   // sign lighting (layer 0)
-  // dim directional lights — the glass is env-driven, and this keeps the matte
-  // balls soft (About-style) instead of washed out by the bright exposure.
-  const keyL=new THREE.DirectionalLight(0xfff4e0,0.5); keyL.position.set(4,7,6); scene.add(keyL);
-  const rimL=new THREE.DirectionalLight(0x9fbcff,0.28); rimL.position.set(-6,-2,4); scene.add(rimL);
-  scene.add(new THREE.AmbientLight(0x2a3a5a,0.35));
+  // stronger key-vs-ambient ratio for real shading contrast on the matte balls —
+  // ambient-heavy flat lighting is what reads as "washed out".
+  const keyL=new THREE.DirectionalLight(0xfff4e0,0.68); keyL.position.set(4,7,6); scene.add(keyL);
+  const rimL=new THREE.DirectionalLight(0x9fbcff,0.22); rimL.position.set(-6,-2,4); scene.add(rimL);
+  scene.add(new THREE.AmbientLight(0x2a3a5a,0.18));
 
   // ground grid + soft contact shadow under the sign
   const grid=new THREE.GridHelper(60,60,0xcdd9ff,0x7f97ec);
@@ -5865,7 +5865,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     sh.material.toneMapped=false; sh.position.set(0,-0.3,0.02); group.add(sh); })();
 
   // flat matte-yellow balls, matching the About / hero-ball section look
-  const ballMat = new THREE.MeshStandardMaterial({color:0xf5d94e, metalness:0, roughness:1, envMapIntensity:0.6}); ballMat.toneMapped=false;
+  const ballMat = new THREE.MeshStandardMaterial({color:0xffcb2e, metalness:0, roughness:0.85, envMapIntensity:0.3}); ballMat.toneMapped=false;
   // per-ball soft shadow that intensifies as the ball nears the ground
   const shadowTex=(function(){ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');
     const rg=g.createRadialGradient(64,64,4,64,64,64); rg.addColorStop(0,'rgba(4,8,30,0.8)'); rg.addColorStop(1,'rgba(4,8,30,0)');
@@ -5873,11 +5873,51 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const shadowGeo=new THREE.PlaneGeometry(1,1);
 
   let text=null; const balls=[]; const DEPTH=0.77;
-  const SBX=0.62, SBY=0.44, FX=0.93, FY=0.9;   // sign screen bbox (keep-out) + frame bounds (keep-in), in NDC
+  const SBX=0.62, SBY=0.44;      // sign screen bbox (keep-out), in NDC
+  const EXIT=1.3;                // off-screen NDC margin at which a ball is recycled
+  const GRAV=0.00022;            // light gravity — long, slow airborne arcs between ground touches
   const DUR=1.7, HOLD=0.8; let raf=0, running=false, flyStart=0, settled=false, settleCb=null, extrude=1;
   const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999); let ptrX=0;
   const _w=new THREE.Vector3(), _n=new THREE.Vector3(), _sr=new THREE.Vector3(), _su=new THREE.Vector3(), _iq=new THREE.Quaternion();
   addEventListener('pointermove',e=>{ ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1; ptrX=e.clientX/innerWidth-0.5; },{passive:true});
+
+  // how far out along `axis` (from 0, signed by `side`, at a fixed perpendicular
+  // offset) a point has to sit before it actually projects off-screen — walked
+  // live against the current camera/tilt rather than guessed, since the tilted
+  // isometric rotation mixes local x/y unevenly onto NDC (a fixed magnitude that's
+  // off-screen on one axis/side can land mid-frame on the other, e.g. negative y)
+  function edgeDist(axis,side,perp,z){
+    let d=6;
+    for(let i=0;i<40;i++){
+      const x=axis==='x'?side*d:perp, y=axis==='y'?side*d:perp;
+      _w.set(x,y,z).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
+      if(Math.abs(_n.x)>EXIT+0.35 || Math.abs(_n.y)>EXIT+0.35) break;
+      d+=2;
+    }
+    return d;
+  }
+  // enters a ball from off-screen on a random edge, heading across toward the
+  // opposite edge at a slow constant drift; `mid` scatters it partway along
+  // that path (startup only, so the first frame isn't empty — every recycle
+  // re-enters fully off-screen at the edge, per the "comes in from outside" ask)
+  function spawnBall(u,r,mid){
+    const axis=Math.random()<0.5?'x':'y';
+    const speed=0.022+Math.random()*0.02;
+    const side=Math.random()<0.5?-1:1;
+    const perp=(Math.random()-0.5)*16;
+    const ez=r+1.5+Math.random()*6;
+    const far=edgeDist(axis,side,perp,ez);
+    const along=mid ? far*(1-2*Math.random()) : far;
+    let ex,ey,vx,vy;
+    // velocity direction is derived from the actual spawned coordinate (not `side`) so a
+    // mid-scatter ball — whose sign can differ from `side` once `along` is itself signed —
+    // always heads toward center, never drifts away and off into the void unrecycled
+    if(axis==='x'){ ex=side*along; ey=perp; vx=-Math.sign(ex||1)*speed; vy=(Math.random()-0.5)*speed*0.4; }
+    else { ey=side*along; ex=perp; vy=-Math.sign(ey||1)*speed; vx=(Math.random()-0.5)*speed*0.4; }
+    u.vel.set(vx,vy,(Math.random()-0.5)*0.01);
+    u.entered=false;   // gate: don't recycle again until it's actually been seen inside the frame
+    return new THREE.Vector3(ex,ey,ez);
+  }
 
   const api={ ok:false,
     start(cb){ if(running) return; settleCb=cb; running=true; flyStart=performance.now(); raf=requestAnimationFrame(loop); },
@@ -5890,30 +5930,16 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     const geo=new TextGeometry('eccho',{font,size:2.6,height:DEPTH,curveSegments:20,bevelEnabled:false});
     geo.center(); geo.translate(0,0,DEPTH/2);
     text=new THREE.Mesh(geo,glass); group.add(text);
-    // local-space screen axes (fixed at spawn — mouse hasn't tilted yet)
-    _iq.copy(group.quaternion).invert();
-    _sr.set(1,0,0).applyQuaternion(_iq); _su.set(0,1,0).applyQuaternion(_iq);
-    // seeds point toward the frame margins; homes get relaxed into the ring around the sign
-    const seeds=[[-10,5,0.7],[10,4,0.8],[-12,-2,0.55],[12,0,0.6],[-8,-6,0.5],[8,-6,0.6],
-      [1,7,0.5],[-2,-7,0.45],[13,6,0.65],[-13,3,0.6]];
-    seeds.forEach(s=>{ const r=s[2]; const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,32), ballMat.clone());
+    for(let i=0;i<12;i++){
+      const r=0.45+Math.random()*0.4;
+      const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,32), ballMat.clone());
       const sh=new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:0}));
       sh.material.toneMapped=false; group.add(sh);
-      const home=new THREE.Vector3(s[0],s[1],r+0.5+Math.random()*1.2);
-      // relax the settle target into the visible margin ring: outside the sign's screen bbox, inside the frame
-      for(let g=0;g<40;g++){ _w.copy(home).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
-        const inSign=Math.abs(_n.x)<SBX && Math.abs(_n.y)<SBY, outFrame=Math.abs(_n.x)>FX||Math.abs(_n.y)>FY;
-        if(!inSign && !outFrame) break;
-        if(inSign){ if((SBX-Math.abs(_n.x))<(SBY-Math.abs(_n.y))) home.addScaledVector(_sr,Math.sign(_n.x||1)*0.5);
-                    else home.addScaledVector(_su,Math.sign(_n.y||1)*0.5); }
-        else { if(Math.abs(_n.x)>FX) home.addScaledVector(_sr,-Math.sign(_n.x)*0.5);
-               if(Math.abs(_n.y)>FY) home.addScaledVector(_su,-Math.sign(_n.y)*0.5); }
-        home.z=Math.max(r,Math.min(home.z,r+2.2)); }
-      m.userData={ r, shadow:sh, home,
-        vel:new THREE.Vector3((Math.random()-.5)*0.02,(Math.random()-.5)*0.02,(Math.random()-.5)*0.05),
-        spin:new THREE.Vector3((Math.random()-.5)*0.006,(Math.random()-.5)*0.006,0),
-        from:new THREE.Vector3((Math.random()<.5?-1:1)*(18+Math.random()*10),(Math.random()-.5)*22,(Math.random()-.5)*12) };
-      m.position.copy(m.userData.home); group.add(m); balls.push(m); });
+      const u={ r, shadow:sh, vel:new THREE.Vector3(),
+        spin:new THREE.Vector3((Math.random()-.5)*0.006,(Math.random()-.5)*0.006,0) };
+      m.position.copy(spawnBall(u,r,true));
+      m.userData=u; group.add(m); balls.push(m);
+    }
     renderer.render(scene,camera);   // warm compile
     api.ok=true; if(window.__onHeroGlassReady) window.__onHeroGlassReady();
   });
@@ -5921,7 +5947,6 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   function loop(now){
     if(!running) return;
     const t=(now-flyStart)*0.001;
-    const fin=Math.min(1, t/DUR);
     if(text){
       ray.setFromCamera(ptr,camera);
       const over = ray.intersectObject(text,false).length>0;
@@ -5935,23 +5960,19 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     _sr.set(1,0,0).applyQuaternion(_iq); _su.set(0,1,0).applyQuaternion(_iq);
     balls.forEach(m=>{
       const u=m.userData, p=m.position, r=u.r;
-      if(fin<1){ const e=1-Math.pow(1-fin,3); p.lerpVectors(u.from,u.home,e); }
-      else {
-        // each ball holds its distributed ring slot horizontally (soft spring to home x,y) and bounces in z off the ground
-        u.vel.x += (u.home.x - p.x)*0.006;  u.vel.y += (u.home.y - p.y)*0.006;   // hold the slot → no corner-collapse
-        u.vel.z -= 0.0012;                                                       // gravity → gentle fall
-        p.add(u.vel);
-        if(p.z<r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.72; if(u.vel.z<0.05) u.vel.z=0.05+Math.random()*0.06;
-          u.vel.z=Math.min(u.vel.z,0.13); }                                      // ground bounce → capped low hop
-        u.vel.x*=0.9; u.vel.y*=0.9;                                              // strong horizontal damping → settle smoothly into the slot
-        // safety: keep out of the sign's screen bbox and inside the frame (rare with the slot spring)
-        _w.copy(p).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
-        if(Math.abs(_n.x)<SBX && Math.abs(_n.y)<SBY){
-          if((SBX-Math.abs(_n.x))<(SBY-Math.abs(_n.y))) u.vel.addScaledVector(_sr, Math.sign(_n.x||1)*0.006);
-          else u.vel.addScaledVector(_su, Math.sign(_n.y||1)*0.006); }
-        if(Math.abs(_n.x)>0.97){ p.addScaledVector(_sr, -Math.sign(_n.x)*(Math.abs(_n.x)-0.97)*4); u.vel.addScaledVector(_sr,-_sr.dot(u.vel)*1.4); }
-        if(Math.abs(_n.y)>0.95){ p.addScaledVector(_su, -Math.sign(_n.y)*(Math.abs(_n.y)-0.95)*4); u.vel.addScaledVector(_su,-_su.dot(u.vel)*1.4); }
-      }
+      // continuous flight: constant horizontal drift, light gravity on the vertical axis
+      u.vel.z -= GRAV;
+      p.add(u.vel);
+      if(p.z<r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.55; }   // hits the ground → bounces off, same x/y trajectory, loses energy each touch
+      // nudge clear of the sign's screen bbox while passing near/behind it
+      _w.copy(p).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
+      if(Math.abs(_n.x)<SBX && Math.abs(_n.y)<SBY){
+        if((SBX-Math.abs(_n.x))<(SBY-Math.abs(_n.y))) p.addScaledVector(_sr, Math.sign(_n.x||1)*0.09);
+        else p.addScaledVector(_su, Math.sign(_n.y||1)*0.09); }
+      // it enters off-screen by design, so only arm the exit-recycle once it's
+      // actually been seen inside the frame — otherwise it'd recycle the instant it spawns
+      if(!u.entered){ if(Math.abs(_n.x)<EXIT && Math.abs(_n.y)<EXIT) u.entered=true; }
+      else if(Math.abs(_n.x)>EXIT || Math.abs(_n.y)>EXIT) p.copy(spawnBall(u,r,false));
       m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
       // shadow grows/darkens as the ball nears the ground
       const sh=u.shadow, h=Math.max(0,p.z-r);
@@ -5965,7 +5986,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       renderer.toneMapping=THREE.NoToneMapping; renderer.setRenderTarget(fbo); renderer.render(scene,camera); renderer.setRenderTarget(null);
       renderer.toneMapping=pt; text.material=glass; glass.buffer=fbo.texture;
     }
-    renderer.toneMappingExposure=1.4;
+    renderer.toneMappingExposure=1.22;
     renderer.render(scene,camera);   // bloom (composer) deferred — it dropped the balls in headless; needs a GPU pass
 
     if(!settled && t>=DUR+HOLD && location.search.indexOf('glasshold')<0){ settled=true; if(settleCb) settleCb(); }
