@@ -90,10 +90,16 @@
     #heroReel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
     #heroReelTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
     @media (prefers-reduced-motion: reduce){#heroReel{display:none}}
-    /* Reel: a real 16:9 card centred on a dark backdrop (no white margins), scroll-scrubbed
-       from ~70% up to full size. --reel-s is driven by initReelScrub(). */
+    /* Reel: pinned full-viewport stage with a scroll runway. #hero becomes tall; #reelPin
+       sticks for 100vh while the reel (a real 16:9 on a dark backdrop) scrubs. The tall/dark
+       overrides beat revealContent's inline styles via !important so that fragile function
+       stays untouched. --reel-s is driven by initReelScrub(). */
+    body.glass-hero #hero{height:260vh !important;min-height:0 !important;overflow:visible !important;background:#080d1c !important}
+    body.glass-hero #reelPin{position:absolute;top:0;left:0;width:100%;height:100vh;overflow:hidden;z-index:2}
+    body.glass-hero .hero-content{top:84vh !important;bottom:auto !important}
+    #reelPin{position:relative;height:100%}
     #reelBackdrop{position:absolute;inset:0;z-index:0;background:#080d1c;pointer-events:none}
-    #reelFrame{position:absolute;top:50%;left:50%;height:100%;width:auto;aspect-ratio:16/9;max-width:96%;
+    #reelFrame{position:absolute;top:50%;left:50%;width:min(96vw,170vh);aspect-ratio:16/9;height:auto;
       z-index:1;overflow:hidden;transform-origin:50% 50%;
       transform:translate(-50%,-50%) scale(var(--reel-s,1));border-radius:var(--reel-r,10px);
       will-change:transform,border-radius;background:#0d1fd4}
@@ -1518,11 +1524,13 @@
 <canvas id="heroGlass" aria-hidden="true"></canvas>
 
 <section id="hero">
-  <div id="reelBackdrop"></div>
-  <div id="reelFrame">
-    <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
-    <div id="heroReelTint"></div>
-    <div id="reelCover"><span class="reel-title">you name it,<br>we create it</span></div>
+  <div id="reelPin">
+    <div id="reelBackdrop"></div>
+    <div id="reelFrame">
+      <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+      <div id="heroReelTint"></div>
+      <div id="reelCover"><span class="reel-title">you name it,<br>we create it</span></div>
+    </div>
   </div>
   <div class="hero-bg"></div>
 </section>
@@ -4088,20 +4096,29 @@
   // and the dark-blue cover ("you name it, we create it") blur-fades away. ─────────
   function initReelScrub() {
     var hero = document.getElementById('hero');
+    var pin = document.getElementById('reelPin');
     var frame = document.getElementById('reelFrame');
     var cover = document.getElementById('reelCover');
-    if (!hero || !frame) return;
+    if (!hero || !frame || !pin) return;
     var title = cover ? cover.querySelector('.reel-title') : null;
     function scrub() {
       var vh = window.innerHeight || 1;
       var top = hero.getBoundingClientRect().top;
-      // p: 0 when the reel's top is at the viewport bottom (just entering), 1 once it has
-      // risen to nearly fill the screen. Scale/rounding/cover all interpolate on p.
-      var p = Math.max(0, Math.min(1, (vh - top) / (vh * 0.92)));
-      frame.style.setProperty('--reel-s', (0.7 + 0.3 * p).toFixed(4));   // scale via CSS var so the centring translate is preserved
-      frame.style.borderRadius = (8 + 10 * (1 - p)).toFixed(1) + 'px';
+      // runway progress: 0 when the pin engages (hero top at 0) → 1 when it releases
+      // (hero scrolled by its full height minus one viewport). Before the pin engages the
+      // reel is still rising into view (top>0), so p clamps at 0 and it stays at 0.7.
+      var run = Math.max(1, hero.offsetHeight - vh);
+      // JS pin (CSS sticky can't be used — the body's overflow makes it the sticky scroller
+      // while the page scrolls the document). absolute→fixed→absolute across the runway.
+      if (top > 0) { pin.style.position = 'absolute'; pin.style.top = '0px'; }
+      else if (-top < run) { pin.style.position = 'fixed'; pin.style.top = '0px'; }
+      else { pin.style.position = 'absolute'; pin.style.top = run + 'px'; }
+      var p = Math.max(0, Math.min(1, -top / run));
+      var sp = Math.min(1, p / 0.35);                 // scale/round finish early, leaving runway for the letter phases (step 2)
+      frame.style.setProperty('--reel-s', (0.7 + 0.3 * sp).toFixed(4));
+      frame.style.borderRadius = (8 + 10 * (1 - sp)).toFixed(1) + 'px';
       if (cover) {
-        var co = Math.max(0, 1 - p / 0.6);            // cover gone by p=0.6, before full expansion
+        var co = Math.max(0, 1 - p / 0.5);            // dark cover fades over the first half of the runway
         cover.style.opacity = co.toFixed(3);
         cover.style.filter = 'blur(' + (5 * (1 - co)).toFixed(2) + 'px)';
         if (title) {
