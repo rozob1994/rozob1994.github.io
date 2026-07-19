@@ -5869,6 +5869,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const shadowGeo=new THREE.PlaneGeometry(1,1);
 
   let text=null, signBB=null; const balls=[]; const DEPTH=0.77;
+  const words=[]; const WORD_DIM=new THREE.Color(0x9aa3c4), WORD_HI=new THREE.Color(0xffcb2e);   // ground labels: dim white → matte yellow
   const EXIT=1.3;                // off-screen NDC margin at which a ball is recycled
   const GRAV=0.00022;            // light gravity — long, slow airborne arcs between ground touches
   const REST=0.012;              // below this rebound speed a ground touch rests instead of bouncing — kills the settling buzz (jitter)
@@ -5940,6 +5941,17 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       m.position.copy(spawnBall(u,r,true));
       m.userData=u; group.add(m); balls.push(m);
     }
+    // ground words — flat on the floor in the sign's perspective; hover lifts them in +z and
+    // fades dim-white → matte-yellow. EDIT HERE: [text, x, y]. Two clusters (top-left / bottom-right).
+    const wordDefs=[['Motion',-1.54,6.32],['Story',0.69,5.79],['Depth',-3.31,6.27],['Light',2.46,4.5],
+      ['Character',0.85,-6.15],['Illusion',0.46,-4.42],['Identity',3.23,-6.26]];
+    wordDefs.forEach(d=>{
+      const g2=new TextGeometry(d[0],{font,size:0.6,height:0.05,curveSegments:6,bevelEnabled:false});
+      g2.center();
+      const mat=new THREE.MeshStandardMaterial({color:WORD_DIM.clone(),metalness:0,roughness:0.9,envMapIntensity:0.2}); mat.toneMapped=false;
+      const wm=new THREE.Mesh(g2,mat); wm.position.set(d[1],d[2],0.06); wm.userData={baseZ:0.06,lift:0,t:0};
+      group.add(wm); words.push(wm);
+    });
     renderer.render(scene,camera);   // warm compile
     api.ok=true; if(window.__onHeroGlassReady) window.__onHeroGlassReady();
   });
@@ -5954,6 +5966,12 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       if(now-extSince>=EXT_DELAY) extTarget = extOver?EXT_HI:EXT_LO;    // commit the target only after the slight delay — slow to start, both in and out
       extVel += (extTarget-extrude)*EXT_K - extVel*EXT_C;               // under-damped spring → anticipation: eases in, overshoots a touch, settles to target
       extrude += extVel; text.scale.z=extrude;
+    }
+    if(words.length){   // hover: lift in +z + fade dim-white → matte-yellow (ray already set from this frame's pointer)
+      const hw=ray.intersectObjects(words,false)[0]; const hit=hw?hw.object:null;
+      words.forEach(w=>{ const u=w.userData, on=w===hit?1:0;
+        u.lift+=((on?0.7:0)-u.lift)*0.14; w.position.z=u.baseZ+u.lift;
+        u.t+=(on-u.t)*0.14; w.material.color.copy(WORD_DIM).lerp(WORD_HI,u.t); });
     }
     // very subtle, very smooth mouse Z-tilt
     rzCur += ((baseRZ + ptrX*0.12) - rzCur)*0.025;
