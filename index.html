@@ -2171,9 +2171,9 @@
       }
       window.__glassHero = true;
       // Fade + pause the glass as the reel rises over it; resume near the top.
-      // The reel card floats over the LIVE glass hero (transparent margins), so the glass must
-      // stay visible instead of fading on scroll — initReelScrub owns its opacity + pause/resume.
-      var glassGate = function(){ heroGlassEl.style.opacity = '1'; };
+      // Glass opacity + pause/resume are owned entirely by initReelScrub now (it shows the glass
+      // behind the reel card and hides it once past the reel). glassGate is a no-op.
+      var glassGate = function(){};
       window.addEventListener('scroll', glassGate, {passive:true});
       window.addEventListener('resize', glassGate, {passive:true});
       glassGate();
@@ -4117,14 +4117,21 @@
       else if (-top < run) { pin.style.position = 'fixed'; pin.style.top = '0px'; }
       else { pin.style.position = 'absolute'; pin.style.top = run + 'px'; }
       var p = Math.max(0, Math.min(1, -top / run));
-      var sp = Math.min(1, p / 0.35);                 // scale/round finish early, leaving runway for the letter phases (step 2)
-      frame.style.setProperty('--reel-s', (0.7 + 0.3 * sp).toFixed(4));   // card grows 70% → full
-      frame.style.borderRadius = (16 * (1 - sp)).toFixed(1) + 'px';        // rounded card on entry → flush at full
-      // the reel is a card floating over the LIVE glass hero (margins are transparent → glass shows
-      // through). Keep the glass rendering while the card is smaller than full; pause once covered.
-      if (glass) { glass.style.opacity = '1';
-        if (sp >= 1) { if (window.__heroGlass && window.__heroGlass.running) window.__heroGlass.stop(); }
-        else { if (window.__heroGlass && !window.__heroGlass.running) window.__heroGlass.resume(); } }
+      // scale is eased and spans the approach + early runway, so the card grows smoothly as it
+      // slides in instead of snapping to place then growing.
+      var gp = clamp01((vh - top) / (vh + run * 0.35)); gp = gp * gp * (3 - 2 * gp);
+      var sp = gp;
+      frame.style.setProperty('--reel-s', (0.7 + 0.3 * gp).toFixed(4));   // card grows 70% → full
+      frame.style.borderRadius = (16 * (1 - gp)).toFixed(1) + 'px';        // rounded card on entry → flush at full
+      // Glass hero shows through the card's margins while it grows, then the card covers it. Once
+      // the reel section is scrolled fully past, the glass MUST go to 0 — it's a fixed full-screen
+      // canvas and would otherwise cover About/Contact below. (This is what broke those sections.)
+      if (glass) {
+        var visible = hero.getBoundingClientRect().bottom > 1;
+        glass.style.opacity = visible ? '1' : '0';
+        if (visible && sp < 1) { if (window.__heroGlass && !window.__heroGlass.running) window.__heroGlass.resume(); }
+        else { if (window.__heroGlass && window.__heroGlass.running) window.__heroGlass.stop(); }
+      }
       if (cover) {
         // phases within the runway (after the card has grown, ~p>0.35):
         var inG   = clamp01(p / 0.28);            // line 1 "you name it" settles in as the card arrives
