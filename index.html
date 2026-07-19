@@ -94,17 +94,18 @@
        sticks for 100vh while the reel (a real 16:9 on a dark backdrop) scrubs. The tall/dark
        overrides beat revealContent's inline styles via !important so that fragile function
        stays untouched. --reel-s is driven by initReelScrub(). */
-    body.glass-hero #hero{height:260vh !important;min-height:0 !important;overflow:visible !important;background:#0d1fd4 !important}
+    body.glass-hero #hero{height:260vh !important;min-height:0 !important;overflow:visible !important;background:transparent !important}
     body.glass-hero #reelPin{position:absolute;top:0;left:0;width:100%;height:100vh;overflow:hidden;z-index:2}
     body.glass-hero .hero-content{top:84vh !important;bottom:auto !important}
     #reelPin{position:relative;height:100%}
-    #reelBackdrop{position:absolute;inset:0;z-index:0;background:#0d1fd4;pointer-events:none}
-    /* reel fills the whole viewport (cover) at full scale — fills any 16:9/16:10 display,
-       27" / 16" / 13" — so there are no dark margins. Enters at 70% (blue margins, not black). */
+    #reelBackdrop{display:none}
+    /* Reel ALWAYS fills the whole viewport (100vw x 100vh, video cover). The scrub is a
+       settle-zoom that never drops below 100%, so there is NEVER any margin/background
+       behind it — no colour of any kind. Works on any display (27/16/13"). */
     #reelFrame{position:absolute;top:50%;left:50%;width:100vw;height:100vh;
       z-index:1;overflow:hidden;transform-origin:50% 50%;
-      transform:translate(-50%,-50%) scale(var(--reel-s,1));border-radius:var(--reel-r,0px);
-      will-change:transform,border-radius;background:#0d1fd4}
+      transform:translate(-50%,-50%) scale(var(--reel-s,1));border-radius:0;
+      will-change:transform;background:transparent}
     #reelCover{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
       text-align:center;background:rgba(9,17,74,0.62);pointer-events:none;opacity:var(--cover-o,1);will-change:opacity,filter}
     #reelCover .reel-title{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);
@@ -2171,13 +2172,9 @@
       }
       window.__glassHero = true;
       // Fade + pause the glass as the reel rises over it; resume near the top.
-      var glassGate = function(){
-        var vh = window.innerHeight;
-        var op = Math.max(0, Math.min(1, 1 - (window.scrollY - vh*0.45) / (vh*0.55)));
-        heroGlassEl.style.opacity = op.toFixed(3);
-        if (op <= 0.02) { if (window.__heroGlass && window.__heroGlass.running) window.__heroGlass.stop(); }
-        else { if (window.__heroGlass && !window.__heroGlass.running) window.__heroGlass.resume(); }
-      };
+      // The reel card floats over the LIVE glass hero (transparent margins), so the glass must
+      // stay visible instead of fading on scroll — initReelScrub owns its opacity + pause/resume.
+      var glassGate = function(){ heroGlassEl.style.opacity = '1'; };
       window.addEventListener('scroll', glassGate, {passive:true});
       window.addEventListener('resize', glassGate, {passive:true});
       glassGate();
@@ -4101,6 +4098,7 @@
     var pin = document.getElementById('reelPin');
     var frame = document.getElementById('reelFrame');
     var cover = document.getElementById('reelCover');
+    var glass = document.getElementById('heroGlass');
     if (!hero || !frame || !pin) return;
     var title = cover ? cover.querySelector('.reel-title') : null;
     function scrub() {
@@ -4117,8 +4115,13 @@
       else { pin.style.position = 'absolute'; pin.style.top = run + 'px'; }
       var p = Math.max(0, Math.min(1, -top / run));
       var sp = Math.min(1, p / 0.35);                 // scale/round finish early, leaving runway for the letter phases (step 2)
-      frame.style.setProperty('--reel-s', (0.7 + 0.3 * sp).toFixed(4));
-      frame.style.borderRadius = (16 * (1 - sp)).toFixed(1) + 'px';   // rounded card on entry → 0 (edge-to-edge) at full fill
+      frame.style.setProperty('--reel-s', (0.7 + 0.3 * sp).toFixed(4));   // card grows 70% → full
+      frame.style.borderRadius = (16 * (1 - sp)).toFixed(1) + 'px';        // rounded card on entry → flush at full
+      // the reel is a card floating over the LIVE glass hero (margins are transparent → glass shows
+      // through). Keep the glass rendering while the card is smaller than full; pause once covered.
+      if (glass) { glass.style.opacity = '1';
+        if (sp >= 1) { if (window.__heroGlass && window.__heroGlass.running) window.__heroGlass.stop(); }
+        else { if (window.__heroGlass && !window.__heroGlass.running) window.__heroGlass.resume(); } }
       if (cover) {
         var co = Math.max(0, 1 - p / 0.5);            // dark cover fades over the first half of the runway
         cover.style.opacity = co.toFixed(3);
