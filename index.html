@@ -5799,13 +5799,9 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   renderer.toneMappingExposure = 2.05;
   const BLUE = 0x0d1fd4;
   const scene = new THREE.Scene();
-  // subtle radial-gradient background (gives the glass detail to refract)
-  const bgCv=document.createElement('canvas'); bgCv.width=bgCv.height=512;
-  { const g=bgCv.getContext('2d'); const rg=g.createRadialGradient(256,210,40,256,300,440);
-    rg.addColorStop(0,'#2338ff'); rg.addColorStop(0.6,'#0f22e0'); rg.addColorStop(1,'#08128f');
-    g.fillStyle=rg; g.fillRect(0,0,512,512); }
-  const bgTex=new THREE.CanvasTexture(bgCv); bgTex.colorSpace=THREE.SRGBColorSpace;
-  scene.background=bgTex;
+  // solid deep blue, matching glass-preview.html. The old bright radial gradient had its
+  // lightest point dead-center (behind the sign), and the glass was refracting that → washed out.
+  scene.background = new THREE.Color(BLUE);
   scene.fog = new THREE.Fog(BLUE, 32, 50);
 
   let ZOOM = 10.6;
