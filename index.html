@@ -5806,7 +5806,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     g.fillStyle=rg; g.fillRect(0,0,512,512); }
   const bgTex=new THREE.CanvasTexture(bgCv); bgTex.colorSpace=THREE.SRGBColorSpace;
   scene.background=bgTex;
-  scene.fog = new THREE.Fog(BLUE, 32, 52);
+  scene.fog = new THREE.Fog(BLUE, 32, 50);
 
   let ZOOM = 10.6;
   const camera = new THREE.OrthographicCamera(-1,1,1,-1,-100,200);
@@ -5828,12 +5828,12 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(studioScene(),0.02).texture;
 
-  const glass = new MeshTransmissionMaterialImpl(8, false);
+  const glass = new MeshTransmissionMaterialImpl(10, false);   // 10 samples, matching glass-preview.html
   glass.color=new THREE.Color(0xffffff); glass.roughness=0.14; glass.ior=1.39; glass.thickness=6.1; glass.envMapIntensity=3.1;
   glass.chromaticAberration=1.5; glass.anisotropicBlur=0.2; glass.distortion=0.89; glass.distortionScale=0.4; glass.temporalDistortion=0.1;
   glass.attenuationColor=new THREE.Color(0xffffff); glass.attenuationDistance=1e4;
-  glass.iridescence=0.35; glass.iridescenceIOR=1.3;                 // edge colour
-  glass.sheen=0.7; glass.sheenColor=new THREE.Color(0xbcd4ff); glass.sheenRoughness=0.35;   // Fresnel rim glow
+  // NOTE: no sheen / iridescence — those were painting a frosted film that washed out the
+  // transmission. The preview (source of truth for the dialed look) uses neither.
   const fbo = new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType});
   const discardMat = new DiscardMaterial();
   function resize(){ const w=innerWidth,h=innerHeight,a=w/h;
