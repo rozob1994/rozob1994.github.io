@@ -269,12 +269,20 @@
     .works2-title{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.8vw,56px);line-height:.98;letter-spacing:-.02em;color:#15161d;margin:0}
     .works2-count{font-family:var(--font-display);font-weight:800;font-size:clamp(20px,2vw,30px);color:rgba(21,22,29,0.3);white-space:nowrap;line-height:1}
     .works2-body{display:grid;grid-template-columns:210px 1fr;gap:clamp(24px,3vw,56px);align-items:start}
-    .works2-filters{position:sticky;top:100px;display:flex;flex-direction:column;gap:28px}
-    .w2f-group{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
-    .w2f-title{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(21,22,29,0.4);margin-bottom:4px}
-    .w2f-btn{font-family:var(--font-body);font-size:15px;color:rgba(21,22,29,0.5);background:transparent;border:1px solid transparent;border-radius:7px;padding:5px 12px;cursor:none;transition:color .2s,border-color .2s;text-align:left}
-    .w2f-btn:hover{color:#15161d}
-    .w2f-btn.active{color:#15161d;border-color:rgba(21,22,29,0.65)}
+    .works2-filters{position:sticky;top:100px;display:flex;flex-direction:column;gap:30px;padding-left:60px;
+      --w2f-accent:#0d1fd4;--w2f-rest:rgba(21,22,29,0.5);--w2f-marker:rgba(21,22,29,0.26)}
+    .w2f-group{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+    .w2f-title{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(21,22,29,0.4);margin-bottom:6px}
+    /* LineSidebar style: a leading marker line + label shift & colour driven by --effect,
+       which a rAF lerp (initFilterProximity) eases toward each item's cursor-distance target. */
+    .w2f-btn{position:relative;font-family:var(--font-body);font-size:15px;background:transparent;border:none;border-radius:0;padding:2px 0;cursor:none;text-align:left;
+      color:color-mix(in srgb, var(--w2f-accent) calc(var(--effect,0)*100%), var(--w2f-rest));
+      transform:translateX(calc(var(--effect,0) * 22px))}
+    .w2f-btn::before{content:'';position:absolute;top:50%;left:-60px;height:1px;width:46px;transform-origin:left center;
+      transform:translateY(-50%) scaleX(calc(0.5 + var(--effect,0) * 0.55));
+      background:color-mix(in srgb, var(--w2f-accent) calc(var(--effect,0)*100%), var(--w2f-marker))}
+    .w2f-btn.active{color:var(--w2f-accent)}
+    .w2f-btn.active::before{background:var(--w2f-accent)}
     .w2f-btn:disabled,.w2f-btn.is-void{opacity:.3;pointer-events:none;text-decoration:line-through;text-decoration-color:rgba(21,22,29,0.3)}
     .works2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,1.8vw,34px) clamp(16px,1.4vw,26px)}
     .w2card{cursor:none;display:flex;flex-direction:column;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
@@ -288,7 +296,9 @@
     .w2tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:#0d1fd4;padding:4px 9px;border-radius:3px}
     @media(max-width:1000px){
       .works2-body{grid-template-columns:1fr;gap:26px}
-      .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px}
+      .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px;padding-left:0}
+      .w2f-btn{transform:none !important}
+      .w2f-btn::before{display:none}   /* markers/proximity are a vertical-list affordance — off on the mobile row */
       .works2-grid{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:600px){.works2-grid{grid-template-columns:1fr}}
@@ -3472,6 +3482,33 @@
     const countEl = document.getElementById('works2Count');
     if (!grid || !filtersEl) return;
     works2Built = true;
+
+    // LineSidebar-style proximity: ease each filter's --effect toward a cursor-distance target
+    // (active items hold at 1). One rAF lerp so colour, shift and marker move together.
+    (function initFilterProximity(host){
+      var last = 0, raf = null, RADIUS = 95, TAU = 0.14;
+      var tgt = new WeakMap(), cur = new WeakMap();
+      function items(){ return host.querySelectorAll('.w2f-btn'); }
+      function frame(now){
+        var dt = Math.min((now - last) / 1000, 0.05); last = now; var k = 1 - Math.exp(-dt / TAU); var moving = false;
+        items().forEach(function(el){
+          var t = Math.max(tgt.get(el) || 0, el.classList.contains('active') ? 1 : 0);
+          var c = cur.get(el) || 0, n = c + (t - c) * k;
+          if (Math.abs(t - n) < 0.0015) n = t; else moving = true;
+          cur.set(el, n); el.style.setProperty('--effect', n.toFixed(4));
+        });
+        raf = moving ? requestAnimationFrame(frame) : null;
+      }
+      function start(){ if (raf != null) return; last = performance.now(); raf = requestAnimationFrame(frame); }
+      host.addEventListener('pointermove', function(e){
+        var py = e.clientY;
+        items().forEach(function(el){ var b = el.getBoundingClientRect(); var d = Math.abs(py - (b.top + b.height / 2));
+          var p = Math.max(0, 1 - d / RADIUS); tgt.set(el, p * p * (3 - 2 * p)); });
+        start();
+      }, { passive: true });
+      host.addEventListener('pointerleave', function(){ items().forEach(function(el){ tgt.set(el, 0); }); start(); });
+      start();   // paint the initial active state
+    })(filtersEl);
 
     const state = { collection: 'all', service: 'all' };
     const cardEls = [];
