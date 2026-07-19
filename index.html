@@ -5876,6 +5876,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const SBX=0.62, SBY=0.44;      // sign screen bbox (keep-out), in NDC
   const EXIT=1.3;                // off-screen NDC margin at which a ball is recycled
   const GRAV=0.00022;            // light gravity — long, slow airborne arcs between ground touches
+  const REST=0.012;              // below this rebound speed a ground touch rests instead of bouncing — kills the settling buzz (jitter)
   const DUR=1.7, HOLD=0.8; let raf=0, running=false, flyStart=0, settled=false, settleCb=null, extrude=1;
   const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999); let ptrX=0;
   const _w=new THREE.Vector3(), _n=new THREE.Vector3(), _sr=new THREE.Vector3(), _su=new THREE.Vector3(), _iq=new THREE.Quaternion();
@@ -5963,7 +5964,8 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       // continuous flight: constant horizontal drift, light gravity on the vertical axis
       u.vel.z -= GRAV;
       p.add(u.vel);
-      if(p.z<r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.55; }   // hits the ground → bounces off, same x/y trajectory, loses energy each touch
+      if(p.z<r){ p.z=r;                                     // hits the ground → bounces off (same x/y trajectory), loses energy each touch
+        const s=Math.abs(u.vel.z); u.vel.z = s<REST ? 0 : s*0.55; }   // ...and once the rebound is tiny it just rests + keeps sliding out — no perpetual micro-bounce
       // nudge clear of the sign's screen bbox while passing near/behind it
       _w.copy(p).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
       if(Math.abs(_n.x)<SBX && Math.abs(_n.y)<SBY){
