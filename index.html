@@ -6007,6 +6007,15 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       sh.position.set(p.x,p.y,0.03); sh.material.opacity=Math.max(0,0.6*(1-h/6));
       const sc=r*2.4*(1+h*0.1); sh.scale.set(sc,sc,1);
     });
+    // ball-vs-ball: separate any overlap and reflect the relative velocity along the
+    // contact normal (restitution 0.6) so pairs push apart and can't re-overlap → no jitter
+    for(let i=0;i<balls.length;i++){ const a=balls[i], pa=a.position, ra=a.userData.r, va=a.userData.vel;
+      for(let j=i+1;j<balls.length;j++){ const b=balls[j], pb=b.position, rb=b.userData.r, vb=b.userData.vel;
+        let dx=pb.x-pa.x, dy=pb.y-pa.y, dz=pb.z-pa.z, rs=ra+rb, d2=dx*dx+dy*dy+dz*dz;
+        if(d2<rs*rs && d2>1e-8){ const d=Math.sqrt(d2), nx=dx/d, ny=dy/d, nz=dz/d, ov=(rs-d)*0.5;
+          pa.x-=nx*ov; pa.y-=ny*ov; pa.z-=nz*ov; pb.x+=nx*ov; pb.y+=ny*ov; pb.z+=nz*ov;   // split the overlap
+          const rvn=(vb.x-va.x)*nx+(vb.y-va.y)*ny+(vb.z-va.z)*nz;
+          if(rvn<0){ const jj=-1.6*rvn*0.5; va.x-=jj*nx; va.y-=jj*ny; va.z-=jj*nz; vb.x+=jj*nx; vb.y+=jj*ny; vb.z+=jj*nz; } } } }
 
     if(text){
       glass.time=t; const pt=renderer.toneMapping;
