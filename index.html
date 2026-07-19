@@ -5796,7 +5796,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const DPR = Math.min(window.devicePixelRatio||1, 1.75);
   renderer.setPixelRatio(DPR);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.22;
+  renderer.toneMappingExposure = 2.05;
   const BLUE = 0x0d1fd4;
   const scene = new THREE.Scene();
   // subtle radial-gradient background (gives the glass detail to refract)
@@ -5829,8 +5829,8 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   scene.environment = pmrem.fromScene(studioScene(),0.02).texture;
 
   const glass = new MeshTransmissionMaterialImpl(8, false);
-  glass.color=new THREE.Color(0xffffff); glass.roughness=0.06; glass.ior=1.5; glass.thickness=3; glass.envMapIntensity=3;
-  glass.chromaticAberration=0.4; glass.anisotropicBlur=0.12; glass.distortion=0.15; glass.distortionScale=0.4; glass.temporalDistortion=0.1;
+  glass.color=new THREE.Color(0xffffff); glass.roughness=0.14; glass.ior=1.39; glass.thickness=6.1; glass.envMapIntensity=3.1;
+  glass.chromaticAberration=1.5; glass.anisotropicBlur=0.2; glass.distortion=0.89; glass.distortionScale=0.4; glass.temporalDistortion=0.1;
   glass.attenuationColor=new THREE.Color(0xffffff); glass.attenuationDistance=1e4;
   glass.iridescence=0.35; glass.iridescenceIOR=1.3;                 // edge colour
   glass.sheen=0.7; glass.sheenColor=new THREE.Color(0xbcd4ff); glass.sheenRoughness=0.35;   // Fresnel rim glow
@@ -5930,7 +5930,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   window.__heroGlass = api;
 
   new FontLoader().load('./vendor/helvetiker_bold.typeface.json', font=>{
-    const geo=new TextGeometry('eccho',{font,size:2.6,height:DEPTH,curveSegments:20,bevelEnabled:false});
+    const geo=new TextGeometry('eccho',{font,size:2.6,height:DEPTH,curveSegments:20,bevelEnabled:true,bevelThickness:0.02,bevelSize:0.012,bevelSegments:2});
     geo.center(); geo.translate(0,0,DEPTH/2);
     text=new THREE.Mesh(geo,glass); group.add(text);
     geo.computeBoundingBox(); signBB=geo.boundingBox.clone();   // local-space collision box for the sign (axis-aligned in group space)
@@ -5991,7 +5991,10 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
           }
           p.x+=nx*(r-d); p.y+=ny*(r-d); p.z+=nz*(r-d);                     // push out to the surface
           const vn=u.vel.x*nx+u.vel.y*ny+u.vel.z*nz;
-          if(vn<0){ if(-vn<REST){ u.vel.x-=vn*nx; u.vel.y-=vn*ny; u.vel.z-=vn*nz; }   // slow contact → cancel inward component, rest/slide (no buzz)
+          if(vn<0){ if(-vn<REST){ u.vel.x-=vn*nx; u.vel.y-=vn*ny; u.vel.z-=vn*nz;   // slow contact → cancel inward component (no sink / no buzz)
+                      if(Math.hypot(u.vel.x,u.vel.y)<0.05){   // ...plus a gentle nudge toward the nearest edge so it rolls off (capped → never a fling)
+                        const dxr=signBB.max.x-p.x, dxl=p.x-signBB.min.x, dyr=signBB.max.y-p.y, dyl=p.y-signBB.min.y, mn=Math.min(dxr,dxl,dyr,dyl);
+                        if(mn===dxr) u.vel.x+=0.005; else if(mn===dxl) u.vel.x-=0.005; else if(mn===dyr) u.vel.y+=0.005; else u.vel.y-=0.005; } }
                     else { const j=-1.55*vn; u.vel.x+=j*nx; u.vel.y+=j*ny; u.vel.z+=j*nz; } }   // real hit → bounce (restitution 0.55)
         }
       }
@@ -6023,7 +6026,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       renderer.toneMapping=THREE.NoToneMapping; renderer.setRenderTarget(fbo); renderer.render(scene,camera); renderer.setRenderTarget(null);
       renderer.toneMapping=pt; text.material=glass; glass.buffer=fbo.texture;
     }
-    renderer.toneMappingExposure=1.22;
+    renderer.toneMappingExposure=2.05;
     renderer.render(scene,camera);   // bloom (composer) deferred — it dropped the balls in headless; needs a GPU pass
 
     if(!settled && t>=DUR+HOLD && location.search.indexOf('glasshold')<0){ settled=true; if(settleCb) settleCb(); }
