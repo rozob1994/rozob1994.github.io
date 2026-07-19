@@ -106,11 +106,10 @@
       z-index:1;overflow:hidden;transform-origin:50% 50%;
       transform:translate(-50%,-50%) scale(var(--reel-s,1));border-radius:0;
       will-change:transform;background:transparent}
-    #reelCover{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
-      text-align:center;background:rgba(9,17,74,0.62);pointer-events:none;opacity:var(--cover-o,1);will-change:opacity,filter}
-    #reelCover .reel-title{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);
-      line-height:1.02;letter-spacing:-.02em;color:#fff;
-      transform:translateY(var(--title-y,0));filter:blur(var(--title-b,0px));will-change:transform,filter}
+    #reelCover{position:absolute;inset:0;z-index:3;background:rgba(9,17,74,0.62);pointer-events:none;opacity:1;will-change:opacity}
+    #reelCover .reel-line{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;white-space:nowrap;
+      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);line-height:1.02;letter-spacing:-.02em;color:#fff}
+    #reelCover .reel-ch{display:inline-block;will-change:transform,opacity}
 
     /* CSS GLASS LOGO */
     .hero-logo-wrap{
@@ -1532,7 +1531,7 @@
     <div id="reelFrame">
       <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
       <div id="heroReelTint"></div>
-      <div id="reelCover"><span class="reel-title">you name it,<br>we create it</span></div>
+      <div id="reelCover"><div class="reel-line" id="reelLine1"></div><div class="reel-line" id="reelLine2"></div></div>
     </div>
   </div>
   <div class="hero-bg"></div>
@@ -4100,7 +4099,11 @@
     var cover = document.getElementById('reelCover');
     var glass = document.getElementById('heroGlass');
     if (!hero || !frame || !pin) return;
-    var title = cover ? cover.querySelector('.reel-title') : null;
+    function buildLine(el, txt){ if(!el) return []; el.textContent=''; var a=[]; for(var i=0;i<txt.length;i++){ var s=document.createElement('span'); s.className='reel-ch'; s.textContent = txt[i]===' ' ? ' ' : txt[i]; el.appendChild(s); a.push(s);} return a; }
+    var L1 = buildLine(document.getElementById('reelLine1'), 'you name it');
+    var L2 = buildLine(document.getElementById('reelLine2'), 'we create it');
+    function clamp01(v){ return v<0?0:v>1?1:v; }
+    function letterP(g,i,n,spread){ var start=(n>1?(i/(n-1)):0)*spread; return clamp01((g-start)/(1-spread)); }
     function scrub() {
       var vh = window.innerHeight || 1;
       var top = hero.getBoundingClientRect().top;
@@ -4123,13 +4126,23 @@
         if (sp >= 1) { if (window.__heroGlass && window.__heroGlass.running) window.__heroGlass.stop(); }
         else { if (window.__heroGlass && !window.__heroGlass.running) window.__heroGlass.resume(); } }
       if (cover) {
-        var co = Math.max(0, 1 - p / 0.5);            // dark cover fades over the first half of the runway
-        cover.style.opacity = co.toFixed(3);
-        cover.style.filter = 'blur(' + (5 * (1 - co)).toFixed(2) + 'px)';
-        if (title) {
-          title.style.transform = 'translateY(' + (-34 * (1 - co)).toFixed(1) + 'px)';
-          title.style.filter = 'blur(' + (9 * (1 - co)).toFixed(2) + 'px)';
+        // phases within the runway (after the card has grown, ~p>0.35):
+        var inG   = clamp01(p / 0.28);            // line 1 "you name it" settles in as the card arrives
+        var outG  = clamp01((p - 0.35) / 0.17);   // line 1 exits upward, letter by letter
+        var enG   = clamp01((p - 0.48) / 0.20);   // line 2 "we create it" rises in from the bottom, letter by letter
+        var fadeG = clamp01((p - 0.68) / 0.17);   // dark cover + line 2 fade away → reel fully visible
+        var off = vh * 0.85;
+        for (var i = 0; i < L1.length; i++) {
+          var li = letterP(inG, i, L1.length, 0.6), lo = letterP(outG, i, L1.length, 0.6);
+          L1[i].style.transform = 'translateY(' + ((1 - li) * 46 - lo * off).toFixed(1) + 'px)';   // in from just below → out the top
+          L1[i].style.opacity = (li * (1 - lo)).toFixed(3);
         }
+        for (var j = 0; j < L2.length; j++) {
+          var le = letterP(enG, j, L2.length, 0.6);
+          L2[j].style.transform = 'translateY(' + ((1 - le) * off).toFixed(1) + 'px)';             // in from off-screen bottom → centre
+          L2[j].style.opacity = (le * (1 - fadeG)).toFixed(3);
+        }
+        cover.style.opacity = (1 - fadeG).toFixed(3);
       }
     }
     window.addEventListener('scroll', scrub, { passive: true });
