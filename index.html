@@ -90,6 +90,16 @@
     #heroReel{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#0d1fd4;pointer-events:none}
     #heroReelTint{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(7,8,15,0.82) 0%,rgba(7,8,15,0.46) 40%,rgba(7,8,15,0.22) 72%,rgba(7,8,15,0.3) 100%)}
     @media (prefers-reduced-motion: reduce){#heroReel{display:none}}
+    /* Reel frame: scroll-scrubbed — enters ~70% (16:9-ish) then scales to full-bleed.
+       --reel-s / --reel-r / --cover-o are driven by initReelScrub(). */
+    #reelFrame{position:absolute;inset:0;z-index:0;overflow:hidden;transform-origin:50% 50%;
+      transform:scale(var(--reel-s,1));border-radius:var(--reel-r,0px);
+      will-change:transform,border-radius;background:#0d1fd4}
+    #reelCover{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+      text-align:center;background:rgba(9,17,74,0.62);pointer-events:none;opacity:var(--cover-o,1);will-change:opacity,filter}
+    #reelCover .reel-title{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);
+      line-height:1.02;letter-spacing:-.02em;color:#fff;
+      transform:translateY(var(--title-y,0));filter:blur(var(--title-b,0px));will-change:transform,filter}
 
     /* CSS GLASS LOGO */
     .hero-logo-wrap{
@@ -1506,8 +1516,11 @@
 <canvas id="heroGlass" aria-hidden="true"></canvas>
 
 <section id="hero">
-  <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
-  <div id="heroReelTint"></div>
+  <div id="reelFrame">
+    <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+    <div id="heroReelTint"></div>
+    <div id="reelCover"><span class="reel-title">you name it,<br>we create it</span></div>
+  </div>
   <div class="hero-bg"></div>
 </section>
 
@@ -2232,6 +2245,7 @@
       initNavSection();
       initAboutDot();
       initHeroReelScroll();
+      initReelScrub();
       initServiceCardHover();
       initAboutReveal();
     }, 700);
@@ -4065,6 +4079,37 @@
     }
     window.addEventListener('scroll', fade, { passive: true });
     fade();
+  }
+
+  // ── Reel scrub: as the reel rises over the glass hero it scales 0.7 → full-bleed,
+  // and the dark-blue cover ("you name it, we create it") blur-fades away. ─────────
+  function initReelScrub() {
+    var hero = document.getElementById('hero');
+    var frame = document.getElementById('reelFrame');
+    var cover = document.getElementById('reelCover');
+    if (!hero || !frame) return;
+    var title = cover ? cover.querySelector('.reel-title') : null;
+    function scrub() {
+      var vh = window.innerHeight || 1;
+      var top = hero.getBoundingClientRect().top;
+      // p: 0 when the reel's top is at the viewport bottom (just entering), 1 once it has
+      // risen to nearly fill the screen. Scale/rounding/cover all interpolate on p.
+      var p = Math.max(0, Math.min(1, (vh - top) / (vh * 0.92)));
+      frame.style.transform = 'scale(' + (0.7 + 0.3 * p).toFixed(4) + ')';
+      frame.style.borderRadius = (18 * (1 - p)).toFixed(1) + 'px';
+      if (cover) {
+        var co = Math.max(0, 1 - p / 0.6);            // cover gone by p=0.6, before full expansion
+        cover.style.opacity = co.toFixed(3);
+        cover.style.filter = 'blur(' + (5 * (1 - co)).toFixed(2) + 'px)';
+        if (title) {
+          title.style.transform = 'translateY(' + (-34 * (1 - co)).toFixed(1) + 'px)';
+          title.style.filter = 'blur(' + (9 * (1 - co)).toFixed(2) + 'px)';
+        }
+      }
+    }
+    window.addEventListener('scroll', scrub, { passive: true });
+    window.addEventListener('resize', scrub, { passive: true });
+    scrub();
   }
 
   // ── Nav section detection (white on blue) ─────────────────────────────────
