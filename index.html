@@ -5781,6 +5781,10 @@ import {FontLoader} from './vendor/FontLoader.hero.js';
 import {TextGeometry} from './vendor/TextGeometry.hero.js';
 import {RoomEnvironment} from './vendor/RoomEnvironment.hero.js';
 import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransmissionMaterial.hero.js';
+import {EffectComposer} from './vendor/pp/postprocessing/EffectComposer.js';
+import {RenderPass} from './vendor/pp/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from './vendor/pp/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
 (function heroGlass(){
   const canvas = document.getElementById('heroGlass');
   if (!canvas) return;
@@ -5837,6 +5841,10 @@ import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransm
     camera.updateProjectionMatrix(); renderer.setSize(w,h,false); fbo.setSize(Math.round(w*DPR),Math.round(h*DPR)); }
   resize(); addEventListener('resize', resize, {passive:true});
 
+  // NOTE: bloom (EffectComposer + UnrealBloomPass, imported above) is wired but
+  // left OFF — through the composer the flat-rendered balls disappear, which needs
+  // a GPU tuning pass to reconcile. Re-enable by rendering via a composer here.
+
   const group=new THREE.Group();
   const baseRX=-0.78, baseRY=0.02, baseRZ=0.55; let rzCur=baseRZ;
   group.rotation.set(baseRX,baseRY,baseRZ); scene.add(group);
@@ -5865,8 +5873,10 @@ import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransm
   const shadowGeo=new THREE.PlaneGeometry(1,1);
 
   let text=null; const balls=[]; const DEPTH=0.77;
+  const SBX=0.62, SBY=0.44, FX=0.93, FY=0.9;   // sign screen bbox (keep-out) + frame bounds (keep-in), in NDC
   const DUR=1.7, HOLD=0.8; let raf=0, running=false, flyStart=0, settled=false, settleCb=null, extrude=1;
   const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(999,999); let ptrX=0;
+  const _w=new THREE.Vector3(), _n=new THREE.Vector3(), _sr=new THREE.Vector3(), _su=new THREE.Vector3(), _iq=new THREE.Quaternion();
   addEventListener('pointermove',e=>{ ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1; ptrX=e.clientX/innerWidth-0.5; },{passive:true});
 
   const api={ ok:false,
@@ -5880,13 +5890,27 @@ import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransm
     const geo=new TextGeometry('eccho',{font,size:2.6,height:DEPTH,curveSegments:20,bevelEnabled:false});
     geo.center(); geo.translate(0,0,DEPTH/2);
     text=new THREE.Mesh(geo,glass); group.add(text);
-    const seeds=[[-9,4,0.7],[9,3,0.85],[-11,-3,0.55],[11,-1,0.6],[-7,-5,0.55],[7,-5,0.6],
-      [0,6,0.5],[-3,-6,0.45],[13,5,0.7],[-13,2,0.6],[4,7,0.5],[-6,7,0.55],[12,-5,0.65],[-12,-6,0.6]];
+    // local-space screen axes (fixed at spawn — mouse hasn't tilted yet)
+    _iq.copy(group.quaternion).invert();
+    _sr.set(1,0,0).applyQuaternion(_iq); _su.set(0,1,0).applyQuaternion(_iq);
+    // seeds point toward the frame margins; homes get relaxed into the ring around the sign
+    const seeds=[[-10,5,0.7],[10,4,0.8],[-12,-2,0.55],[12,0,0.6],[-8,-6,0.5],[8,-6,0.6],
+      [1,7,0.5],[-2,-7,0.45],[13,6,0.65],[-13,3,0.6]];
     seeds.forEach(s=>{ const r=s[2]; const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,32), ballMat.clone());
       const sh=new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:0}));
       sh.material.toneMapped=false; group.add(sh);
-      m.userData={ r, shadow:sh, home:new THREE.Vector3(s[0],s[1],r+2+Math.random()*4),
-        vel:new THREE.Vector3((Math.random()-.5)*0.07,(Math.random()-.5)*0.07,(Math.random()-.5)*0.11),
+      const home=new THREE.Vector3(s[0],s[1],r+0.5+Math.random()*1.2);
+      // relax the settle target into the visible margin ring: outside the sign's screen bbox, inside the frame
+      for(let g=0;g<40;g++){ _w.copy(home).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
+        const inSign=Math.abs(_n.x)<SBX && Math.abs(_n.y)<SBY, outFrame=Math.abs(_n.x)>FX||Math.abs(_n.y)>FY;
+        if(!inSign && !outFrame) break;
+        if(inSign){ if((SBX-Math.abs(_n.x))<(SBY-Math.abs(_n.y))) home.addScaledVector(_sr,Math.sign(_n.x||1)*0.5);
+                    else home.addScaledVector(_su,Math.sign(_n.y||1)*0.5); }
+        else { if(Math.abs(_n.x)>FX) home.addScaledVector(_sr,-Math.sign(_n.x)*0.5);
+               if(Math.abs(_n.y)>FY) home.addScaledVector(_su,-Math.sign(_n.y)*0.5); }
+        home.z=Math.max(r,Math.min(home.z,r+2.2)); }
+      m.userData={ r, shadow:sh, home,
+        vel:new THREE.Vector3((Math.random()-.5)*0.02,(Math.random()-.5)*0.02,(Math.random()-.5)*0.05),
         spin:new THREE.Vector3((Math.random()-.5)*0.006,(Math.random()-.5)*0.006,0),
         from:new THREE.Vector3((Math.random()<.5?-1:1)*(18+Math.random()*10),(Math.random()-.5)*22,(Math.random()-.5)*12) };
       m.position.copy(m.userData.home); group.add(m); balls.push(m); });
@@ -5903,18 +5927,30 @@ import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransm
       const over = ray.intersectObject(text,false).length>0;
       extrude += ((over?1.7:1.0)-extrude)*0.1; text.scale.z=extrude;
     }
+    // very subtle, very smooth mouse Z-tilt (update first so containment uses this frame's orientation)
+    rzCur += ((baseRZ + ptrX*0.12) - rzCur)*0.025;
+    group.rotation.z = rzCur;
+    // screen right/up expressed in the group's local space — lets us contain balls in NDC no matter the tilt/zoom
+    _iq.copy(group.quaternion).invert();
+    _sr.set(1,0,0).applyQuaternion(_iq); _su.set(0,1,0).applyQuaternion(_iq);
     balls.forEach(m=>{
       const u=m.userData, p=m.position, r=u.r;
       if(fin<1){ const e=1-Math.pow(1-fin,3); p.lerpVectors(u.from,u.home,e); }
       else {
-        // zero-g arcs: they TRAVEL across, arc down, bounce off the ground, fly back up
-        u.vel.z -= 0.0006;                                                       // gentle gravity → long arcs
+        // each ball holds its distributed ring slot horizontally (soft spring to home x,y) and bounces in z off the ground
+        u.vel.x += (u.home.x - p.x)*0.006;  u.vel.y += (u.home.y - p.y)*0.006;   // hold the slot → no corner-collapse
+        u.vel.z -= 0.0012;                                                       // gravity → gentle fall
         p.add(u.vel);
-        if(p.z<r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.96; if(u.vel.z<0.07) u.vel.z=0.07+Math.random()*0.05; } // elastic bounce → back up
-        const dr=Math.hypot(p.x,p.y);
-        if(dr>15){ u.vel.x-=(p.x/dr)*0.0004; u.vel.y-=(p.y/dr)*0.0004; }         // very weak return (imperceptible, not a wall)
-        if(dr<6.5){ u.vel.x+=(p.x/(dr||1))*0.0012; u.vel.y+=(p.y/(dr||1))*0.0012; }  // ease off the sign
-        const hs=Math.hypot(u.vel.x,u.vel.y); if(hs>0.05){ u.vel.x*=0.05/hs; u.vel.y*=0.05/hs; }  // clamp only horizontal; let vertical arcs breathe
+        if(p.z<r){ p.z=r; u.vel.z=Math.abs(u.vel.z)*0.72; if(u.vel.z<0.05) u.vel.z=0.05+Math.random()*0.06;
+          u.vel.z=Math.min(u.vel.z,0.13); }                                      // ground bounce → capped low hop
+        u.vel.x*=0.9; u.vel.y*=0.9;                                              // strong horizontal damping → settle smoothly into the slot
+        // safety: keep out of the sign's screen bbox and inside the frame (rare with the slot spring)
+        _w.copy(p).applyQuaternion(group.quaternion); _n.copy(_w).project(camera);
+        if(Math.abs(_n.x)<SBX && Math.abs(_n.y)<SBY){
+          if((SBX-Math.abs(_n.x))<(SBY-Math.abs(_n.y))) u.vel.addScaledVector(_sr, Math.sign(_n.x||1)*0.006);
+          else u.vel.addScaledVector(_su, Math.sign(_n.y||1)*0.006); }
+        if(Math.abs(_n.x)>0.97){ p.addScaledVector(_sr, -Math.sign(_n.x)*(Math.abs(_n.x)-0.97)*4); u.vel.addScaledVector(_sr,-_sr.dot(u.vel)*1.4); }
+        if(Math.abs(_n.y)>0.95){ p.addScaledVector(_su, -Math.sign(_n.y)*(Math.abs(_n.y)-0.95)*4); u.vel.addScaledVector(_su,-_su.dot(u.vel)*1.4); }
       }
       m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
       // shadow grows/darkens as the ball nears the ground
@@ -5922,9 +5958,6 @@ import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransm
       sh.position.set(p.x,p.y,0.03); sh.material.opacity=Math.max(0,0.6*(1-h/6));
       const sc=r*2.4*(1+h*0.1); sh.scale.set(sc,sc,1);
     });
-    // very subtle, very smooth mouse Z-tilt
-    rzCur += ((baseRZ + ptrX*0.12) - rzCur)*0.025;
-    group.rotation.z = rzCur;
 
     if(text){
       glass.time=t; const pt=renderer.toneMapping;
@@ -5932,7 +5965,8 @@ import {MeshTransmissionMaterialImpl, DiscardMaterial} from './vendor/MeshTransm
       renderer.toneMapping=THREE.NoToneMapping; renderer.setRenderTarget(fbo); renderer.render(scene,camera); renderer.setRenderTarget(null);
       renderer.toneMapping=pt; text.material=glass; glass.buffer=fbo.texture;
     }
-    renderer.toneMappingExposure=1.4; renderer.render(scene,camera);
+    renderer.toneMappingExposure=1.4;
+    renderer.render(scene,camera);   // bloom (composer) deferred — it dropped the balls in headless; needs a GPU pass
 
     if(!settled && t>=DUR+HOLD && location.search.indexOf('glasshold')<0){ settled=true; if(settleCb) settleCb(); }
     raf=requestAnimationFrame(loop);
