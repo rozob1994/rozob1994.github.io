@@ -781,10 +781,20 @@
     /* ABOUT HEADING — yellow glow */
     .about-heading em{text-shadow:0 0 40px rgba(245,217,78,0.35)}
 
-    /* SCROLL PILL — subtle bounce */
-    @keyframes pillBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
-    @keyframes pillExit{0%{transform:translateX(-50%) translateY(0);opacity:1}28%{transform:translateX(-50%) translateY(-10px);opacity:1}100%{transform:translateX(-50%) translateY(28px);opacity:0}}
-    .scroll-pill{animation:pillBounce 2.2s var(--ease) infinite}
+    /* SCROLL PILL — pop in with anticipation, then settle into the idle bounce */
+    @keyframes pillBounce{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-50%) translateY(-4px) scale(1)}}
+    @keyframes pillExit{0%{transform:translateX(-50%) translateY(0) scale(1);opacity:1}28%{transform:translateX(-50%) translateY(-10px) scale(1);opacity:1}100%{transform:translateX(-50%) translateY(28px) scale(1);opacity:0}}
+    /* anticipation: appears small, winds back down (45%), then springs up past 1 and settles */
+    @keyframes pillPop{
+      0%{opacity:0;transform:translateX(-50%) scale(0.5)}
+      30%{opacity:1;transform:translateX(-50%) scale(0.85)}
+      45%{transform:translateX(-50%) scale(0.76)}
+      70%{transform:translateX(-50%) scale(1.13)}
+      85%{transform:translateX(-50%) scale(0.98)}
+      100%{opacity:1;transform:translateX(-50%) scale(1)}
+    }
+    .scroll-pill{animation:none}
+    .scroll-pill.pill-visible{animation:pillPop 0.66s cubic-bezier(0.4,0,0.2,1) both, pillBounce 2.2s var(--ease) infinite 0.7s}
     .scroll-pill.pill-exit{animation:pillExit 0.65s var(--ease) forwards}
 
     /* WORK ITEM — improved card border on hover */
