@@ -529,7 +529,7 @@
     .service-desc{font-size:16px;color:rgba(255,255,255,0.6);line-height:1.8}
 
     /* CONTACT */
-    #contact-wrapper{position:relative;min-height:135vh;background:#07080f}
+    #contact-wrapper{position:relative;min-height:100vh;background:#07080f}
     .contact-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
     #contactGlowDot{position:absolute;width:32px;height:32px;background:#f5d94e;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 60px rgba(245,217,78,0.9),0 0 120px rgba(245,217,78,0.4),0 0 200px rgba(245,217,78,0.2);animation:contactPulse 2s var(--ease) infinite;z-index:1;pointer-events:none;will-change:transform}
     @keyframes contactPulse{
@@ -620,7 +620,7 @@
       .svc-list{order:1}
 
       /* Contact */
-      #contact-wrapper{min-height:112vh}            /* shorter so the iris reveal completes sooner */
+      #contact-wrapper{min-height:100vh}            /* one screen — reveal is static now, no runway needed */
       .contact-inner{grid-template-columns:1fr;gap:40px}
       #contactContent{padding:0 28px}
       .contact-photo{max-width:280px;max-height:none;margin:0 auto;justify-self:center}
@@ -1481,12 +1481,12 @@
     /* Back-to-top: a circled up-arrow on the right of the contact section, bobbing
        up and down to invite a click (no label — the gesture reads on its own). */
     .scroll-top-arrow{position:absolute;right:clamp(22px,4vw,72px);top:50%;transform:translateY(-50%);
-      width:52px;height:52px;border-radius:50%;background:transparent;border:1px solid rgba(0,0,0,0.28);
+      width:52px;height:52px;border-radius:50%;background:#0d1fd4;border:1px solid #0d1fd4;
       display:flex;align-items:center;justify-content:center;cursor:none;pointer-events:auto;z-index:4;
       transition:background .3s var(--ease),border-color .3s var(--ease)}
-    .scroll-top-arrow svg{width:20px;height:20px;stroke:#15161d;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+    .scroll-top-arrow svg{width:20px;height:20px;stroke:var(--yellow);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
       animation:scrollTopBob 1.5s var(--ease) infinite}
-    .scroll-top-arrow:hover{background:rgba(0,0,0,0.06);border-color:rgba(0,0,0,0.5)}
+    .scroll-top-arrow:hover{background:#0a17ad;border-color:#0a17ad}
     @keyframes scrollTopBob{0%,100%{transform:translateY(3px)}50%{transform:translateY(-3px)}}
     @media(max-width:760px){
       .scroll-top-arrow{right:50%;top:auto;bottom:clamp(20px,5vh,40px);transform:translateX(50%);width:46px;height:46px}
