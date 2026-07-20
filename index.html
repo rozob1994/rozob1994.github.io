@@ -2193,13 +2193,8 @@
         heroEl.parentNode.insertBefore(sp, heroEl);
       }
       window.__glassHero = true;
-      // Fade + pause the glass as the reel rises over it; resume near the top.
-      // Glass opacity + pause/resume are owned entirely by initReelScrub now (it shows the glass
-      // behind the reel card and hides it once past the reel). glassGate is a no-op.
-      var glassGate = function(){};
-      window.addEventListener('scroll', glassGate, {passive:true});
-      window.addEventListener('resize', glassGate, {passive:true});
-      glassGate();
+      // Glass opacity + pause/resume are owned entirely by initReelScrub (it shows the glass
+      // behind the reel card and hides + pauses it once past the reel).
       // Hide the top nav bar over the glass hero + reel; reveal it at the projects.
       var navEl = document.getElementById('navbar');
       if (navEl) {
@@ -2268,7 +2263,6 @@
         setTimeout(function(){ logoDot.classList.add('echo-active'); }, 660);
       }
 
-      window.addEventListener('scroll', onScroll, {passive:true});
       // Build the default (Mofid) work panel + its filter buttons.
       if (window._switchWorkTab) window._switchWorkTab('mofid');   // builds the 3D carousel (kept untouched)
       buildWorksGallery();                                          // the new selected-work grid
@@ -2328,12 +2322,12 @@
       ['echoField', 'who we are'],
       ['services', 'behind the scenes'],
       ['contact-wrapper', 'say hello']
-    ];
+    ].map(m => [document.getElementById(m[0]), m[1]]);   // resolve elements once, not every scroll
     let cur = '';
     function pick() {
       let label = MAP[0][1];
       for (let i = 0; i < MAP.length; i++) {
-        const e = document.getElementById(MAP[i][0]); if (!e) continue;
+        const e = MAP[i][0]; if (!e) continue;
         if (e.getBoundingClientRect().top <= 70) label = MAP[i][1];
       }
       if (label !== cur) {
@@ -2579,13 +2573,19 @@
       if (L >= 150) return BLUE; // white / light surface → blue
       return WHITE; // dark surface → white
     }
-    var pending = false;
+    var pending = false, lastSample = 0;
     function update() {
       pending = false;
       var se = document.scrollingElement, max = se.scrollHeight - window.innerHeight;
       var p = max > 0 ? Math.max(0, Math.min(1, se.scrollTop / max)) : 0;
-      dot.style.top = (p * 100).toFixed(2) + '%';
+      dot.style.top = (p * 100).toFixed(2) + '%';          // dot position: cheap, every frame
       rail.classList.toggle('on', max > 40);
+      // Colour sampling is an elementFromPoint hit-test + a getComputedStyle walk — costly.
+      // The colour transition is 0.45s, so sampling ~8×/s (not per-frame) is visually identical
+      // and keeps this off the hot scroll path.
+      var now = performance.now();
+      if (now - lastSample < 120) return;
+      lastSample = now;
       var r = rail.getBoundingClientRect();
       var y = Math.max(2, Math.min(window.innerHeight - 2, r.top + r.height * p));
       var el = document.elementFromPoint(window.innerWidth - 46, y);
@@ -4363,8 +4363,6 @@
     window.addEventListener('scroll', updateNav, {passive:true});
     updateNav();
   }
-
-  function onScroll() {}
 
   // ── About section reveal animations ─────────────────────────────────────
   function initAboutReveal() {
