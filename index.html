@@ -2168,6 +2168,14 @@
       // reels "pull over," then projects come out from below).
       heroGlassEl.style.opacity = '1';
       document.body.classList.add('glass-hero');
+      // glass-hero just dropped #heroGlass to z-index:1. The solid-blue #canvasBg (z-9)
+      // is now ABOVE the glass sign — if it fades over 0.65s (the generic path below) it
+      // veils the sign with flat blue for that whole fade = a brief blue flash on reveal.
+      // On the glass path canvasBg is redundant (the glass canvas IS the blue backdrop),
+      // so kill it instantly here — no veil, no flash.
+      canvasBg.style.transition = 'none';
+      canvasBg.style.opacity = '0';
+      canvasBg.style.display = 'none';
       // Real 100vh spacer (a margin-top collapses through <body>) so the fixed
       // glass has a screen to itself before the reel scrolls up over it.
       if (!document.getElementById('glassSpacer')) {
