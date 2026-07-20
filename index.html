@@ -3655,6 +3655,23 @@
           group.querySelectorAll('.w2f-btn').forEach(function (b) { b.classList.remove('active'); });
           btn.classList.add('active');
           state[axis] = btn.dataset.val; apply();
+          // Filtering can shrink the grid a lot; if that leaves us looking PAST it (dumped
+          // into the editorial section below), pull the works section back into view.
+          requestAnimationFrame(function () {
+            var anchor = document.querySelector('.works2') || grid;
+            var ar = anchor.getBoundingClientRect(), gb = grid.getBoundingClientRect();
+            if (ar.top < 60 && gb.bottom < window.innerHeight * 0.6) {
+              window.__navJump = true;
+              var done = function () { window.__navJump = false; };
+              if (window.__lenis && window.__lenis.scrollTo) {
+                window.__lenis.scrollTo(anchor, { offset: -110, duration: 0.7, lock: true, onComplete: done });
+                setTimeout(done, 900);
+              } else {
+                window.scrollTo({ top: document.scrollingElement.scrollTop + ar.top - 110, behavior: 'smooth' });
+                setTimeout(done, 900);
+              }
+            }
+          });
         });
       });
     });
