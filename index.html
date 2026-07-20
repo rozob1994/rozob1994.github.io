@@ -2542,12 +2542,21 @@
   (function initScrollRail() {
     var rail = document.getElementById('scrollRail'), dot = document.getElementById('scrollDot');
     if (!rail || !dot) return;
-    function lum(el) {
+    var WHITE = 'rgba(255,255,255,0.95)', BLUE = 'rgba(13,31,212,0.95)', YELLOW = 'rgba(245,217,78,0.98)';
+    function rgb(el) {
       for (; el && el !== document.documentElement; el = el.parentElement) {
         var c = getComputedStyle(el).backgroundColor, m = c && c.match(/[\d.]+/g);
-        if (m && m.length >= 3 && (m.length < 4 || +m[3] > 0.35)) return 0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2];
+        if (m && m.length >= 3 && (m.length < 4 || +m[3] > 0.35)) return [+m[0], +m[1], +m[2]];
       }
-      return 20;
+      return [11, 11, 14];
+    }
+    function railColor(el) {
+      var c = rgb(el), r = c[0], g = c[1], b = c[2];
+      var L = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (b > 110 && b > r + 55 && b > g + 55) return YELLOW; // blue surface → yellow
+      if (r > 175 && g > 165 && b < 150 && r - b > 70) return BLUE; // yellow surface → blue
+      if (L >= 150) return BLUE; // white / light surface → blue
+      return WHITE; // dark surface → white
     }
     var pending = false;
     function update() {
@@ -2559,7 +2568,7 @@
       var r = rail.getBoundingClientRect();
       var y = Math.max(2, Math.min(window.innerHeight - 2, r.top + r.height * p));
       var el = document.elementFromPoint(window.innerWidth - 46, y);
-      rail.style.color = (el ? lum(el) : 20) < 130 ? 'rgba(255,255,255,0.95)' : 'rgba(13,31,212,0.95)';
+      rail.style.color = el ? railColor(el) : WHITE;
     }
     function onScroll() { if (!pending) { pending = true; requestAnimationFrame(update); } }
     window.addEventListener('scroll', onScroll, { passive: true });
