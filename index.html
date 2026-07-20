@@ -60,8 +60,9 @@
     .nav-toggle{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:38px;height:38px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:50%;cursor:pointer;padding:0;transition:background .25s}
     .nav-toggle:hover{background:rgba(255,255,255,0.12)}
     .nav-toggle span{display:block;width:15px;height:1.6px;background:#fff;border-radius:2px;transition:transform .32s var(--ease),opacity .2s}
-    .nav-toggle.open span:nth-child(1){transform:translateY(2.8px) rotate(45deg)}
-    .nav-toggle.open span:nth-child(2){transform:translateY(-2.8px) rotate(-45deg)}
+    .nav-toggle.open span:nth-child(1){transform:translateY(5.6px) rotate(45deg)}
+    .nav-toggle.open span:nth-child(2){opacity:0}
+    .nav-toggle.open span:nth-child(3){transform:translateY(-5.6px) rotate(-45deg)}
     .nav-menu{pointer-events:none;width:min(540px,92vw);margin-top:8px;background:rgba(12,13,18,0.93);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.09);border-radius:20px;overflow:hidden;box-shadow:0 16px 44px rgba(0,0,0,0.5);max-height:0;opacity:0;transform:translateY(-10px);transition:max-height .5s var(--ease),opacity .32s var(--ease),transform .42s var(--ease)}
     .nav-menu.open{max-height:70vh;opacity:1;transform:translateY(0);pointer-events:all}
     .nav-menu-item{display:block;padding:15px 26px;font-family:var(--font-display);font-weight:600;font-size:20px;color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.07);transition:background .25s,padding-left .25s}
@@ -1493,7 +1494,7 @@
   <div class="nav-pill">
     <a href="#hero" class="nav-logo" aria-label="eccho — home"><span class="nav-logo-dot" aria-hidden="true"></span><span class="nav-logo-word">ECCHO</span></a>
     <span class="nav-where" id="navWhere">we are eccho</span>
-    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
   <div class="nav-menu" id="navMenu">
     <a class="nav-menu-item" href="#work">Work</a>
@@ -2267,7 +2268,24 @@
       toggle.setAttribute('aria-expanded', isOpen);
     }
     toggle.addEventListener('click', (e) => { e.stopPropagation(); setOpen(!menu.classList.contains('open')); });
-    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', (ev) => {
+      setOpen(false);
+      const href = a.getAttribute('href');
+      if (!href || href[0] !== '#') return;
+      const target = document.getElementById(href.slice(1));
+      if (!target) return;
+      ev.preventDefault();
+      // Suppress the About-ball snap so the jump isn't hijacked to the ball anchor,
+      // and use Lenis so it lands correctly through the pinned reel/hero layout.
+      window.__navJump = true;
+      const done = () => { window.__navJump = false; };
+      if (window.__lenis && window.__lenis.scrollTo) {
+        window.__lenis.scrollTo(target, { duration: 1.1, offset: -80, lock: true, onComplete: done });
+        setTimeout(done, 1400);
+      } else {
+        target.scrollIntoView({ behavior: 'smooth' }); setTimeout(done, 1400);
+      }
+    }));
     document.addEventListener('click', (e) => { if (menu.classList.contains('open') && !menu.contains(e.target) && !toggle.contains(e.target)) setOpen(false); });
   })();
 
@@ -2277,7 +2295,7 @@
     if (!el) return;
     const MAP = [
       ['hero', 'we are eccho'],
-      ['work', 'the work'],
+      ['work', 'the good stuff'],
       ['echoField', 'who we are'],
       ['services', 'behind the scenes'],
       ['contact-wrapper', 'say hello']
@@ -5767,7 +5785,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   window.addEventListener('scroll', () => {
     const y = window.scrollY, dir = y - lastScrollY; lastScrollY = y;
     const lenis = window.__lenis;
-    if (snapping || !lenis || !visible) return;
+    if (snapping || !lenis || !visible || window.__navJump) return;   // don't hijack a menu-driven jump
     const vhh = window.innerHeight || 1;
     const top = host.getBoundingClientRect().top + y;      // echoField top in doc coords
     const arriveY = top + 0.80 * vhh;                                  // descRaw = 1.0 (ball arrived, big)
