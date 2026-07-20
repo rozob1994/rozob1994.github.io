@@ -2559,7 +2559,7 @@
       var r = rail.getBoundingClientRect();
       var y = Math.max(2, Math.min(window.innerHeight - 2, r.top + r.height * p));
       var el = document.elementFromPoint(window.innerWidth - 46, y);
-      rail.style.color = (el ? lum(el) : 20) < 130 ? 'rgba(255,255,255,0.95)' : 'rgba(21,22,29,0.92)';
+      rail.style.color = (el ? lum(el) : 20) < 130 ? 'rgba(255,255,255,0.95)' : 'rgba(13,31,212,0.95)';
     }
     function onScroll() { if (!pending) { pending = true; requestAnimationFrame(update); } }
     window.addEventListener('scroll', onScroll, { passive: true });
