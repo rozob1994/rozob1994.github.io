@@ -5428,6 +5428,13 @@
   function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
   requestAnimationFrame(raf);
   window.__lenis = lenis;
+  // Always open at the top of the page — Lenis keeps its own scroll state, and on reload
+  // (or bfcache restore) it can otherwise land past the reel. Snap Lenis + the window to 0
+  // now, on window.load, and on every pageshow.
+  function toTop() { try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) {} window.scrollTo(0, 0); }
+  toTop();
+  window.addEventListener('load', toTop);
+  window.addEventListener('pageshow', toTop);
   // Pause smooth-scroll while a full-screen overlay is open, so the wheel drives the
   // overlay's own scroll (it also carries data-lenis-prevent) and never the page behind.
   function syncLenis() {
