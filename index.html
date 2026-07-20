@@ -34,6 +34,14 @@
 
     #cursor-dot{position:fixed;width:8px;height:8px;background:var(--yellow);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference}
     body.hide-cursor-dot #cursor-dot{opacity:0}   /* hidden over the hero-ball grid so it doesn't tangle with the dots */
+    /* On-brand scroll indicator — hide the native bar, show a thin rail + a dot whose
+       colour flips to contrast whatever section is behind it (set by initScrollRail). */
+    html,body{scrollbar-width:none;-ms-overflow-style:none}
+    html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
+    #scrollRail{position:fixed;right:16px;top:24vh;height:52vh;width:8px;z-index:470;pointer-events:none;color:#fff;opacity:0;transition:color .45s var(--ease),opacity .5s var(--ease)}
+    #scrollRail.on{opacity:1}
+    #scrollRail::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1.5px;transform:translateX(-50%);background:currentColor;opacity:.2;border-radius:1px}
+    #scrollDot{position:absolute;left:50%;top:0;width:6px;height:6px;border-radius:50%;background:currentColor;transform:translate(-50%,-50%);box-shadow:0 0 8px 1px currentColor}
     #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(245,217,78,0.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .4s var(--ease),height .4s,border-color .3s}
     body.hovering #cursor-ring{width:60px;height:60px;border-color:var(--yellow)}
     /* over bright surfaces (e.g. the light work section) the ring goes dark so it stays visible */
@@ -1488,6 +1496,7 @@
 <body class="seq-playing">
 <div id="scroll-progress"></div>
 <div id="cursor-dot"></div>
+<div id="scrollRail" aria-hidden="true"><div id="scrollDot"></div></div>
 <div id="cursor-ring"></div>
 
 <nav id="navbar">
@@ -1499,7 +1508,6 @@
   <div class="nav-menu" id="navMenu">
     <a class="nav-menu-item" href="#work">Work</a>
     <a class="nav-menu-item" href="#services">What we do</a>
-    <a class="nav-menu-item" href="#about">About</a>
     <a class="nav-menu-item" href="#contact-wrapper">Contact</a>
   </div>
 </nav>
@@ -2518,12 +2526,46 @@
     var btn = document.getElementById('backToTop');
     if (!btn) return;
     btn.addEventListener('click', function () {
+      window.__navJump = true;   // suppress the About-ball snap so it doesn't get stuck mid-way
+      var done = function () { window.__navJump = false; };
       if (window.__lenis && typeof window.__lenis.scrollTo === 'function') {
-        window.__lenis.scrollTo(0, { duration: 1.2 });
+        window.__lenis.scrollTo(0, { duration: 1.2, lock: true, onComplete: done });
+        setTimeout(done, 1500);
       } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(done, 1500);
       }
     });
+  })();
+
+  // On-brand scroll indicator: a thin rail + a dot at the scroll position, whose colour
+  // flips to contrast the section behind it (samples the bg luminance under the dot).
+  (function initScrollRail() {
+    var rail = document.getElementById('scrollRail'), dot = document.getElementById('scrollDot');
+    if (!rail || !dot) return;
+    function lum(el) {
+      for (; el && el !== document.documentElement; el = el.parentElement) {
+        var c = getComputedStyle(el).backgroundColor, m = c && c.match(/[\d.]+/g);
+        if (m && m.length >= 3 && (m.length < 4 || +m[3] > 0.35)) return 0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2];
+      }
+      return 20;
+    }
+    var pending = false;
+    function update() {
+      pending = false;
+      var se = document.scrollingElement, max = se.scrollHeight - window.innerHeight;
+      var p = max > 0 ? Math.max(0, Math.min(1, se.scrollTop / max)) : 0;
+      dot.style.top = (p * 100).toFixed(2) + '%';
+      rail.classList.toggle('on', max > 40);
+      var r = rail.getBoundingClientRect();
+      var y = Math.max(2, Math.min(window.innerHeight - 2, r.top + r.height * p));
+      var el = document.elementFromPoint(window.innerWidth - 46, y);
+      rail.style.color = (el ? lum(el) : 20) < 130 ? 'rgba(255,255,255,0.95)' : 'rgba(21,22,29,0.92)';
+    }
+    function onScroll() { if (!pending) { pending = true; requestAnimationFrame(update); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    if (window.__lenis && window.__lenis.on) window.__lenis.on('scroll', onScroll);
+    update();
   })();
 
   // ── Hero dot: gentle scale-up in place next to the logo + scroll parallax ──
@@ -3517,7 +3559,7 @@
     // LineSidebar-style proximity: ease each filter's --effect toward a cursor-distance target
     // (active items hold at 1). One rAF lerp so colour, shift and marker move together.
     (function initFilterProximity(host){
-      var last = 0, raf = null, RADIUS = 95, TAU = 0.14;
+      var last = 0, raf = null, RADIUS = 30, TAU = 0.14;   // tight → only the item under the cursor lights up, not its neighbours
       var tgt = new WeakMap(), cur = new WeakMap();
       function items(){ return host.querySelectorAll('.w2f-btn'); }
       function frame(now){
@@ -5506,9 +5548,8 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const slotEl = document.getElementById('aboutBallSlot');
   if (!canvas || !stage || !host || !aboutSec) return;
   const section = stage;   // canvas sizing / observers use the pinned stage
-  // Hide the little cursor dot while over this section — it tangles with the grid dots.
-  stage.addEventListener('pointerenter', function () { document.body.classList.add('hide-cursor-dot'); });
-  stage.addEventListener('pointerleave', function () { document.body.classList.remove('hide-cursor-dot'); });
+  // (Cursor dot stays visible over this section now — the old dot-grid it tangled with
+  //  was replaced by the RippleGrid, so there's nothing to conflict with.)
 
   let renderer;
   try {
