@@ -29,7 +29,10 @@
       /* One easing curve for the whole site — every reveal, hover, pulse uses this */
       --ease:cubic-bezier(0.16,1,0.3,1);
     }
-    html{scroll-behavior:smooth}
+    /* Native smooth-scroll ONLY when Lenis isn't driving (touch / reduced-motion).
+       When Lenis is active it adds `.lenis` to <html>; native scroll-behavior:smooth
+       fights Lenis's per-frame scrollTo and makes wheel + anchor jumps feel janky. */
+    html:not(.lenis){scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-weight:300;line-height:1.6;cursor:none;overflow-x:hidden}
 
     #cursor-dot{position:fixed;width:8px;height:8px;background:var(--yellow);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference}
@@ -194,7 +197,7 @@
     .hero-title{font-family:var(--font-display);font-size:clamp(80px,10vw,140px);font-weight:800;line-height:0.9;color:#fff;letter-spacing:-.02em;margin-left:-0.065em}
     .hero-subtitle{font-family:var(--font-display);font-size:clamp(18px,2.2vw,28px);font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:0.15em;margin-top:2px;line-height:1;margin-left:-0.07em}
     .hero-author{font-family:var(--font-mono);font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.82);text-transform:uppercase;margin-top:4px;margin-left:-0.07em;text-shadow:0 1px 16px rgba(0,0,0,0.5)}
-    .scroll-pill{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:lowercase;color:#fff;background:#0d1fd4;border:1px solid #0d1fd4;border-radius:100px;padding:6px 20px;z-index:50;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
+    .scroll-pill{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:20px;letter-spacing:0.15em;text-transform:lowercase;color:#15161d;background:var(--yellow);border:1px solid var(--yellow);border-radius:100px;padding:12px 40px;z-index:50;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
     .scroll-pill.pill-visible{opacity:1!important}
 
     .about-marquee-wrap{overflow:hidden;height:auto;padding:16px 0}
@@ -2288,8 +2291,8 @@
       window.__navJump = true;
       const done = () => { window.__navJump = false; };
       if (window.__lenis && window.__lenis.scrollTo) {
-        window.__lenis.scrollTo(target, { duration: 1.1, offset: -80, lock: true, onComplete: done });
-        setTimeout(done, 1400);
+        window.__lenis.scrollTo(target, { duration: 1.7, offset: -80, lock: true, easing: function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }, onComplete: done });
+        setTimeout(done, 2000);
       } else {
         target.scrollIntoView({ behavior: 'smooth' }); setTimeout(done, 1400);
       }
