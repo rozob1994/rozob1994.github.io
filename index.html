@@ -3613,10 +3613,22 @@
       grid.appendChild(el); cardEls.push(el);
     });
 
-    const rev = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rev.unobserve(e.target); } });
-    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-    cardEls.forEach(function (el) { rev.observe(el); });
+    // Staggered fade-in: reset every card to hidden (instantly, no fade-out), then
+    // re-add `.in` on the visible ones with an increasing transition-delay so they
+    // cascade one after another. Re-run on every filter change so a new order always
+    // replays the cascade instead of snapping.
+    var revealed = false;
+    function reveal() {
+      var shown = cardEls.filter(function (el) { return el.style.display !== 'none'; });
+      cardEls.forEach(function (el) { el.style.transition = 'none'; el.classList.remove('in'); el.style.transitionDelay = ''; });
+      void grid.offsetWidth;                       // commit the hidden state before re-enabling transitions
+      cardEls.forEach(function (el) { el.style.transition = ''; });
+      shown.forEach(function (el, i) { el.style.transitionDelay = (i * 0.06).toFixed(2) + 's'; el.classList.add('in'); });
+    }
+    var rev = new IntersectionObserver(function (es) {
+      if (es[0].isIntersecting) { revealed = true; reveal(); rev.disconnect(); }
+    }, { threshold: 0, rootMargin: '0px 0px -80px 0px' });   // grid is very tall — fire as soon as its top edge enters
+    rev.observe(grid);
 
     const COL_LABEL = { all: 'All Projects', mofid: 'Mofid Securities', personal: 'Personal Work' };
     const colBtns = filtersEl.querySelectorAll('.w2f-group[data-axis="collection"] .w2f-btn');
@@ -3649,13 +3661,14 @@
         const okS = state.service === 'all' || (' ' + el.dataset.svc + ' ').indexOf(' ' + state.service + ' ') >= 0;
         const show = okC && okS;
         el.style.display = show ? '' : 'none';
-        if (show) { el.classList.add('in'); vis++; }
+        if (show) vis++;
       });
       let label = COL_LABEL[state.collection];
       if (state.service !== 'all') label = WORKS2_SVC[state.service] + (state.collection !== 'all' ? ' — ' + COL_LABEL[state.collection] : '');
       if (titleEl) titleEl.textContent = label;
       if (countEl) countEl.textContent = '(' + ('0' + vis).slice(-2) + ')';
       refreshAvail();
+      if (revealed) reveal();                      // replay the staggered cascade on every filter change
     }
     filtersEl.querySelectorAll('.w2f-group').forEach(function (group) {
       const axis = group.dataset.axis;
