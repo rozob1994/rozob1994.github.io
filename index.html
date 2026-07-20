@@ -1429,7 +1429,7 @@
     .ecar-media{background:#0b0b0e}
     .ecar-media .es-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
     /* tagline side — dark grey, with the wavy-dots canvas behind the type */
-    .ecar-panel{background:#0d0d10;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(40px,7vh,90px) clamp(28px,3.5vw,64px)}
+    .ecar-panel{background:#0d1fd4;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(40px,7vh,90px) clamp(28px,3.5vw,64px)}
     .ecar-panel .es-wave{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.7}
     .ecar-panel .es-txt{position:relative;z-index:2;display:flex;flex-direction:column;gap:clamp(14px,1.6vh,26px)}
     .ecar:not(.mirror) .ecar-panel .es-txt{align-items:flex-end;text-align:right}
@@ -3053,7 +3053,7 @@
       const pin = document.createElement('div'); pin.className = 'ecar-pin';
       if (ci === 2) {
         // ── Void gallery ──
-        section.className = 'ecar ecar-void'; section.style.height = '180vh';
+        section.className = 'ecar ecar-void'; section.style.height = '120vh';   // trimmed from 180vh — cut the dead scroll (void is time-based, needs no extra runway)
         const layer = document.createElement('div'); layer.className = 'evoid';
         const txt = document.createElement('div'); txt.className = 'evoid-text';
         txt.innerHTML = '<h2 class="ev-title">' + cfg.text + '</h2><div class="ev-sub">' + cfg.sub + '</div>';
@@ -3085,7 +3085,7 @@
       });
       pin.appendChild(panel); pin.appendChild(media);
       section.appendChild(pin); host.appendChild(section);
-      ecInitWave(wave, { frequency: 2, speed: 1, cellSize: 10, gamma: 8, paletteBias: -4 });
+      ecInitWave(wave, { frequency: 2, speed: 1, cellSize: 10, gamma: 8, paletteBias: -4, colors: ['#f5d94e'] });   // yellow waves
       ecInitWeight(letters, section);
       editorials.push({ el: section, imgEls: imgEls, N: N, panel: panel, txt: txt });
     });
@@ -3109,7 +3109,7 @@
         // over the first ~1.1 screens of scroll into the section.
         const padV = parseFloat(getComputedStyle(sec.panel).paddingTop) || 0;
         const travel = Math.max(0, sec.panel.clientHeight - sec.txt.offsetHeight - padV * 2);
-        const tp = Math.min(1, Math.max(0, -rect.top / (1.1 * vh)));
+        const tp = Math.min(1, Math.max(0, -rect.top / Math.max(1, (sec.N - 1) * stepPx)));   // glide the tagline down over the FULL image sequence (ends on the last slide)
         const te = tp * tp * (3 - 2 * tp);
         sec.txt.style.transform = 'translateY(' + (-(1 - te) * travel).toFixed(1) + 'px)';
       }
@@ -5123,7 +5123,7 @@
     // Standard ease-out per glyph (fast start, slow settle); the stagger itself is
     // distributed ease-in over a fixed window, so the paragraph floods in quickly at
     // first and trails off at the end regardless of length.
-    var EASE_OUT = 'cubic-bezier(0.33,1,0.68,1)', WINDOW = 0.85;
+    var EASE_OUT = 'cubic-bezier(0.33,1,0.68,1)', WINDOW = 0.5;   // last glyph starts ~0.5s + 0.42s transition ≈ under 1s total
     var idx = 0;
     words.forEach(function (word, wi) {
       var w = document.createElement('span');
@@ -5150,12 +5150,15 @@
     items.forEach(function (x) { x.classList.toggle('hot', x === it); });
     maskItems.forEach(function (x) { x.classList.toggle('hot', x.dataset.svc === k); });   // white copy above the box
     for (var key in layers) layers[key].classList.toggle('on', key === k);
-    // move the note to the hovered title's height (centred on it), then type it in
+    // type the note, then centre it on the hovered title — but clamp it BELOW the
+    // "What we offer" lead so they never overlap (tight on short 13" screens).
+    if (NOTE[k]) typeNote(NOTE[k]);
     if (noteEl) {
       var sr = wrap.getBoundingClientRect(), ir = it.getBoundingClientRect();
-      noteEl.style.top = Math.round((ir.top - sr.top) + ir.height / 2) + 'px';
+      var center = (ir.top - sr.top) + ir.height / 2;
+      if (leadEl) { var lr = leadEl.getBoundingClientRect(); center = Math.max(center, (lr.bottom - sr.top) + noteEl.offsetHeight / 2 + 18); }
+      noteEl.style.top = Math.round(center) + 'px';
     }
-    if (NOTE[k]) typeNote(NOTE[k]);
     if (!shown) { shown = true; wrap.classList.add('show-box'); }
     curKey = k; kick();
   }
