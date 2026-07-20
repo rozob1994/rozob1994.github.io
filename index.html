@@ -6074,7 +6074,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     text=new THREE.Mesh(geo,glass); group.add(text);
     geo.computeBoundingBox(); signBB=geo.boundingBox.clone();   // local-space collision box for the sign (axis-aligned in group space)
     for(let i=0;i<12;i++){
-      const r=0.45+Math.random()*0.4;
+      const r=(0.45+Math.random()*0.4)*0.7;   // 30% smaller overall
       const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,32), ballMat.clone());
       const sh=new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:0}));
       sh.material.toneMapped=false; group.add(sh);
@@ -6121,7 +6121,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     if(words.length){   // hover on the STATIC proxy (jitter-free); spring-lift + colour, same care as the sign
       const h=ray.intersectObjects(wordHits,false)[0]; const hitW=h?h.object.userData.word:null;
       words.forEach(w=>{ const u=w.userData, on=w===hitW?1:0;
-        u.lv += ((on?0.85:0)-u.lift)*0.05 - u.lv*0.24; u.lift += u.lv; w.position.z=u.baseZ+u.lift;   // under-damped → gentle overshoot
+        u.lv += ((on?0.425:0)-u.lift)*0.05 - u.lv*0.24; u.lift += u.lv; w.position.z=u.baseZ+u.lift;   // under-damped → gentle overshoot (50% less lift)
         u.t += (on-u.t)*0.16; w.material.color.copy(WORD_DIM).lerp(WORD_HI,u.t); });
     }
     // very subtle, very smooth mouse Z-tilt
