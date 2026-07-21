@@ -5642,9 +5642,20 @@
 <script src="./vendor/lenis.min.js"></script>
 <script>
 (function () {
-  if (typeof Lenis === 'undefined') return;
-  if (window.matchMedia('(pointer:coarse)').matches) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Safari keeps NATIVE scrolling: Lenis makes scroll smoothness hostage to main-thread
+  // frame time, and Safari's slower WebGL submission turns long frames into scroll hitches.
+  // Safari users are almost all on Mac trackpads (excellent native inertia), and every
+  // __lenis call site has a native fallback — the exact path touch devices already use.
+  var isSafari = /apple/i.test(navigator.vendor || '') && !/crios|fxios|edgios|chrome|android/i.test(navigator.userAgent);
+  if (typeof Lenis === 'undefined' || isSafari
+      || window.matchMedia('(pointer:coarse)').matches
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Still always open at the top — Safari's bfcache restores mid-page scroll on back/forward.
+    var toTopNative = function () { try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, 0); } };
+    window.addEventListener('load', toTopNative);
+    window.addEventListener('pageshow', toTopNative);
+    return;
+  }
   var lenis = new Lenis({ lerp: 0.08, smoothWheel: true, wheelMultiplier: 1 });
   function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
   requestAnimationFrame(raf);
@@ -6160,7 +6171,10 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   // Fill-rate is the bottleneck on integrated GPUs (Safari/M1 especially): the scene
   // renders twice per frame (transmission FBO + screen). 1.4 is visually near-identical
   // on Retina but nearly halves the shaded pixels vs the old 1.75 cap.
-  const DPR = Math.min(window.devicePixelRatio||1, 1.4);
+  // DPR/FBO_SCALE are `let`: the adaptive governor below drops them on machines that
+  // can't hold frame rate (smoothness is the constant, fidelity floats).
+  let DPR = Math.min(window.devicePixelRatio||1, 1.4);
+  let FBO_SCALE = 0.5;
   renderer.setPixelRatio(DPR);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 2.05;
@@ -6202,10 +6216,10 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   function resize(){ const w=innerWidth,h=innerHeight,a=w/h;
     camera.left=-ZOOM*a/2; camera.right=ZOOM*a/2; camera.top=ZOOM/2; camera.bottom=-ZOOM/2;
     camera.updateProjectionMatrix(); renderer.setSize(w,h,false);
-    // Transmission FBO at HALF resolution: the refracted background is blurred and
+    // Transmission FBO at reduced resolution: the refracted background is blurred and
     // distorted by the shader anyway, and it's sampled via normalized NDC coords, so
     // full-res here is pure waste (this alone cuts one of the two passes to 1/4 cost).
-    fbo.setSize(Math.round(w*DPR*0.5),Math.round(h*DPR*0.5)); }
+    fbo.setSize(Math.max(1,Math.round(w*DPR*FBO_SCALE)),Math.max(1,Math.round(h*DPR*FBO_SCALE))); }
   resize(); addEventListener('resize', resize, {passive:true});
 
   // NOTE: bloom (EffectComposer + UnrealBloomPass, imported above) is wired but
@@ -6294,7 +6308,9 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     start(cb){ if(running) return; settleCb=cb; running=true; flyStart=performance.now(); raf=requestAnimationFrame(loop); },
     stop(){ running=false; if(raf) cancelAnimationFrame(raf); raf=0; },
     resume(){ if(running) return; running=true; raf=requestAnimationFrame(loop); },
-    get running(){ return running; } };
+    get running(){ return running; },
+    get low(){ return gLow; },
+    forceLow(){ engageLow(); } };   // debug hook: __heroGlass.forceLow() in the console
   window.__heroGlass = api;
 
   new FontLoader().load('./vendor/helvetiker_bold.typeface.json', font=>{
@@ -6336,8 +6352,30 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     api.ok=true; if(window.__onHeroGlassReady) window.__onHeroGlassReady();
   });
 
+  // ── Adaptive quality governor ──────────────────────────────────────────────
+  // Samples real frame times (after a warm-up, so shader compiles don't count).
+  // If this machine can't hold ~48fps, drop to LOW once: DPR 1.15, FBO to 1/3,
+  // and update the transmission buffer only every other frame. One-way switch —
+  // fast machines never trip it and see zero change.
+  let gLow=false, gFrame=0, gPrevT=0, gSlow=0, gSampled=0;
+  function engageLow(){
+    gLow=true;
+    DPR=Math.min(window.devicePixelRatio||1,1.15); FBO_SCALE=1/3;
+    renderer.setPixelRatio(DPR); resize();
+  }
+  function govern(now){
+    gFrame++;
+    if(gLow || gFrame<30){ gPrevT=now; return; }          // warm-up: ignore first ~30 frames
+    if(gPrevT){ const dt=now-gPrevT;
+      if(dt>2 && dt<250){ gSampled++; if(dt>21) gSlow++; }   // ignore tab-switch gaps
+      if(gSampled>=120 && gSlow/gSampled>0.35) engageLow();  // >35% of frames over 21ms → LOW
+    }
+    gPrevT=now;
+  }
+
   function loop(now){
     if(!running) return;
+    govern(now);
     const t=(now-flyStart)*0.001;
     if(text){
       ray.setFromCamera(ptr,camera);
@@ -6415,10 +6453,16 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
           if(rvn<0){ const jj=-1.6*rvn*0.5; va.x-=jj*nx; va.y-=jj*ny; va.z-=jj*nz; vb.x+=jj*nx; vb.y+=jj*ny; vb.z+=jj*nz; } } } }
 
     if(text){
-      glass.time=t; const pt=renderer.toneMapping;
-      text.material=discardMat; camera.layers.enableAll();
-      renderer.toneMapping=THREE.NoToneMapping; renderer.setRenderTarget(fbo); renderer.render(scene,camera); renderer.setRenderTarget(null);
-      renderer.toneMapping=pt; text.material=glass; glass.buffer=fbo.texture;
+      glass.time=t;
+      // LOW mode: refresh the transmission buffer every OTHER frame — the refracted
+      // background barely changes frame-to-frame, and this halves the double-render cost.
+      if(!gLow || (gFrame&1)===0){
+        const pt=renderer.toneMapping;
+        text.material=discardMat; camera.layers.enableAll();
+        renderer.toneMapping=THREE.NoToneMapping; renderer.setRenderTarget(fbo); renderer.render(scene,camera); renderer.setRenderTarget(null);
+        renderer.toneMapping=pt; text.material=glass;
+      }
+      glass.buffer=fbo.texture;
     }
     renderer.toneMappingExposure=2.05;
     renderer.render(scene,camera);   // bloom (composer) deferred — it dropped the balls in headless; needs a GPU pass
