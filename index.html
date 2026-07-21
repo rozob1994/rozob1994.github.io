@@ -287,16 +287,28 @@
     .w2f-btn.active{color:var(--w2f-accent)}
     .w2f-btn.active::before{background:var(--w2f-accent)}
     .w2f-btn:disabled,.w2f-btn.is-void{opacity:.3;pointer-events:none;text-decoration:line-through;text-decoration-color:rgba(21,22,29,0.3)}
-    .works2-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,1.8vw,34px) clamp(16px,1.4vw,26px)}
-    .w2card{cursor:none;display:flex;flex-direction:column;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+    /* Two-column immersive grid: the info (title/desc/tags) overlays the image and
+       reveals on hover, so cards are pure imagery at rest and pack tighter. */
+    .works2-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(22px,2vw,38px) clamp(18px,1.8vw,32px)}
+    .w2card{cursor:none;position:relative;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
     .w2card.in{opacity:1;transform:none}
     .w2card-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:rgba(21,22,29,0.06);border-radius:2px}
-    .w2card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
-    .w2card:hover .w2card-media img{transform:scale(1.045)}
-    .w2card-title{font-family:var(--font-display);font-weight:700;font-size:clamp(17px,1.4vw,21px);color:#15161d;margin:15px 0 6px}
-    .w2card-desc{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:rgba(21,22,29,0.55);margin:0 0 13px;max-width:36ch}
-    .w2card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+    .w2card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.9s var(--ease)}
+    .w2card:hover .w2card-media img{transform:scale(1.08)}   /* the pre-overhaul zoom: same duration, ease and scale */
+    .w2card-info{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;
+      padding:clamp(18px,2vw,30px);pointer-events:none;
+      background:linear-gradient(to top,rgba(7,8,15,0.8) 0%,rgba(7,8,15,0.38) 42%,rgba(7,8,15,0) 68%);
+      opacity:0;transition:opacity .5s var(--ease)}
+    .w2card:hover .w2card-info{opacity:1}
+    .w2card-title{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,1.8vw,28px);color:#fff;margin:0 0 6px;
+      transform:translateY(12px);transition:transform .55s var(--ease)}
+    .w2card-desc{font-family:var(--font-body);font-size:14px;line-height:1.5;color:rgba(255,255,255,0.82);margin:0 0 14px;max-width:52ch;
+      transform:translateY(12px);transition:transform .62s var(--ease)}
+    .w2card-tags{display:flex;flex-wrap:wrap;gap:6px;transform:translateY(12px);transition:transform .7s var(--ease)}
+    .w2card:hover .w2card-title,.w2card:hover .w2card-desc,.w2card:hover .w2card-tags{transform:translateY(0)}
     .w2tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:#0d1fd4;padding:4px 9px;border-radius:3px}
+    /* No hover on touch — keep the info visible so titles aren't unreachable */
+    @media(hover:none){.w2card-info{opacity:1}.w2card-title,.w2card-desc,.w2card-tags{transform:none}}
     @media(max-width:1000px){
       .works2-body{grid-template-columns:1fr;gap:26px}
       .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px;padding-left:0}
@@ -3645,7 +3657,9 @@
       const d = document.createElement('p'); d.className = 'w2card-desc'; d.textContent = c.desc;
       const tags = document.createElement('div'); tags.className = 'w2card-tags';
       c.svc.forEach(function (s) { const sp = document.createElement('span'); sp.className = 'w2tag'; sp.textContent = WORKS2_SVC[s] || s; tags.appendChild(sp); });
-      el.appendChild(media); el.appendChild(t); el.appendChild(d); el.appendChild(tags);
+      const info = document.createElement('div'); info.className = 'w2card-info';
+      info.appendChild(t); info.appendChild(d); info.appendChild(tags);
+      media.appendChild(info); el.appendChild(media);
       grid.appendChild(el); cardEls.push(el);
     });
 
