@@ -3763,9 +3763,17 @@
       );
     }));
 
+    // Owner-curated slides (picked by contact-sheet number, in display order).
     buildEditorialCarousels(document.getElementById('pcarAll'), [
-      { text: 'be bold',           sub: "timid doesn't get remembered", imgs: galleryImgs(1, 8) },
-      { text: 'tell your story',   sub: 'motion that means something',   imgs: galleryImgs(9, 8) },
+      { text: 'be bold',           sub: "timid doesn't get remembered", imgs: [
+        'media/mofid/3d-designs/14.jpg', 'media/mofid/3d-designs/15.jpg', 'media/mofid/3d-designs/17.jpg',
+        'media/mofid/3d-designs/32.jpg', 'media/mofid/3d-designs/29.jpg', 'media/mofid/3d-designs/35.jpg',
+        'media/mofid/3d-designs/40.jpg' ] },
+      { text: 'tell your story',   sub: 'motion that means something',   imgs: [
+        'media/mofid/3d-designs/36.jpg', 'media/mofid/3d-designs/22.jpg',
+        'media/mofid/annual-jahat-festival/jahat-1404-teaser.jpg',
+        'media/mofid/mofid-ident-r-d/gallery/05.jpg', 'media/mofid/mofid-ident-r-d/mofid-4-9-glass-motion.jpg',
+        'media/mofid/3d-designs/27.jpg', 'media/mofid/3d-designs/48.jpg' ] },
       { text: 'make your brand&nbsp;<em>Resonate</em>', sub: 'felt long after the scroll', imgs: galleryImgs(1, 24) }
     ]);
 
