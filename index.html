@@ -278,10 +278,14 @@
     .w2f-title{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(21,22,29,0.4);margin-bottom:6px}
     /* LineSidebar style: a leading marker line + label shift & colour driven by --effect,
        which a rAF lerp (initFilterProximity) eases toward each item's cursor-distance target. */
-    .w2f-btn{position:relative;font-family:var(--font-body);font-size:15px;background:transparent;border:none;border-radius:0;padding:2px 0;cursor:none;text-align:left;
+    /* Generous hit area: pad each button out over the marker zone and vertically,
+       with negative margins cancelling the visual shift — the label LOOKS the same
+       but the clickable rect covers the marker line + the space between items. */
+    .w2f-btn{position:relative;font-family:var(--font-body);font-size:15px;background:transparent;border:none;border-radius:0;
+      padding:9px 18px 9px 60px;margin:-7px 0 -7px -60px;cursor:none;text-align:left;
       color:color-mix(in srgb, var(--w2f-accent) calc(var(--effect,0)*100%), var(--w2f-rest));
       transform:translateX(calc(var(--effect,0) * 22px))}
-    .w2f-btn::before{content:'';position:absolute;top:50%;left:-60px;height:1px;width:32px;transform-origin:left center;
+    .w2f-btn::before{content:'';position:absolute;top:50%;left:0;height:1px;width:32px;transform-origin:left center;
       transform:translateY(-50%) scaleX(calc(0.5 + var(--effect,0) * 0.55));
       background:color-mix(in srgb, var(--w2f-accent) calc(var(--effect,0)*100%), var(--w2f-marker))}
     .w2f-btn.active{color:var(--w2f-accent)}
@@ -312,7 +316,7 @@
     @media(max-width:1000px){
       .works2-body{grid-template-columns:1fr;gap:26px}
       .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px;padding-left:0}
-      .w2f-btn{transform:none !important}
+      .w2f-btn{transform:none !important;padding:8px 12px;margin:0}
       .w2f-btn::before{display:none}   /* markers/proximity are a vertical-list affordance — off on the mobile row */
       .works2-grid{grid-template-columns:repeat(2,1fr)}
     }
