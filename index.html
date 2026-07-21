@@ -496,8 +496,8 @@
       opacity:0;pointer-events:none;background:transparent;overflow:hidden;
       transition:opacity .4s var(--ease)}
     .svc2.show-box .svc2-box{opacity:1}
-    .svc2-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
-    .svc2-box img.on{opacity:1}
+    .svc2-box img,.svc2-box video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
+    .svc2-box img.on,.svc2-box video.on{opacity:1}
     /* the two overlaid lists (base = coloured, mask = dark, clipped to the box) */
     .svc2-list,.svc2-mask{position:absolute;left:28%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
     .svc2-list{z-index:1}   /* every title sits BEHIND the image box */
@@ -5235,12 +5235,12 @@
 
   var items = [].slice.call(listEl.querySelectorAll('.svc2-item'));
   var maskItems = maskEl ? [].slice.call(maskEl.querySelectorAll('.svc2-item')) : [];
-  // Placeholder image per service (from the 3D-designs stills). Swap for the real ones.
-  var IMG = {
-    'product-viz':    'media/mofid/3d-designs/01.jpg',
-    '3d-motion':      'media/mofid/3d-designs/09.jpg',
-    '2d-motion':      'media/mofid/3d-designs/14.jpg',
-    'logo-animation': 'media/mofid/3d-designs/20.jpg'
+  // Final per-service hover loops (owner-supplied square 1080x1080 videos).
+  var VID = {
+    'product-viz':    'media/services/product-viz.mp4',
+    '3d-motion':      'media/services/3d-motion.mp4',
+    '2d-motion':      'media/services/2d-motion.mp4',
+    'logo-animation': 'media/services/logo-animation.mp4'
   };
   var NOTE = {
     'product-viz':    'High-fidelity 3D product renders that make your product the hero of every frame. From clean studio packshots to rich lifestyle scenes, we build photoreal imagery tuned for e-commerce, advertising and brand campaigns — on-brand, precise, and ready to sell.',
@@ -5248,12 +5248,26 @@
     '2d-motion':      'Clean, modern 2D animation for explainers, brand stories and social content. Motion that lands an idea quickly, keeps a clear visual voice, and stays memorable long after the last frame — crafted frame by frame around your message.',
     'logo-animation': 'Purposeful motion for brand marks — intros, stingers and looping idents that give your identity a distinctive on-screen signature. Short, precise pieces of animation that make your logo feel alive wherever it appears.'
   };
-  // Stack one <img> per service inside the box; we cross-fade between them.
+  // Stack one muted looping <video> per service inside the box; we cross-fade
+  // between them and only the active layer plays (the rest stay paused).
   var layers = {};
   items.forEach(function (it) {
-    var k = it.dataset.svc, im = new Image();
-    im.src = IMG[k]; im.alt = ''; boxEl.appendChild(im); layers[k] = im;
+    var k = it.dataset.svc, v = document.createElement('video');
+    v.src = VID[k]; v.muted = true; v.loop = true; v.playsInline = true;
+    v.setAttribute('playsinline', ''); v.preload = 'metadata';
+    boxEl.appendChild(v); layers[k] = v;
   });
+  // Warm the loops just before the section scrolls into reach, so the first
+  // hover starts instantly instead of waiting on a network fetch.
+  if (typeof IntersectionObserver !== 'undefined') {
+    var warm = new IntersectionObserver(function (es) {
+      if (es[0].isIntersecting) {
+        for (var key in layers) { layers[key].preload = 'auto'; layers[key].load(); }
+        warm.disconnect();
+      }
+    }, { rootMargin: '900px' });
+    warm.observe(section);
+  }
 
   var curKey = null, tx = 0, ty = 0, cx = 0, cy = 0, shown = false, raf = 0, haveCursor = false;
   function loop() {
@@ -5321,7 +5335,12 @@
     if (k === curKey) return;   // already active — don't retype on re-enter
     items.forEach(function (x) { x.classList.toggle('hot', x === it); });
     maskItems.forEach(function (x) { x.classList.toggle('hot', x.dataset.svc === k); });   // white copy above the box
-    for (var key in layers) layers[key].classList.toggle('on', key === k);
+    for (var key in layers) {
+      var on = key === k;
+      layers[key].classList.toggle('on', on);
+      if (on) { var pl = layers[key].play(); if (pl && pl.catch) pl.catch(function () {}); }
+      else layers[key].pause();
+    }
     // type the note, then centre it on the hovered title — but clamp it BELOW the
     // "What we offer" lead so they never overlap (tight on short 13" screens).
     if (NOTE[k]) typeNote(NOTE[k]);
@@ -5338,6 +5357,7 @@
     shown = false; wrap.classList.remove('show-box');
     items.forEach(function (x) { x.classList.remove('hot'); });
     maskItems.forEach(function (x) { x.classList.remove('hot'); });
+    for (var key in layers) layers[key].pause();   // nothing plays while the box is hidden
     curKey = null; kick();
   }
   // Align "What we offer" with the first tab; centre the marquee in the empty space
