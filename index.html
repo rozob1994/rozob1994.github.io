@@ -3277,7 +3277,7 @@
     // Crisp, seamless grid painted in device pixels. GRID = 156 CSS px cells.
     let gGRID = 0, gLW = 1, gW = 0, gH = 0, gDPR = 1;
     function sizeGrid() {
-      gDPR = window.devicePixelRatio || 1;
+      gDPR = Math.min(window.devicePixelRatio || 1, 1.5);   // capped — full Retina here just inflates scroll repaints
       const wCss = sticky.clientWidth, hCss = sticky.clientHeight;
       gridCanvas.width = gW = Math.round(wCss * gDPR);
       gridCanvas.height = gH = Math.round(hCss * gDPR);
@@ -5502,7 +5502,10 @@
   gl.uniform1f(U.vignetteStrength, P.vignetteStrength); gl.uniform1f(U.glowIntensity, P.glowIntensity); gl.uniform1f(U.opacity, P.opacity);
   gl.uniform1f(U.gridRotation, P.gridRotation); gl.uniform1i(U.mouseInteraction, P.mouseInteraction); gl.uniform1f(U.mouseInteractionRadius, P.mouseInteractionRadius);
 
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // dpr 1: this is a full-screen fragment shader of soft glowing lines — rendering it
+  // at Retina resolution doubles-to-quadruples the shaded pixels for no visible gain,
+  // and it runs stacked on top of the about3d WebGL canvas.
+  var dpr = 1;
   function resize() {
     var r = stage.getBoundingClientRect();
     var W = Math.max(1, Math.floor(r.width)), H = Math.max(1, Math.floor(r.height));
@@ -5690,9 +5693,11 @@ import {RGBELoader} from './vendor/RGBELoader.js';
 
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+    // antialias OFF: smooth spheres barely alias, and MSAA on a full Retina buffer is
+    // one of the big costs Safari/M1 chokes on. DPR capped 1.5 (was 2) for the same reason.
+    renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: false});
   } catch (e) { return; }                                       // no WebGL — silently skip
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setClearColor(0x000000, 0);                          // transparent — let the CSS section blue show through
   // Filmic tone mapping rolls off highlights softly — no clipped/washed-out brights
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -6152,7 +6157,10 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
   catch(e){ return; }
-  const DPR = Math.min(window.devicePixelRatio||1, 1.75);
+  // Fill-rate is the bottleneck on integrated GPUs (Safari/M1 especially): the scene
+  // renders twice per frame (transmission FBO + screen). 1.4 is visually near-identical
+  // on Retina but nearly halves the shaded pixels vs the old 1.75 cap.
+  const DPR = Math.min(window.devicePixelRatio||1, 1.4);
   renderer.setPixelRatio(DPR);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 2.05;
@@ -6183,7 +6191,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(studioScene(),0.02).texture;
 
-  const glass = new MeshTransmissionMaterialImpl(10, false);   // 10 samples, matching glass-preview.html
+  const glass = new MeshTransmissionMaterialImpl(6, false);   // 6 samples — indistinguishable from 10 in motion, ~40% cheaper glass fragments
   glass.color=new THREE.Color(0xffffff); glass.roughness=0.14; glass.ior=1.39; glass.thickness=6.1; glass.envMapIntensity=3.1;
   glass.chromaticAberration=1.5; glass.anisotropicBlur=0.2; glass.distortion=0.89; glass.distortionScale=0.4; glass.temporalDistortion=0.1;
   glass.attenuationColor=new THREE.Color(0xffffff); glass.attenuationDistance=1e4;
@@ -6193,7 +6201,11 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   const discardMat = new DiscardMaterial();
   function resize(){ const w=innerWidth,h=innerHeight,a=w/h;
     camera.left=-ZOOM*a/2; camera.right=ZOOM*a/2; camera.top=ZOOM/2; camera.bottom=-ZOOM/2;
-    camera.updateProjectionMatrix(); renderer.setSize(w,h,false); fbo.setSize(Math.round(w*DPR),Math.round(h*DPR)); }
+    camera.updateProjectionMatrix(); renderer.setSize(w,h,false);
+    // Transmission FBO at HALF resolution: the refracted background is blurred and
+    // distorted by the shader anyway, and it's sampled via normalized NDC coords, so
+    // full-res here is pure waste (this alone cuts one of the two passes to 1/4 cost).
+    fbo.setSize(Math.round(w*DPR*0.5),Math.round(h*DPR*0.5)); }
   resize(); addEventListener('resize', resize, {passive:true});
 
   // NOTE: bloom (EffectComposer + UnrealBloomPass, imported above) is wired but
