@@ -109,8 +109,17 @@
       will-change:transform;background:transparent}
     #reelCover{position:absolute;inset:0;z-index:3;background:rgba(9,17,74,0.62);pointer-events:none;opacity:1;will-change:opacity}
     #reelCover .reel-line{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;white-space:nowrap;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);line-height:1.02;letter-spacing:-.02em;color:#fff}
-    #reelCover .reel-ch{display:inline-block;will-change:transform,opacity}
+      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);line-height:1.02;letter-spacing:-.02em;color:transparent}
+    /* Fake 2D glass letters: per-letter gradient sheen (each glyph gets its own facet sweep),
+       chromatic fringes left/right for dispersion, and a soft frost bloom. No real backdrop
+       sampling — layered light tricks only, per the "fake glass" brief. */
+    #reelCover .reel-ch{display:inline-block;will-change:transform,opacity;
+      background:linear-gradient(163deg,rgba(255,255,255,0.96) 8%,rgba(255,255,255,0.46) 36%,rgba(232,240,255,0.2) 52%,rgba(255,255,255,0.58) 76%,rgba(255,255,255,0.9) 96%);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      text-shadow:-3px 0 7px rgba(255,80,130,0.3),3px 0 7px rgba(80,190,255,0.34),0 0 24px rgba(255,255,255,0.2)}
+    /* The works section PULLS OVER the pinned reel (not pushing it up) — give its top
+       edge a deep shadow so it reads as a sheet sliding over the footage. */
+    body.glass-hero #work{box-shadow:0 -36px 90px rgba(0,0,0,0.5)}
 
     /* CSS GLASS LOGO */
     .hero-logo-wrap{
@@ -4282,22 +4291,28 @@
     var L2 = buildLine(document.getElementById('reelLine2'), 'we create it');
     function clamp01(v){ return v<0?0:v>1?1:v; }
     function letterP(g,i,n,spread){ var start=(n>1?(i/(n-1)):0)*spread; return clamp01((g-start)/(1-spread)); }
+    var reelDots = initReelDots(cover);
     function scrub() {
       var vh = window.innerHeight || 1;
       var top = hero.getBoundingClientRect().top;
+      var heroH = hero.offsetHeight;
       // runway progress: 0 when the pin engages (hero top at 0) → 1 when it releases
       // (hero scrolled by its full height minus one viewport). Before the pin engages the
       // reel is still rising into view (top>0), so p clamps at 0 and it stays at 0.7.
-      var run = Math.max(1, hero.offsetHeight - vh);
+      var run = Math.max(1, heroH - vh);
       // JS pin (CSS sticky can't be used — the body's overflow makes it the sticky scroller
-      // while the page scrolls the document). absolute→fixed→absolute across the runway.
+      // while the page scrolls the document). The fixed phase now extends one extra viewport
+      // past the runway so the reel HOLDS full-screen while the works section pulls over it
+      // (#work is z:3, above the pin) instead of the reel being pushed up. The final park spot
+      // sits exactly where the fixed frame was, so the hand-off is invisible (it's covered).
       if (top > 0) { pin.style.position = 'absolute'; pin.style.top = '0px'; }
-      else if (-top < run) { pin.style.position = 'fixed'; pin.style.top = '0px'; }
+      else if (-top < heroH) { pin.style.position = 'fixed'; pin.style.top = '0px'; }
       else { pin.style.position = 'absolute'; pin.style.top = run + 'px'; }
       var p = Math.max(0, Math.min(1, -top / run));
-      // scale is eased and spans the approach + early runway, so the card grows smoothly as it
-      // slides in instead of snapping to place then growing.
-      var gp = clamp01((vh - top) / (vh + run * 0.35)); gp = gp * gp * (3 - 2 * gp);
+      // settle + zoom share ONE graph: gp hits 1 exactly when the card docks (top=0),
+      // so the grow finishes in the same moment the slide-in settles — no snap, no
+      // "arrive first, zoom after".
+      var gp = clamp01((vh - top) / vh); gp = gp * gp * (3 - 2 * gp);
       var sp = gp;
       frame.style.setProperty('--reel-s', (0.7 + 0.3 * gp).toFixed(4));   // card grows 70% → full
       frame.style.borderRadius = (16 * (1 - gp)).toFixed(1) + 'px';        // rounded card on entry → flush at full
@@ -4313,26 +4328,105 @@
       if (cover) {
         // phases within the runway (after the card has grown, ~p>0.35):
         var inG   = clamp01(p / 0.28);            // line 1 "you name it" settles in as the card arrives
-        var outG  = clamp01((p - 0.35) / 0.17);   // line 1 exits upward, letter by letter
-        var enG   = clamp01((p - 0.48) / 0.20);   // line 2 "we create it" rises in from the bottom, letter by letter
-        var fadeG = clamp01((p - 0.68) / 0.17);   // dark cover + line 2 fade away → reel fully visible
-        var off = vh * 0.85;
+        var outG  = clamp01((p - 0.35) / 0.17);   // line 1 exits, letter by letter
+        var enG   = clamp01((p - 0.48) / 0.20);   // line 2 "we create it" enters, letter by letter
+        var fadeG = clamp01((p - 0.68) / 0.17);   // dark cover + dots + line 2 fade away → reel fully visible
+        // ALL ins and outs use the same gentle language as line 1's entrance:
+        // a short 46px drift + fade, letter-staggered — no off-screen throws.
         for (var i = 0; i < L1.length; i++) {
           var li = letterP(inG, i, L1.length, 0.6), lo = letterP(outG, i, L1.length, 0.6);
-          L1[i].style.transform = 'translateY(' + ((1 - li) * 46 - lo * off).toFixed(1) + 'px)';   // in from just below → out the top
+          L1[i].style.transform = 'translateY(' + ((1 - li) * 46 - lo * 46).toFixed(1) + 'px)';   // in from just below → out just above
           L1[i].style.opacity = (li * (1 - lo)).toFixed(3);
         }
         for (var j = 0; j < L2.length; j++) {
           var le = letterP(enG, j, L2.length, 0.6);
-          L2[j].style.transform = 'translateY(' + ((1 - le) * off).toFixed(1) + 'px)';             // in from off-screen bottom → centre
+          L2[j].style.transform = 'translateY(' + ((1 - le) * 46 - fadeG * 24).toFixed(1) + 'px)'; // in from just below; drifts up softly as it fades
           L2[j].style.opacity = (le * (1 - fadeG)).toFixed(3);
         }
         cover.style.opacity = (1 - fadeG).toFixed(3);
+        // reactive dot grid runs only while the cover is actually showing on screen
+        if (reelDots) reelDots.gate(fadeG < 0.995 && top < vh && (top + heroH) > 0);
       }
     }
     window.addEventListener('scroll', scrub, { passive: true });
     window.addEventListener('resize', scrub, { passive: true });
     scrub();
+  }
+
+  // ── DotField (React Bits, ported to vanilla JS): reactive yellow dot grid on the
+  //    reel cover — above the dark blue overlay, below the glass titles. It lives inside
+  //    #reelCover, so it inherits the cover's scroll-fade automatically; the gate just
+  //    stops the physics loop once the cover is gone. Physics mode (bulgeOnly:false).
+  function initReelDots(cover) {
+    if (!cover) return null;
+    if (window.matchMedia('(pointer:coarse)').matches) return null;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
+    var canvas = document.createElement('canvas');
+    canvas.id = 'reelDots';
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+    cover.insertBefore(canvas, cover.firstChild);   // first child → paints under the .reel-line texts
+    var ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return null;
+    var P = { dotRadius: 1.5, dotSpacing: 9, cursorRadius: 500, cursorForce: 0.07,
+              glowRadius: 210, glowRGB: '18,15,23', dotColor: '#ffcf00' };
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = 0, H = 0, dots = [], raf = 0, active = false;
+    var m = { cx: -9999, cy: -9999, x: -9999, y: -9999, px: -9999, py: -9999, speed: 0 };
+    var eng = 0, glowOp = 0;
+    function build() {
+      var r = cover.getBoundingClientRect();
+      W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+      canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var step = P.dotRadius + P.dotSpacing, cols = Math.floor(W / step), rows = Math.floor(H / step);
+      var padX = (W % step) / 2, padY = (H % step) / 2; dots = new Array(rows * cols);
+      var k = 0;
+      for (var row = 0; row < rows; row++) for (var col = 0; col < cols; col++) {
+        var ax = padX + col * step + step / 2, ay = padY + row * step + step / 2;
+        dots[k++] = { ax: ax, ay: ay, sx: ax, sy: ay, vx: 0, vy: 0 };
+      }
+    }
+    addEventListener('mousemove', function (e) { m.cx = e.clientX; m.cy = e.clientY; }, { passive: true });
+    setInterval(function () {   // cursor speed → engagement (as in the source component)
+      var dx = m.px - m.x, dy = m.py - m.y, d = Math.sqrt(dx * dx + dy * dy);
+      m.speed += (d - m.speed) * 0.5; if (m.speed < 0.001) m.speed = 0; m.px = m.x; m.py = m.y;
+    }, 20);
+    function tick() {
+      if (!active) { raf = 0; return; }
+      var r = canvas.getBoundingClientRect();
+      m.x = m.cx - r.left; m.y = m.cy - r.top;
+      var tEng = Math.min(m.speed / 5, 1); eng += (tEng - eng) * 0.06; if (eng < 0.001) eng = 0;
+      glowOp += (eng - glowOp) * 0.08;
+      ctx.clearRect(0, 0, W, H);
+      if (glowOp > 0.01) {   // dark cursor glow under the dots
+        var g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, P.glowRadius);
+        g.addColorStop(0, 'rgba(' + P.glowRGB + ',' + glowOp.toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(' + P.glowRGB + ',0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(m.x - P.glowRadius, m.y - P.glowRadius, P.glowRadius * 2, P.glowRadius * 2);
+      }
+      var crSq = P.cursorRadius * P.cursorRadius, rad = P.dotRadius / 2;
+      ctx.fillStyle = P.dotColor;
+      ctx.beginPath();
+      for (var i = 0; i < dots.length; i++) {
+        var d0 = dots[i], dx = m.x - d0.ax, dy = m.y - d0.ay, distSq = dx * dx + dy * dy;
+        if (distSq < crSq && eng > 0.01) {
+          var dist = Math.sqrt(distSq) || 1, ang = Math.atan2(dy, dx);
+          var move = (500 / dist) * (m.speed * P.cursorForce);
+          d0.vx += Math.cos(ang) * -move; d0.vy += Math.sin(ang) * -move;
+        }
+        d0.vx *= 0.9; d0.vy *= 0.9;
+        d0.sx += (d0.ax + d0.vx - d0.sx) * 0.1; d0.sy += (d0.ay + d0.vy - d0.sy) * 0.1;
+        ctx.moveTo(d0.sx + rad, d0.sy); ctx.arc(d0.sx, d0.sy, rad, 0, 6.2832);
+      }
+      ctx.fill();
+      raf = requestAnimationFrame(tick);
+    }
+    build();
+    addEventListener('resize', build, { passive: true });
+    return { gate: function (on) {
+      if (on && !active) { active = true; if (!raf) raf = requestAnimationFrame(tick); }
+      else if (!on) { active = false; }
+    } };
   }
 
   // ── Nav section detection (white on blue) ─────────────────────────────────
