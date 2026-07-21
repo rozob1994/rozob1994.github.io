@@ -108,8 +108,16 @@
       transform:translate(-50%,-50%) scale(var(--reel-s,1));border-radius:0;
       will-change:transform;background:transparent}
     #reelCover{position:absolute;inset:0;z-index:3;background:rgba(9,17,74,0.62);pointer-events:none;opacity:1;will-change:opacity}
-    #reelCover .reel-line{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;white-space:nowrap;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(30px,6.2vw,96px);line-height:1.02;letter-spacing:-.02em;color:transparent}
+    /* Stacked composition (per owner's reference): word per row, left-aligned, tight
+       leading; "it" on its own row tucked to the right and SHARED between phrases —
+       it never moves while "you/name" swaps to "we/create". The two phrase-words of
+       each row overlap in the same grid cell; the letter animation swaps them. */
+    #reelCover .reel-stack{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      display:flex;flex-direction:column;align-items:flex-start;
+      font-family:var(--font-display);font-weight:800;font-size:clamp(34px,6.8vw,108px);line-height:0.96;letter-spacing:-.02em;color:transparent}
+    #reelCover .reel-row{display:grid;justify-items:start}
+    #reelCover .reel-word{grid-area:1/1;display:flex;white-space:nowrap}
+    #reelCover .reel-row-it{align-self:flex-end}
     /* Fake 2D glass letters: per-letter gradient sheen (each glyph gets its own facet sweep),
        chromatic fringes left/right for dispersion, and a soft frost bloom. No real backdrop
        sampling — layered light tricks only, per the "fake glass" brief. */
@@ -1555,7 +1563,11 @@
     <div id="reelFrame">
       <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
       <div id="heroReelTint"></div>
-      <div id="reelCover"><div class="reel-line" id="reelLine1"></div><div class="reel-line" id="reelLine2"></div></div>
+      <div id="reelCover"><div class="reel-stack" aria-hidden="true">
+        <div class="reel-row"><span class="reel-word" id="rwA1">you</span><span class="reel-word" id="rwB1">we</span></div>
+        <div class="reel-row"><span class="reel-word" id="rwA2">name</span><span class="reel-word" id="rwB2">create</span></div>
+        <div class="reel-row reel-row-it"><span class="reel-word" id="rwIT">it</span></div>
+      </div></div>
     </div>
   </div>
   <div class="hero-bg"></div>
@@ -4286,9 +4298,14 @@
     var cover = document.getElementById('reelCover');
     var glass = document.getElementById('heroGlass');
     if (!hero || !frame || !pin) return;
-    function buildLine(el, txt){ if(!el) return []; el.textContent=''; var a=[]; for(var i=0;i<txt.length;i++){ var s=document.createElement('span'); s.className='reel-ch'; s.textContent = txt[i]===' ' ? ' ' : txt[i]; el.appendChild(s); a.push(s);} return a; }
-    var L1 = buildLine(document.getElementById('reelLine1'), 'you name it');
-    var L2 = buildLine(document.getElementById('reelLine2'), 'we create it');
+    // Phrase A = "you"+"name", phrase B = "we"+"create"; "it" is its own persistent
+    // group (enters once with phrase A, never exits — it's shared by both phrases and
+    // only leaves with the cover fade).
+    function splitWord(id){ var el=document.getElementById(id); if(!el) return []; var t=el.textContent; el.textContent=''; var a=[];
+      for(var i=0;i<t.length;i++){ var s=document.createElement('span'); s.className='reel-ch'; s.textContent=t[i]; el.appendChild(s); a.push(s);} return a; }
+    var L1 = splitWord('rwA1').concat(splitWord('rwA2'));
+    var L2 = splitWord('rwB1').concat(splitWord('rwB2'));
+    var LIT = splitWord('rwIT');
     function clamp01(v){ return v<0?0:v>1?1:v; }
     function letterP(g,i,n,spread){ var start=(n>1?(i/(n-1)):0)*spread; return clamp01((g-start)/(1-spread)); }
     var reelDots = initReelDots(cover);
@@ -4331,12 +4348,18 @@
         var outG  = clamp01((p - 0.35) / 0.17);   // line 1 exits, letter by letter
         var enG   = clamp01((p - 0.48) / 0.20);   // line 2 "we create it" enters, letter by letter
         var fadeG = clamp01((p - 0.68) / 0.17);   // dark cover + dots + line 2 fade away → reel fully visible
-        // ALL ins and outs use the same gentle language as line 1's entrance:
+        // ALL ins and outs use the same gentle language as the first entrance:
         // a short 46px drift + fade, letter-staggered — no off-screen throws.
+        var nIn = L1.length + LIT.length;   // "it" enters at the tail of phrase A's stagger
         for (var i = 0; i < L1.length; i++) {
-          var li = letterP(inG, i, L1.length, 0.6), lo = letterP(outG, i, L1.length, 0.6);
+          var li = letterP(inG, i, nIn, 0.6), lo = letterP(outG, i, L1.length, 0.6);
           L1[i].style.transform = 'translateY(' + ((1 - li) * 46 - lo * 46).toFixed(1) + 'px)';   // in from just below → out just above
           L1[i].style.opacity = (li * (1 - lo)).toFixed(3);
+        }
+        for (var k = 0; k < LIT.length; k++) {   // persistent "it": enters once, stays through the swap, leaves only with the cover fade
+          var ki = letterP(inG, L1.length + k, nIn, 0.6);
+          LIT[k].style.transform = 'translateY(' + ((1 - ki) * 46).toFixed(1) + 'px)';
+          LIT[k].style.opacity = ki.toFixed(3);
         }
         for (var j = 0; j < L2.length; j++) {
           var le = letterP(enG, j, L2.length, 0.6);
