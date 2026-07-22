@@ -424,7 +424,7 @@
     /* The About "hero" is an immersive full-screen moment: #echoField is a tall
        runway, #aboutStage pins (sticky) and fills the screen, and the scroll drives
        the ball's entrance (see the WebGL module). */
-    #echoField{position:relative;background:#0d1fd4}   /* height = content; the sticky scene stays pinned behind the whole field */
+    #echoField{position:relative;background:#0d1fd4;z-index:3}   /* height = content; the sticky scene stays pinned behind the whole field. z-index:3 so it occludes the contact section, which is pulled up underneath it → the contact reveals FROM BEHIND this section as it scrolls away. */
     #aboutStage{position:sticky;top:0;height:100vh;overflow:hidden}
     /* Runway: the hero scene stays pinned and fully performs (descend → settle →
        pulse → taglines) across this scroll before the Services card rises over it. */
@@ -571,7 +571,11 @@
     .service-desc{font-size:16px;color:rgba(255,255,255,0.6);line-height:1.8}
 
     /* CONTACT */
-    #contact-wrapper{position:relative;min-height:100vh;background:#07080f}
+    /* Curtain-lift reveal: pulled up one screen UNDER #echoField (z-index:3, opaque)
+       so it's hidden behind the previous section, then a sticky pin holds it in place
+       while that section scrolls up and off — the contact (photo + copy) is revealed
+       FROM BEHIND it. 200vh = 100vh reveal runway + 100vh to hold, then it scrolls on. */
+    #contact-wrapper{position:relative;min-height:200vh;background:#07080f;z-index:1;margin-top:-100vh}
     .contact-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
     #contactGlowDot{position:absolute;width:32px;height:32px;background:#f5d94e;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 60px rgba(245,217,78,0.9),0 0 120px rgba(245,217,78,0.4),0 0 200px rgba(245,217,78,0.2);animation:contactPulse 2s var(--ease) infinite;z-index:1;pointer-events:none;will-change:transform}
     @keyframes contactPulse{
@@ -656,8 +660,10 @@
       .svc-media{min-height:clamp(220px,40vh,360px);order:2}
       .svc-list{order:1}
 
-      /* Contact */
-      #contact-wrapper{min-height:100vh}
+      /* Contact — the curtain reveal relies on CSS position:sticky, which doesn't pin
+         reliably on mobile here (body overflow). Disable the overlap/reveal on touch:
+         plain full-screen contact section. */
+      #contact-wrapper{margin-top:0;min-height:100vh}
       .contact-lead{font-size:clamp(42px,12.5vw,76px)}
       .contact-icons2{gap:16px}
 
@@ -1540,6 +1546,11 @@
        screen, and services becomes a stacked touch layout (its desktop layout is
        hover-driven and absolutely positioned — unusable on touch). */
     @media (pointer:coarse){
+      /* Contact curtain reveal needs CSS sticky + z-layering, both unreliable on touch →
+         fully neutralise it back to a plain full-screen section (also covers large touch
+         devices the max-width:900 rule doesn't). */
+      #echoField{z-index:auto}
+      #contact-wrapper{margin-top:0 !important;min-height:100vh !important;z-index:auto}
       /* — Reel hero: full-viewport video with the stacked titles over it — */
       body.mobile-hero #hero{height:100vh !important;height:100svh !important;min-height:0 !important;overflow:hidden !important;background:#0b0f2e !important;padding:0 !important}
       body.mobile-hero #reelPin{position:absolute;inset:0;height:100%}
