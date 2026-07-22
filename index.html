@@ -2409,8 +2409,16 @@
       // and use Lenis so it lands correctly through the pinned reel/hero layout.
       window.__navJump = true;
       const done = () => { window.__navJump = false; };
+      // The contact section is pulled up under the previous section with a 100vh
+      // curtain-reveal runway (desktop only — detected via its negative margin). Its
+      // element top is where the reveal STARTS (still hidden behind services), so land
+      // one viewport past it to arrive fully revealed instead of "stuck at services".
+      let jumpOffset = -80;
+      if (target.id === 'contact-wrapper' && parseFloat(getComputedStyle(target).marginTop) < 0) {
+        jumpOffset = window.innerHeight;
+      }
       if (window.__lenis && window.__lenis.scrollTo) {
-        window.__lenis.scrollTo(target, { duration: 1.7, offset: -80, lock: true, easing: function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }, onComplete: done });
+        window.__lenis.scrollTo(target, { duration: 1.7, offset: jumpOffset, lock: true, easing: function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }, onComplete: done });
         setTimeout(done, 2000);
       } else {
         target.scrollIntoView({ behavior: 'smooth' }); setTimeout(done, 1400);
