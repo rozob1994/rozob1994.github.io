@@ -1531,6 +1531,42 @@
       .wreveal{opacity:1!important;transform:none!important;transition:none}
       .wcard:hover .work-img{transform:none}
     }
+
+    /* ══ MOBILE (touch) EXPERIENCE ═══════════════════════════════════════════
+       Phones skip the WebGL set pieces (glass hero, ball scene), so the desktop
+       scroll runways that pace them are dead height there. Instead: the REEL is
+       the hero (full-screen, titles overlaid), the ball runway collapses to one
+       screen, and services becomes a stacked touch layout (its desktop layout is
+       hover-driven and absolutely positioned — unusable on touch). */
+    @media (pointer:coarse){
+      /* — Reel hero: full-viewport video with the stacked titles over it — */
+      body.mobile-hero #hero{height:100vh !important;height:100svh !important;min-height:0 !important;overflow:hidden !important;background:#0b0f2e !important;padding:0 !important}
+      body.mobile-hero #reelPin{position:absolute;inset:0;height:100%}
+      body.mobile-hero #reelFrame{width:100%;height:100%;transform:translate(-50%,-50%) scale(1);border-radius:0}
+      body.mobile-hero #reelCover{background:linear-gradient(to top,rgba(9,17,74,0.78) 0%,rgba(9,17,74,0.3) 55%,rgba(9,17,74,0.18) 100%)}
+      body.mobile-hero #rwB1,body.mobile-hero #rwB2{display:none}   /* static hero shows phrase A only */
+      body.mobile-hero .reel-stack{font-size:clamp(46px,15vw,96px)}
+      body.mobile-hero .reel-word{animation:mWordIn .8s var(--ease) both .25s}
+      body.mobile-hero .reel-row:nth-child(2) .reel-word{animation-delay:.42s}
+      body.mobile-hero .reel-row-it .reel-word{animation-delay:.6s}
+      body.mobile-hero .hero-content{display:none}
+      /* — Ball section: WebGL scene is skipped on touch → the pacing runway is pure
+           dead scroll there; the stage itself (taglines) already fills one screen — */
+      #aboutRunway{height:0}
+      .works2{padding-bottom:clamp(56px,8vh,110px)}   /* the 38vh desktop pad paces the carousel overlap — dead height on phones */
+      /* — Services: stacked touch layout — */
+      .svc2{height:auto;padding:88px 22px 56px}
+      .svc2-marquee-wrap{position:relative;top:auto;margin-bottom:34px}
+      .svc2-marquee-wrap.bottom{display:none}
+      .svc2-lead{position:static;max-width:none;margin-bottom:40px}
+      .svc2-note,.svc2-box,.svc2-mask{display:none}
+      .svc2-list{position:static;transform:none}
+      .svc2-item{margin:0 0 52px}
+      .svc2-name{font-size:clamp(34px,10.5vw,54px);color:var(--yellow)}
+      .svc2-mvideo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:4px;margin:18px 0 12px;display:block;background:rgba(255,255,255,0.05)}
+      .svc2-mnote{font-family:var(--font-body);font-size:14.5px;line-height:1.6;color:rgba(255,255,255,0.78);margin:0;max-width:60ch}
+    }
+    @keyframes mWordIn{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body class="seq-playing">
@@ -1572,6 +1608,8 @@
     <div id="reelBackdrop"></div>
     <div id="reelFrame">
       <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+      <script>/* phones get the 720p encode — half the bytes; swapped inline so the 1080p fetch never starts */
+      (function(){ if (window.matchMedia('(pointer:coarse)').matches) { var v=document.getElementById('heroReel'); if (v) v.src='media/showreel-720.mp4'; } })();</script>
       <div id="heroReelTint"></div>
       <div id="reelCover"><div class="reel-stack" aria-hidden="true">
         <div class="reel-row"><span class="reel-word" id="rwA1">you</span><span class="reel-word" id="rwB1">we</span></div>
@@ -2246,6 +2284,14 @@
     heroEl.style.height            = 'max(55vh, calc((100vh - 420px) * 0.85))';  // reel; floored at 55vh so it stays tall enough on short (13") laptops
     heroContent.style.transform    = 'translateY(0)'; // text rises from below into position
     heroContent.style.pointerEvents = 'all';
+    // Phones: no glass scene, so the REEL is the hero — full-viewport with the
+    // stacked titles overlaid (CSS under body.mobile-hero drives the layout;
+    // !important there beats the inline height set just above).
+    if (!useGlass && window.matchMedia('(pointer:coarse)').matches) {
+      document.body.classList.add('mobile-hero');
+      var hrV = document.getElementById('heroReel');
+      if (hrV) { var pl = hrV.play && hrV.play(); if (pl && pl.catch) pl.catch(function () {}); }
+    }
 
     if (scrollPill) scrollPill.classList.add('pill-visible');
     document.body.classList.remove('seq-playing');
@@ -3177,7 +3223,7 @@
   }
 
   // Build carousels 1 & 2 (editorial split) and 3 (void gallery).
-  const EC_STEP_VH = 40;   // viewport-heights of scroll per image swipe
+  const EC_STEP_VH = window.matchMedia('(pointer:coarse)').matches ? 28 : 40;   // vh of scroll per image swipe — tighter on phones (page is many screens tall there)
   function buildEditorialCarousels(host, configs) {
     if (!host) return;
     host.innerHTML = '';
@@ -3187,7 +3233,8 @@
       const pin = document.createElement('div'); pin.className = 'ecar-pin';
       if (ci === 2) {
         // ── Void gallery ──
-        section.className = 'ecar ecar-void'; section.style.height = '120vh';   // trimmed from 180vh — cut the dead scroll (void is time-based, needs no extra runway)
+        section.className = 'ecar ecar-void';
+        section.style.height = window.matchMedia('(pointer:coarse)').matches ? '100vh' : '120vh';   // void is time-based, needs no extra runway; exactly one screen on phones
         const layer = document.createElement('div'); layer.className = 'evoid';
         const txt = document.createElement('div'); txt.className = 'evoid-text';
         txt.innerHTML = '<h2 class="ev-title">' + cfg.text + '</h2><div class="ev-sub">' + cfg.sub + '</div>';
@@ -4310,6 +4357,10 @@
     var cover = document.getElementById('reelCover');
     var glass = document.getElementById('heroGlass');
     if (!hero || !frame || !pin) return;
+    // Touch: the mobile hero is STATIC (reel + phrase A overlaid, animated in by CSS).
+    // Bail before the letter-split — the desktop scrub math assumes the 260vh runway
+    // and would zero the letters' opacity at the top of the page.
+    if (window.matchMedia('(pointer:coarse)').matches) { if (glass) glass.style.opacity = '0'; return; }
     // Phrase A = "you"+"name", phrase B = "we"+"create"; "it" is its own persistent
     // group (enters once with phrase A, never exits — it's shared by both phrases and
     // only leaves with the cover fade).
@@ -5266,6 +5317,29 @@
     '2d-motion':      'Clean, modern 2D animation for explainers, brand stories and social content. Motion that lands an idea quickly, keeps a clear visual voice, and stays memorable long after the last frame — crafted frame by frame around your message.',
     'logo-animation': 'Purposeful motion for brand marks — intros, stingers and looping idents that give your identity a distinctive on-screen signature. Short, precise pieces of animation that make your logo feel alive wherever it appears.'
   };
+  // Touch: the desktop composition is hover-driven and absolutely positioned —
+  // both dead on a phone. Build a stacked flow instead: each service = title +
+  // its loop playing inline + the note text. Only the loop in view plays.
+  if (window.matchMedia('(pointer:coarse)').matches) {
+    items.forEach(function (it) {
+      var k = it.dataset.svc;
+      var v = document.createElement('video');
+      v.className = 'svc2-mvideo';
+      v.src = VID[k]; v.muted = true; v.loop = true; v.playsInline = true;
+      v.setAttribute('playsinline', ''); v.preload = 'metadata';
+      var note = document.createElement('p');
+      note.className = 'svc2-mnote'; note.textContent = NOTE[k] || '';
+      it.appendChild(v); it.appendChild(note);
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting) { var p = e.target.play(); if (p && p.catch) p.catch(function () {}); }
+          else e.target.pause();
+        });
+      }, { threshold: 0.25 }).observe(v);
+    });
+    return;   // skip all the desktop hover/box wiring
+  }
+
   // Stack one muted looping <video> per service inside the box; we cross-fade
   // between them and only the active layer plays (the rest stay paused).
   var layers = {};
@@ -5425,6 +5499,9 @@
   var canvas = document.getElementById('kineticGrid');
   var stage  = document.getElementById('aboutStage');
   if (!canvas || !stage) return;
+  // Touch: the ball scene (whose shrink gates this grid's visibility) is skipped,
+  // so the grid would render forever at opacity 0 — pure battery drain. Skip it.
+  if (window.matchMedia('(pointer:coarse)').matches) return;
   var opts = { alpha: true, premultipliedAlpha: false, antialias: true };
   var gl = canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
   if (!gl) return;
