@@ -314,20 +314,25 @@
     /* No hover on touch — keep the info visible so titles aren't unreachable */
     @media(hover:none){.w2card-info{opacity:1}.w2card-title,.w2card-desc,.w2card-tags{transform:none}}
     @media(max-width:1000px){
-      .works2-body{grid-template-columns:1fr;gap:26px}
-      /* Touch filters: one horizontally-scrollable CHIP row per axis — thumb-sized
-         pill targets with an unmistakable active state (the desktop text list relies
-         on cursor proximity + markers, which mean nothing on a phone). */
-      .works2-filters{position:static;flex-direction:column;gap:12px;padding-left:0}
-      .w2f-group{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:8px;overflow-x:auto;
-        -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 0}
+      /* min-width:0 down the grid chain: without it, each 1fr column's implicit
+         min-width:auto floors at its content's min-content, so the column (and the
+         cards) refuse to shrink below ~540px and spill off the screen. */
+      .works2-body{grid-template-columns:1fr;gap:18px;min-width:0}
+      .works2-grid,.w2card,.w2card-media,.works2-filters{min-width:0}
+      /* Filters: a compact STICKY bar so they stay reachable the whole way down the
+         grid. One chip per option, active = filled blue. No axis labels — the chips
+         read on their own (the desktop text-list + cursor-proximity UI is dead here). */
+      .works2-filters{position:sticky;top:86px;z-index:20;flex-direction:column;gap:7px;
+        background:#e9e9ec;padding:11px 0 12px;margin:0 0 6px;box-shadow:0 10px 14px -10px rgba(21,22,29,0.22)}
+      .w2f-group{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:7px;overflow-x:auto;
+        -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:1px 0;min-width:0}
       .w2f-group::-webkit-scrollbar{display:none}
-      .w2f-title{margin:0 6px 0 0;flex:0 0 auto}
-      .w2f-btn{flex:0 0 auto;transform:none !important;margin:0;padding:10px 18px;border:1px solid rgba(21,22,29,0.2);
-        border-radius:100px;font-size:14px;background:#fff;color:rgba(21,22,29,0.72)}
+      .w2f-title{display:none}
+      .w2f-btn{flex:0 0 auto;transform:none !important;margin:0;padding:9px 15px;border:1px solid rgba(21,22,29,0.16);
+        border-radius:100px;font-size:13px;background:#fff;color:rgba(21,22,29,0.68);white-space:nowrap;line-height:1}
       .w2f-btn.active{background:var(--w2f-accent);border-color:var(--w2f-accent);color:#fff}
-      .w2f-btn:disabled,.w2f-btn.is-void{opacity:.3}
-      .w2f-btn::before{display:none}   /* markers/proximity are a vertical-list affordance — off on the mobile row */
+      .w2f-btn:disabled,.w2f-btn.is-void{opacity:.32}
+      .w2f-btn::before{display:none}
       .works2-grid{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:600px){.works2-grid{grid-template-columns:1fr}}
@@ -1567,6 +1572,13 @@
            dead scroll there; the stage itself (taglines) already fills one screen — */
       #aboutRunway{height:0}
       .works2{padding-bottom:clamp(56px,8vh,110px)}   /* the 38vh desktop pad paces the carousel overlap — dead height on phones */
+      /* The signature "echo" ball — a CSS sphere (the WebGL scene is skipped on touch),
+         so the About section still has its hero ball, gently floating. */
+      .about-ball-slot{display:block !important;align-self:center;width:clamp(104px,30vw,168px);height:clamp(104px,30vw,168px);
+        border-radius:50%;margin:8px 0;
+        background:radial-gradient(circle at 34% 30%,#ffe98a 0%,#ffcb2e 44%,#f3b500 100%);
+        box-shadow:0 22px 46px -14px rgba(243,181,0,0.55),inset -9px -12px 26px rgba(180,130,0,0.4);
+        animation:mBallFloat 4.2s var(--ease) infinite}
       /* — Services: stacked touch layout — */
       .svc2{height:auto;padding:88px 22px 56px}
       .svc2-marquee-wrap{position:relative;top:auto;margin-bottom:34px}
@@ -1575,7 +1587,8 @@
       .svc2-note,.svc2-box,.svc2-mask{display:none}
       .svc2-list{position:static;transform:none}
       .svc2-item{margin:0 0 52px}
-      .svc2-name{font-size:clamp(34px,10.5vw,54px);color:var(--yellow)}
+      .svc2-name{font-size:clamp(26px,7.6vw,40px);color:var(--yellow)}
+      .svc2-brk{width:clamp(40px,9vw,70px)}   /* the decorative rule scales down with the smaller titles */
       .svc2-mvideo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:4px;margin:18px 0 12px;display:block;background:rgba(255,255,255,0.05)}
       .svc2-mnote{font-family:var(--font-body);font-size:14.5px;line-height:1.6;color:rgba(255,255,255,0.78);margin:0;max-width:60ch}
       /* Void title "make your brand Resonate" clipped the screen edges — pad the
@@ -1585,6 +1598,7 @@
       .es-title{font-size:clamp(40px,13vw,76px)}   /* be bold / tell your story headings — fit the phone width */
     }
     @keyframes mWordIn{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes mBallFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
     /* phrase A: in at ~6%, holds to 44%, drifts up+out by 50%, resets (hidden) for the loop */
     @keyframes mLoopA{0%,100%{opacity:0;transform:translateY(34px)}6%{opacity:1;transform:translateY(0)}44%{opacity:1;transform:translateY(0)}50%,92%{opacity:0;transform:translateY(-26px)}96%{opacity:0;transform:translateY(34px)}}
     /* phrase B: mirrors A on the second half of the cycle */
@@ -3291,7 +3305,12 @@
       });
       pin.appendChild(panel); pin.appendChild(media);
       section.appendChild(pin); host.appendChild(section);
-      ecInitWave(wave, { frequency: 2, speed: 1, cellSize: 10, gamma: 8, paletteBias: -4, colors: ['#f5d94e'] });   // yellow waves
+      // The wavy panel background is a live WebGL fragment shader — the main cause of
+      // lag in "be bold / tell your story" on phones. Skip it on touch; the panel keeps
+      // its solid blue and the yellow taglines, just without the animated waves.
+      if (!window.matchMedia('(pointer:coarse)').matches) {
+        ecInitWave(wave, { frequency: 2, speed: 1, cellSize: 10, gamma: 8, paletteBias: -4, colors: ['#f5d94e'] });   // yellow waves
+      }
       ecInitWeight(letters, section);
       editorials.push({ el: section, imgEls: imgEls, N: N, panel: panel, txt: txt });
     });
