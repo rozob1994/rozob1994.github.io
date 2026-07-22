@@ -583,32 +583,27 @@
       100%{transform:translate(-50%,-50%) scale(4.5);opacity:0}
     }
     #contactGlowRing{position:absolute;width:32px;height:32px;border:2px solid rgba(245,217,78,0.6);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none;animation:contactRing 2s var(--ease) infinite}
-    #contactReveal{position:absolute;inset:0;background:#f5d94e;z-index:1}
-    #contactContent{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 56px;pointer-events:none}
-
-    #contactIcons{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-    .ct-icon{position:absolute;color:#0d1fd4;transform:scale(0);transition:transform .6s var(--ease)}
-    .ct-icon.in{transform:scale(1)}
-    .ct-icon svg{width:100%;height:100%;display:block}
-    .contact-inner{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1100px;margin:0 auto}
-    .contact-photo{position:relative;aspect-ratio:3/4;background:transparent;overflow:visible;display:flex;align-items:center;justify-content:center;max-height:500px}
-    .contact-photo img{width:100%;height:100%;object-fit:cover;display:block}
-    #contactRevealCanvas{position:absolute;left:0;top:0;pointer-events:none}
-    .contact-photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:16px}
-    .contact-photo-initials{font-family:var(--font-display);font-size:80px;font-weight:800;color:rgba(0,0,0,0.2)}
-    .contact-photo-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,0,0,0.3)}
-    .contact-info{display:flex;flex-direction:column;gap:32px}
-    .contact-pre{font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:rgba(0,0,0,0.45)}
-    .contact-heading{font-family:var(--font-display);font-size:clamp(56px,7vw,100px);font-weight:800;line-height:.88;letter-spacing:-.03em;color:#0a0a0a}
-    .contact-email{font-family:var(--font-mono);font-size:13px;letter-spacing:.05em;color:rgba(0,0,0,0.6);text-decoration:none;border-bottom:1px solid rgba(0,0,0,0.2);padding-bottom:4px;display:inline-block;transition:color .2s,border-color .2s}
-    .contact-email:hover{color:#000;border-color:#000}
-    .contact-socials{display:flex;gap:24px;list-style:none;flex-wrap:wrap}
-    .contact-socials a{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(0,0,0,0.5);text-decoration:none;transition:color .2s}
-    .contact-socials a:hover{color:#000}
-    .contact-cta{display:inline-flex;align-items:center;gap:12px;background:#0a0a0a;color:var(--yellow);font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:16px 32px;border:none;cursor:none;text-decoration:none;transition:background 0.3s var(--ease),transform 0.3s var(--ease),box-shadow 0.3s;align-self:flex-start}
-    .contact-cta:hover{background:#111;transform:translateX(6px);box-shadow:4px 0 20px rgba(245,217,78,0.12)}
-    .contact-cta::after{content:'→';font-size:14px;display:inline-block;transition:transform 0.35s var(--ease)}
-    .contact-cta:hover::after{transform:translateX(5px)}
+    /* Full-bleed B&W photo hero + dark scrim so the copy reads over any part of it. */
+    .contact-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.03);z-index:0}
+    .contact-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:linear-gradient(to bottom,rgba(7,8,15,0.62) 0%,rgba(7,8,15,0.3) 42%,rgba(7,8,15,0.82) 100%)}
+    .contact-center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;
+      padding:0 24px;gap:clamp(28px,4.6vh,52px)}
+    .contact-lead{font-family:var(--font-display);font-weight:800;font-size:clamp(40px,7vw,116px);line-height:.95;
+      letter-spacing:-.02em;color:#fff;margin:0;text-shadow:0 8px 48px rgba(0,0,0,0.45)}
+    .contact-magic{display:inline-flex;align-items:center;gap:12px;font-family:var(--font-mono);text-transform:lowercase;
+      letter-spacing:.05em;font-size:clamp(15px,1.5vw,19px);color:#15161d;background:var(--yellow);border-radius:100px;
+      padding:17px 36px;text-decoration:none;cursor:none;transition:transform .4s var(--ease),box-shadow .4s var(--ease);
+      box-shadow:0 16px 44px -12px rgba(245,217,78,0.55)}
+    .contact-magic:hover{transform:translateY(-3px);box-shadow:0 24px 56px -12px rgba(245,217,78,0.72)}
+    .contact-magic .cm-arrow{transition:transform .4s var(--ease)}
+    .contact-magic:hover .cm-arrow{transform:translateX(6px)}
+    .contact-icons2{display:flex;align-items:center;gap:clamp(16px,2.4vw,30px)}
+    .ci2{width:clamp(44px,4vw,54px);height:clamp(44px,4vw,54px);border-radius:50%;display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,0.32);color:#fff;text-decoration:none;cursor:none;
+      transition:background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
+    .ci2:hover{background:var(--yellow);border-color:var(--yellow);color:#15161d;transform:translateY(-3px)}
+    .ci2 svg{width:46%;height:46%;display:block}
 
     footer{padding:24px 56px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg)}
     footer p{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--muted)}
@@ -662,15 +657,9 @@
       .svc-list{order:1}
 
       /* Contact */
-      #contact-wrapper{min-height:100vh}            /* one screen — reveal is static now, no runway needed */
-      .contact-inner{grid-template-columns:1fr;gap:40px}
-      #contactContent{padding:0 28px}
-      .contact-photo{max-width:280px;max-height:none;margin:0 auto;justify-self:center}
-      /* Centre everything under the photo so it all aligns down the middle */
-      .contact-info{align-items:center;text-align:center}
-      .contact-info > div{align-items:center}
-      .contact-socials{justify-content:center}
-      .contact-cta{align-self:center}
+      #contact-wrapper{min-height:100vh}
+      .contact-lead{font-size:clamp(42px,12.5vw,76px)}
+      .contact-icons2{gap:16px}
 
       /* Gallery collage: one continuous 2-col grid so there are no empty slots
          (display:contents lets every still pack straight into .stills-flow) */
@@ -730,12 +719,9 @@
       .services-grid{grid-template-columns:1fr}
       .service-card{padding:28px 24px}
 
-      /* Contact — phone: smaller photo + more breathing room (collage/min-height
-         inherited from the ≤900 block above) */
-      #contactContent{padding:40px 24px}
-      .contact-inner{gap:28px}
-      .contact-photo{max-width:180px}   /* ~50% smaller than desktop, centred */
-      .contact-socials{gap:16px}
+      /* Contact — phone */
+      .contact-center{padding:0 20px;gap:30px}
+      .ci2{width:46px;height:46px}
 
       /* Footer */
       footer{padding:16px 20px;flex-direction:column;gap:12px;align-items:flex-start}
@@ -1779,35 +1765,32 @@
 
 <div id="contact-wrapper">
   <div class="contact-sticky">
-    <div id="contactGlowDot"></div>
-    <div id="contactGlowRing"></div>
-    <div id="contactReveal">
-      <div id="contactContent">
-      <div id="contactIcons" aria-hidden="true"></div>
-      <div class="contact-inner">
-        <div class="contact-photo" id="contactPhoto" data-src="media/contact-photo.jpg">
-          <canvas id="contactRevealCanvas" aria-hidden="true"></canvas>
-        </div>
-        <div class="contact-info">
-          <div class="contact-pre">Let's work together</div>
-          <h2 class="contact-heading">SAY<br>HELLO.</h2>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-email">Roozbeh.ghanbarzadeh1994@gmail.com</a>
-            <a href="tel:+989021869510" class="contact-email">+98 902 186 9510</a>
-          </div>
-          <ul class="contact-socials">
-            <li><a href="https://www.behance.net/roozbehghanbar" target="_blank" rel="noopener">Behance</a></li>
-            <li><a href="https://www.instagram.com/eccho.motions/" target="_blank" rel="noopener">Instagram</a></li>
-            <li><a href="https://www.linkedin.com/in/roozbeh-ghanbarzadeh-ba41ab104/" target="_blank" rel="noopener">LinkedIn</a></li>
-          </ul>
-          <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-cta">Start a project</a>
-        </div>
-      </div>
-      <button id="backToTop" class="scroll-top-arrow" aria-label="Back to top" title="Back to top">
-        <svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>
-      </button>
+    <img class="contact-bg" src="media/contact-bg.jpg" alt="" aria-hidden="true"/>
+    <div class="contact-scrim" aria-hidden="true"></div>
+    <div class="contact-center">
+      <h2 class="contact-lead">bring your vision<br>to life</h2>
+      <a href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" class="contact-magic">let's do some magic <span class="cm-arrow" aria-hidden="true">→</span></a>
+      <div class="contact-icons2">
+        <a class="ci2" href="mailto:Roozbeh.ghanbarzadeh1994@gmail.com" aria-label="Email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7 12 13l8.5-6"/></svg>
+        </a>
+        <a class="ci2" href="tel:+989021869510" aria-label="Phone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3l2 5-2.4 1.4a11 11 0 0 0 5 5L17 15l5 2v3a2 2 0 0 1-2 2A17 17 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>
+        </a>
+        <a class="ci2" href="https://www.behance.net/roozbehghanbar" target="_blank" rel="noopener" aria-label="Behance">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.3 11c.7-.35 1.1-1 1.1-1.9 0-1.75-1.35-2.45-3-2.45H1.5v10.7h5.2c1.8 0 3.5-.9 3.5-2.95 0-1.25-.6-2.15-1.9-2.4zM4 8.3h2.2c.8 0 1.4.35 1.4 1.15S7 10.6 6.2 10.6H4V8.3zm2.5 7.35H4v-2.7h2.55c.95 0 1.6.4 1.6 1.4s-.7 1.3-1.65 1.3zM16.4 8.2h4.3v1.05h-4.3zM23 13.9c0-2.5-1.45-4.45-4.05-4.45-2.5 0-4.25 1.9-4.25 4.35 0 2.55 1.65 4.3 4.25 4.3 1.95 0 3.25-.9 3.85-2.75h-2.05c-.2.65-.85 1-1.65 1-1.1 0-1.75-.65-1.85-1.85H23v-.6zm-5.7-1c.15-1.1.85-1.65 1.75-1.65 1 0 1.5.65 1.55 1.65h-3.3z"/></svg>
+        </a>
+        <a class="ci2" href="https://www.instagram.com/eccho.motions/" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a class="ci2" href="https://www.linkedin.com/in/roozbeh-ghanbarzadeh-ba41ab104/" target="_blank" rel="noopener" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3.2 9h3.6v11.5H3.2zM9.2 9h3.45v1.6h.05c.5-.9 1.7-1.85 3.55-1.85 3.8 0 4.5 2.4 4.5 5.6v6.15h-3.6v-5.45c0-1.3-.03-2.95-1.85-2.95-1.85 0-2.13 1.4-2.13 2.85v5.55H9.2z"/></svg>
+        </a>
       </div>
     </div>
+    <button id="backToTop" class="scroll-top-arrow" aria-label="Back to top" title="Back to top">
+      <svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>
+    </button>
   </div>
 </div>
 
