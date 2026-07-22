@@ -315,8 +315,18 @@
     @media(hover:none){.w2card-info{opacity:1}.w2card-title,.w2card-desc,.w2card-tags{transform:none}}
     @media(max-width:1000px){
       .works2-body{grid-template-columns:1fr;gap:26px}
-      .works2-filters{position:static;flex-direction:row;flex-wrap:wrap;gap:16px 30px;padding-left:0}
-      .w2f-btn{transform:none !important;padding:8px 12px;margin:0}
+      /* Touch filters: one horizontally-scrollable CHIP row per axis — thumb-sized
+         pill targets with an unmistakable active state (the desktop text list relies
+         on cursor proximity + markers, which mean nothing on a phone). */
+      .works2-filters{position:static;flex-direction:column;gap:12px;padding-left:0}
+      .w2f-group{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:8px;overflow-x:auto;
+        -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 0}
+      .w2f-group::-webkit-scrollbar{display:none}
+      .w2f-title{margin:0 6px 0 0;flex:0 0 auto}
+      .w2f-btn{flex:0 0 auto;transform:none !important;margin:0;padding:10px 18px;border:1px solid rgba(21,22,29,0.2);
+        border-radius:100px;font-size:14px;background:#fff;color:rgba(21,22,29,0.72)}
+      .w2f-btn.active{background:var(--w2f-accent);border-color:var(--w2f-accent);color:#fff}
+      .w2f-btn:disabled,.w2f-btn.is-void{opacity:.3}
       .w2f-btn::before{display:none}   /* markers/proximity are a vertical-list affordance — off on the mobile row */
       .works2-grid{grid-template-columns:repeat(2,1fr)}
     }
@@ -1544,11 +1554,14 @@
       body.mobile-hero #reelPin{position:absolute;inset:0;height:100%}
       body.mobile-hero #reelFrame{width:100%;height:100%;transform:translate(-50%,-50%) scale(1);border-radius:0}
       body.mobile-hero #reelCover{background:linear-gradient(to top,rgba(9,17,74,0.78) 0%,rgba(9,17,74,0.3) 55%,rgba(9,17,74,0.18) 100%)}
-      body.mobile-hero #rwB1,body.mobile-hero #rwB2{display:none}   /* static hero shows phrase A only */
       body.mobile-hero .reel-stack{font-size:clamp(46px,15vw,96px)}
-      body.mobile-hero .reel-word{animation:mWordIn .8s var(--ease) both .25s}
-      body.mobile-hero .reel-row:nth-child(2) .reel-word{animation-delay:.42s}
-      body.mobile-hero .reel-row-it .reel-word{animation-delay:.6s}
+      /* Looping phrases: "you name (it)" ⇄ "we create (it)" on a 9s cycle — the shared
+         "it" enters once and stays, exactly like the desktop scrub's behaviour. */
+      body.mobile-hero #rwA1{animation:mLoopA 9s var(--ease) infinite .2s}
+      body.mobile-hero #rwA2{animation:mLoopA 9s var(--ease) infinite .38s}
+      body.mobile-hero #rwB1{animation:mLoopB 9s var(--ease) infinite .2s;opacity:0}
+      body.mobile-hero #rwB2{animation:mLoopB 9s var(--ease) infinite .38s;opacity:0}
+      body.mobile-hero .reel-row-it .reel-word{animation:mWordIn .8s var(--ease) both .6s}
       body.mobile-hero .hero-content{display:none}
       /* — Ball section: WebGL scene is skipped on touch → the pacing runway is pure
            dead scroll there; the stage itself (taglines) already fills one screen — */
@@ -1565,8 +1578,17 @@
       .svc2-name{font-size:clamp(34px,10.5vw,54px);color:var(--yellow)}
       .svc2-mvideo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:4px;margin:18px 0 12px;display:block;background:rgba(255,255,255,0.05)}
       .svc2-mnote{font-family:var(--font-body);font-size:14.5px;line-height:1.6;color:rgba(255,255,255,0.78);margin:0;max-width:60ch}
+      /* Void title "make your brand Resonate" clipped the screen edges — pad the
+         centring box and scale the type to the viewport so it never overruns. */
+      .evoid-text{padding:0 22px}
+      .evoid-text .ev-title{font-size:clamp(30px,8.5vw,46px);overflow-wrap:break-word;max-width:100%}
+      .es-title{font-size:clamp(40px,13vw,76px)}   /* be bold / tell your story headings — fit the phone width */
     }
     @keyframes mWordIn{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:translateY(0)}}
+    /* phrase A: in at ~6%, holds to 44%, drifts up+out by 50%, resets (hidden) for the loop */
+    @keyframes mLoopA{0%,100%{opacity:0;transform:translateY(34px)}6%{opacity:1;transform:translateY(0)}44%{opacity:1;transform:translateY(0)}50%,92%{opacity:0;transform:translateY(-26px)}96%{opacity:0;transform:translateY(34px)}}
+    /* phrase B: mirrors A on the second half of the cycle */
+    @keyframes mLoopB{0%,44%{opacity:0;transform:translateY(34px)}52%{opacity:1;transform:translateY(0)}90%{opacity:1;transform:translateY(0)}96%,100%{opacity:0;transform:translateY(-26px)}}
   </style>
 </head>
 <body class="seq-playing">
@@ -3121,7 +3143,10 @@
     const pos = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, pos); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     const uvb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, uvb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
     const tex = gl.createTexture(), fbo = gl.createFramebuffer();
-    let W = 1, H = 1; const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Waves are soft dot-gradients — Retina resolution quadruples the shaded pixels for
+    // no visible gain, and at dpr 2 this two-pass shader was the "be bold / tell your
+    // story" lag. Phones get 1, desktop 1.5.
+    let W = 1, H = 1; const dpr = window.matchMedia('(pointer:coarse)').matches ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
     function size() {
       const r = host.getBoundingClientRect();
       W = Math.max(1, Math.round(r.width * dpr)); H = Math.max(1, Math.round(r.height * dpr));
