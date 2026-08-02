@@ -15,9 +15,27 @@
        else on the page (scripts, assets) could download until it resolved, and where
        Google is throttled/blocked it hung for ~13s before the site even started loading.
        Same families/weights, served locally as woff2 (~208 KB), no third-party request. -->
-  <link rel="preload" as="font" type="font/woff2" href="./vendor/fonts/Syne-400_800-latin.woff2" crossorigin/>
-  <link rel="preload" as="font" type="font/woff2" href="./vendor/fonts/DMSans-300-latin.woff2" crossorigin/>
+  <link rel="preload" as="font" type="font/woff2" href="./vendor/fonts/InstrumentSans-latin.woff2" crossorigin/>
+  <link rel="preload" as="font" type="font/woff2" href="./vendor/fonts/DMMono-400-latin.woff2" crossorigin/>
   <style>
+    @font-face {
+      font-family: 'Instrument Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(./vendor/fonts/InstrumentSans-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'Instrument Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-stretch: 100%;
+      font-display: swap;
+      src: url(./vendor/fonts/InstrumentSans-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
     @font-face {
       font-family: 'DM Mono';
       font-style: normal;
@@ -50,54 +68,6 @@
       src: url(./vendor/fonts/DMMono-400-latin.woff2) format('woff2');
       unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
     }
-    @font-face {
-      font-family: 'DM Sans';
-      font-style: normal;
-      font-weight: 300;
-      font-display: swap;
-      src: url(./vendor/fonts/DMSans-300-latin-ext.woff2) format('woff2');
-      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-    }
-    @font-face {
-      font-family: 'DM Sans';
-      font-style: normal;
-      font-weight: 300;
-      font-display: swap;
-      src: url(./vendor/fonts/DMSans-300-latin.woff2) format('woff2');
-      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-    }
-    @font-face {
-      font-family: 'DM Sans';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url(./vendor/fonts/DMSans-300-latin-ext.woff2) format('woff2');
-      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-    }
-    @font-face {
-      font-family: 'DM Sans';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url(./vendor/fonts/DMSans-300-latin.woff2) format('woff2');
-      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-    }
-    @font-face {
-      font-family: 'Syne';
-      font-style: normal;
-      font-weight: 400 800;
-      font-display: swap;
-      src: url(./vendor/fonts/Syne-400_800-latin-ext.woff2) format('woff2');
-      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-    }
-    @font-face {
-      font-family: 'Syne';
-      font-style: normal;
-      font-weight: 400 800;
-      font-display: swap;
-      src: url(./vendor/fonts/Syne-400_800-latin.woff2) format('woff2');
-      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-    }
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     /* Lenis smooth scroll */
@@ -109,7 +79,7 @@
       --bg:#07080f;--bg2:#0c0e1a;--surface:#0f1120;--border:#1a1d2e;
       --text:#f0ede8;--muted:#9da2bb;--yellow:#f5d94e;--yellow-soft:rgba(245,217,78,0.1);
       --blue:#1a3bbd;
-      --font-display:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'DM Mono',monospace;
+      --font-display:'Instrument Sans',sans-serif;--font-body:'Instrument Sans',sans-serif;--font-mono:'DM Mono',monospace;
       /* One easing curve for the whole site — every reveal, hover, pulse uses this */
       --ease:cubic-bezier(0.16,1,0.3,1);
     }
@@ -153,7 +123,7 @@
     body.po-active #navbar{display:none !important}
     .nav-pill{pointer-events:all;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;width:min(540px,92vw);padding:10px 11px 10px 20px;background:rgba(12,13,18,0.8);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.09);border-radius:999px;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,0.38)}
     .nav-logo{display:inline-flex;align-items:center;gap:8px;text-decoration:none;flex:0 0 auto}
-    .nav-logo-word{font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:-.02em;color:#fff;line-height:1}
+    .nav-logo-word{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;color:#fff;line-height:1}
     .nav-logo-dot{position:relative;width:8px;height:8px;border-radius:50%;background:var(--yellow);transform:scale(0);transform-origin:center;transition:transform .62s var(--ease);box-shadow:0 0 12px 2px rgba(245,217,78,0.5);flex:0 0 auto}
     .nav-logo-dot.dot-in{transform:scale(1)}
     .nav-logo-dot.echo-active::before,.nav-logo-dot.echo-active::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;transform:translate(-50%,-50%);border:2px solid rgba(245,217,78,0.6);border-radius:50%;pointer-events:none;animation:echoExpandSm 4.6s var(--ease) infinite}
@@ -207,7 +177,7 @@
        each row overlap in the same grid cell; the letter animation swaps them. */
     #reelCover .reel-stack{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
       display:flex;flex-direction:column;align-items:flex-start;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(54px,12.5vw,300px);line-height:0.96;letter-spacing:-.02em;color:#fff}
+      font-family:var(--font-display);font-weight:700;font-size:clamp(54px,12.5vw,300px);line-height:0.96;letter-spacing:-.02em;color:#fff}
     #reelCover .reel-row{display:grid;justify-items:start}
     #reelCover .reel-word{grid-area:1/1;display:flex;white-space:nowrap}
     #reelCover .reel-row-it{align-self:flex-end}
@@ -228,7 +198,7 @@
     .glass-logo{
       font-family:var(--font-display);
       font-size:clamp(100px,14vw,200px);
-      font-weight:800;
+      font-weight:700;
       letter-spacing:-.02em;
       line-height:1;
       position:relative;
@@ -269,7 +239,7 @@
       display:block;
       font-family:var(--font-display);
       font-size:clamp(100px,14vw,200px);
-      font-weight:800;
+      font-weight:700;
       letter-spacing:-.02em;
     }
     /* Spotlight canvas overlay — clips to logo bounds */
@@ -298,7 +268,7 @@
     /* margin-left on each line cancels its first glyph's left side bearing
        (measured: E Syne800=0.065em, D Syne600=0.07em, B DMMono=0.07em)
        so the ink edges align at any font size */
-    .hero-title{font-family:var(--font-display);font-size:clamp(80px,10vw,140px);font-weight:800;line-height:0.9;color:#fff;letter-spacing:-.02em;margin-left:-0.065em}
+    .hero-title{font-family:var(--font-display);font-size:clamp(80px,10vw,140px);font-weight:700;line-height:0.9;color:#fff;letter-spacing:-.02em;margin-left:-0.065em}
     .hero-subtitle{font-family:var(--font-display);font-size:clamp(18px,2.2vw,28px);font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:0.15em;margin-top:2px;line-height:1;margin-left:-0.07em}
     .hero-author{font-family:var(--font-mono);font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.82);text-transform:uppercase;margin-top:4px;margin-left:-0.07em;text-shadow:0 1px 16px rgba(0,0,0,0.5)}
     .scroll-pill{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:14px;letter-spacing:0.15em;text-transform:lowercase;color:#15161d;background:var(--yellow);border:1px solid var(--yellow);border-radius:100px;padding:8px 28px;z-index:50;opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
@@ -310,7 +280,7 @@
     .about-marquee-right{animation:marqueeRight 80s linear infinite}
     @keyframes marqueeLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
     @keyframes marqueeRight{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-    .am-inner{display:inline-flex;align-items:center;font-family:var(--font-display);font-weight:800;font-size:clamp(17px,2.1vw,34px);padding:12px 0}
+    .am-inner{display:inline-flex;align-items:center;font-family:var(--font-display);font-weight:700;font-size:clamp(17px,2.1vw,34px);padding:12px 0}
     .am-sep{color:rgba(245,217,78,0.6);margin:0 16px}
     .am-o{color:rgba(255,255,255,0.75)}
     .am-e{color:rgba(255,255,255,0.45)}
@@ -341,13 +311,13 @@
     /* Nav over the light work section */
     /* nav is a dark floating pill now — theme-independent; on-light/on-blue no longer restyle it */
     /* Bold studio statement above the work tabs */
-    .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:800;font-size:clamp(21px,2.5vw,38px);line-height:1.12;letter-spacing:-.015em;color:#fff;max-width:24ch;margin:0 0 clamp(84px,10vw,158px)}
+    .work-intro{position:relative;z-index:6;font-family:var(--font-display);font-weight:700;font-size:clamp(21px,2.5vw,38px);line-height:1.12;letter-spacing:-.015em;color:#fff;max-width:24ch;margin:0 0 clamp(84px,10vw,158px)}
     .work-intro .wi-soft{color:rgba(255,255,255,0.42)}
     .work-intro .wi-blue{color:#0d1fd4}
     .work-intro .wi-dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--yellow);margin-left:.06em;vertical-align:baseline}
     @media(max-width:600px){.work-intro{max-width:none}}
     #workBgCanvas{display:none}
-    .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
+    .section-title{font-family:var(--font-display);font-size:clamp(24px,3vw,40px);font-weight:700;color:var(--yellow);margin-bottom:48px;line-height:1;transition:color 0.5s var(--ease)}
     #work .work-header{position:relative;z-index:6}
     #work #carouselOuter{position:relative;z-index:1}
     .work-header{display:flex;align-items:center;justify-content:space-between;padding:0;position:relative;z-index:2;margin-bottom:12px}
@@ -362,8 +332,8 @@
     .works2-lead .dot{width:clamp(11px,1vw,15px);height:clamp(11px,1vw,15px);border-radius:50%;background:var(--yellow);flex:0 0 auto}
     .works2-lead span:last-child{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(21,22,29,0.6)}
     .works2-headrow{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:1px solid rgba(21,22,29,0.14);padding-bottom:20px;margin-bottom:32px}
-    .works2-title{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3.8vw,56px);line-height:.98;letter-spacing:-.02em;color:#15161d;margin:0}
-    .works2-count{font-family:var(--font-display);font-weight:800;font-size:clamp(20px,2vw,30px);color:rgba(21,22,29,0.3);white-space:nowrap;line-height:1}
+    .works2-title{font-family:var(--font-display);font-weight:700;font-size:clamp(28px,3.8vw,56px);line-height:.98;letter-spacing:-.02em;color:#15161d;margin:0}
+    .works2-count{font-family:var(--font-display);font-weight:700;font-size:clamp(20px,2vw,30px);color:rgba(21,22,29,0.3);white-space:nowrap;line-height:1}
     .works2-body{display:grid;grid-template-columns:210px 1fr;gap:clamp(24px,3vw,56px);align-items:start}
     .works2-filters{position:sticky;top:100px;display:flex;flex-direction:column;gap:30px;padding-left:60px;
       --w2f-accent:#0d1fd4;--w2f-rest:rgba(21,22,29,0.5);--w2f-marker:rgba(21,22,29,0.26)}
@@ -544,7 +514,7 @@
     .about-intro{clip-path:inset(-25% 0 -25% 100%)}   /* hidden → revealed right-to-left */
     .about-body{clip-path:inset(-25% 100% -25% 0)}    /* hidden → revealed left-to-right */
     .about-ball-slot{flex:0 0 auto;width:clamp(88px,8vw,120px);height:clamp(88px,8vw,120px)}
-    .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:800;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
+    .about-heading{font-family:var(--font-display);font-size:clamp(44px,5.5vw,84px);font-weight:700;line-height:.9;letter-spacing:-.02em;color:#fff;width:min-content;flex:0 0 auto}
     .about-heading em{font-style:normal;color:var(--yellow)}
     /* word-by-word swipe animation */
     @keyframes aboutWordIn{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:translateX(0)}}
@@ -632,7 +602,7 @@
     .svc2-mask .svc2-item.hot{opacity:1}
     .svc2-item{cursor:none;margin:0 0 clamp(4px,0.7vw,16px)}
     .svc2-item:last-child{margin-bottom:0}
-    .svc2-name{display:block;font-family:var(--font-display);font-weight:800;text-transform:uppercase;
+    .svc2-name{display:block;font-family:var(--font-display);font-weight:700;text-transform:uppercase;
       font-size:clamp(30px,4.5vw,66px);line-height:.92;letter-spacing:-.02em;color:rgba(255,255,255,0.6);transition:color .28s var(--ease)}
     .svc2-item.hot .svc2-name{color:var(--yellow)}
     .svc2-mask .svc2-name,.svc2-mask .svc2-item.hot .svc2-name{color:#fff}   /* the copy above the box is always WHITE */
@@ -660,7 +630,7 @@
     .service-card::before{content:'';position:absolute;inset:-1px;background:conic-gradient(from var(--sc-angle),transparent 55%,rgba(245,217,78,0.9) 70%,transparent 80%);border-radius:inherit;opacity:0;transition:opacity .3s;-webkit-mask:linear-gradient(#fff,#fff) content-box,linear-gradient(#fff,#fff);-webkit-mask-composite:destination-out;mask:linear-gradient(#fff,#fff) content-box,linear-gradient(#fff,#fff);mask-composite:exclude;padding:1px;pointer-events:none}
     .service-card:hover::before{opacity:1;animation:sc-spin 3s linear infinite;transition-delay:0.3s}
     .service-card>*{position:relative;z-index:1}
-    .service-num-bg{font-family:var(--font-display);font-size:120px;font-weight:800;color:rgba(255,255,255,0.06);position:absolute;top:8px;right:16px;line-height:1;z-index:0;pointer-events:none;transition:opacity .4s}
+    .service-num-bg{font-family:var(--font-display);font-size:120px;font-weight:700;color:rgba(255,255,255,0.06);position:absolute;top:8px;right:16px;line-height:1;z-index:0;pointer-events:none;transition:opacity .4s}
     .service-num{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:rgba(255,255,255,0.45);margin-bottom:28px}
     .service-title{font-family:var(--font-display);font-size:28px;font-weight:700;color:#fff;margin-bottom:14px;line-height:1.1}
     .service-desc{font-size:16px;color:rgba(255,255,255,0.6);line-height:1.8}
@@ -688,7 +658,7 @@
       background:linear-gradient(to bottom,rgba(7,8,15,0.62) 0%,rgba(7,8,15,0.3) 42%,rgba(7,8,15,0.82) 100%)}
     .contact-center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;
       padding:0 24px;gap:clamp(28px,4.6vh,52px)}
-    .contact-lead{font-family:var(--font-display);font-weight:800;font-size:clamp(40px,7vw,116px);line-height:.95;
+    .contact-lead{font-family:var(--font-display);font-weight:700;font-size:clamp(40px,7vw,116px);line-height:.95;
       letter-spacing:-.02em;color:#fff;margin:0;text-shadow:0 8px 48px rgba(0,0,0,0.45)}
     .contact-magic{display:inline-flex;align-items:center;gap:12px;font-family:var(--font-mono);text-transform:lowercase;
       letter-spacing:.05em;font-size:clamp(15px,1.5vw,19px);color:#15161d;background:var(--yellow);border-radius:100px;
@@ -1079,7 +1049,7 @@
     .po-meta-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
     .po-title{
       font-family:var(--font-display);font-size:clamp(36px,5vw,72px);
-      font-weight:800;color:#fff;line-height:1;
+      font-weight:700;color:#fff;line-height:1;
     }
     .po-tags{
       display:flex;flex-direction:column;gap:16px;
@@ -1255,7 +1225,7 @@
     /* ── WORK TABS (Personal Work / Mofid Securities) ── */
     .work-tabs{display:flex;align-items:center;gap:0}
     .work-tab{
-      font-family:var(--font-display);font-size:clamp(21px,2.5vw,38px);font-weight:800;
+      font-family:var(--font-display);font-size:clamp(21px,2.5vw,38px);font-weight:700;
       background:none;border:none;cursor:pointer;
       color:rgba(255,255,255,0.22);
       padding:0 0 4px;margin-right:clamp(16px,2.5vw,36px);
@@ -1336,7 +1306,7 @@
     .mofid-ov-close:hover{color:#fff}
     .mofid-ov-close svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.5;fill:none}
     .mofid-ov-header{padding:112px 80px 0;margin-bottom:8px}
-    .mofid-ov-title{font-family:var(--font-display);font-size:clamp(28px,4vw,56px);font-weight:800;color:#fff;line-height:1;margin:0 0 8px}
+    .mofid-ov-title{font-family:var(--font-display);font-size:clamp(28px,4vw,56px);font-weight:700;color:#fff;line-height:1;margin:0 0 8px}
     .mofid-ov-subtitle{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35)}
     .mofid-ov-cat{padding:0 80px 48px}
     .mofid-cat-label{font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:0 0 16px;padding-top:40px;border-top:1px solid rgba(255,255,255,0.08)}
@@ -1365,7 +1335,7 @@
     .me-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block}
     .me-body{padding:clamp(26px,3vw,50px) 0 clamp(64px,8vw,120px)}
     .me-cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--yellow);margin-bottom:13px}
-    .me-title{font-family:var(--font-display);font-weight:800;font-size:clamp(26px,3.4vw,48px);line-height:1.04;letter-spacing:-.01em;color:#fff;margin:0 0 18px}
+    .me-title{font-family:var(--font-display);font-weight:700;font-size:clamp(26px,3.4vw,48px);line-height:1.04;letter-spacing:-.01em;color:#fff;margin:0 0 18px}
     .me-desc{font-family:var(--font-body);font-size:clamp(14px,1.05vw,16px);line-height:1.7;color:rgba(255,255,255,0.66);margin:0;max-width:72ch}
     .me-related{margin-top:clamp(50px,6vw,92px)}
     .me-related-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:0 0 22px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.08)}
@@ -1502,7 +1472,7 @@
     .pcar-track{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
     .pcar-stage{position:absolute;left:0;width:100%;height:100vh}     /* top set by JS (k * 100vh) */
     .pcar-text{position:absolute;top:50%;opacity:0;transform:translateY(-50%) translateY(var(--ty,0));z-index:6;white-space:nowrap;
-      font-family:var(--font-display);font-weight:800;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
+      font-family:var(--font-display);font-weight:700;font-size:clamp(22px,2.5vw,40px);line-height:1.02;letter-spacing:-.02em;color:#15161d}
     .pcar-text em{font-style:normal;color:#0d1fd4}
     .pcar-sub{display:block;margin-top:12px;text-align:left;font-family:var(--font-mono);font-weight:400;
       font-size:clamp(11px,0.95vw,14px);letter-spacing:.03em;line-height:1.3;color:rgba(21,22,29,0.55);min-height:1.3em}
@@ -1574,7 +1544,7 @@
     .ecar:not(.mirror) .ecar-panel .es-txt{align-items:flex-end;text-align:right}
     .ecar.mirror .ecar-panel .es-txt{align-items:flex-start;text-align:left}
     .es-sub{font-family:var(--font-mono);font-size:clamp(11px,0.85vw,14px);letter-spacing:.22em;text-transform:lowercase;color:rgba(255,255,255,0.6)}
-    .es-title{font-family:var(--font-display);font-weight:800;font-variation-settings:'wght' 800;text-transform:uppercase;
+    .es-title{font-family:var(--font-display);font-weight:700;font-variation-settings:'wght' 800;text-transform:uppercase;
       font-size:clamp(58px,8vw,150px);line-height:.9;letter-spacing:-.02em;color:#fff;margin:0}
     .es-title .es-w{display:inline-block;white-space:nowrap}   /* keep each word whole; wrap only between words */
     .es-title .es-l{display:inline-block;text-align:center;will-change:font-variation-settings}   /* fixed-width box (pinned in JS) so the weight morph never rewraps */
@@ -1586,7 +1556,7 @@
     .evoid-tile{position:absolute;will-change:transform,opacity;pointer-events:none;translate:-50% -50%;top:50%;left:50%}
     .evoid-tile img{width:100%;height:100%;object-fit:cover;display:block}
     .evoid-text{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
-    .evoid-text .ev-title{font-family:var(--font-display);font-weight:800;font-size:clamp(34px,4.4vw,74px);line-height:1;letter-spacing:-.02em;color:#fff;margin:0}
+    .evoid-text .ev-title{font-family:var(--font-display);font-weight:700;font-size:clamp(34px,4.4vw,74px);line-height:1;letter-spacing:-.02em;color:#fff;margin:0}
     .evoid-text .ev-title em{font-style:normal;color:var(--yellow)}
     .evoid-text .ev-sub{font-family:var(--font-mono);font-size:clamp(11px,0.9vw,14px);letter-spacing:.18em;color:rgba(255,255,255,0.55);margin-top:14px}
     @media(max-width:760px){
@@ -3348,14 +3318,14 @@
     ls.forEach(function (el) { el.style.width = el.getBoundingClientRect().width.toFixed(2) + 'px'; });
   }
 
-  // Per-letter Syne weight morph — letters thicken as the cursor nears them.
+  // Per-letter weight morph — letters thin as the cursor nears them.
   function ecInitWeight(letters, gate) {
     if (!letters.length) return;
     ecWireMouse();
-    // Rest at the brand display weight (800, matching the site's Syne headings);
-    // the cursor subtly thins the letters it passes over.
-    const WFAR = 800, WNEAR = 500, RAD = 190, EASE = 0.14;
-    const state = letters.map(function () { return 800; });
+    // Rest at the brand display weight (700 — Instrument Sans's heaviest; its axis is
+    // 400–700, so the old 800/500 pair clamped at the top and lost half its range).
+    const WFAR = 700, WNEAR = 400, RAD = 190, EASE = 0.14;
+    const state = letters.map(function () { return 700; });
     let vis = false, raf = 0;
     function loop() {
       if (!vis) { raf = 0; return; }
