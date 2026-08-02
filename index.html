@@ -5654,6 +5654,10 @@
     // fade it back out as the ball grows again on scroll-up.
     var gt = Math.max(0, Math.min(1, +window.__heroGridCenter || 0));
     gridOp += (gt - gridOp) * 0.08;
+    // The grid only appears as the ball shrinks. When it's effectively invisible (ball
+    // grown) skip the full-screen ripple shader entirely — just keep the canvas clear.
+    // That's most of the About section's runtime, so it's a real GPU saving.
+    if (gridOp < 0.004 && gt < 0.004) { gl.clear(gl.COLOR_BUFFER_BIT); raf = visible ? requestAnimationFrame(render) : 0; return; }
     gl.uniform1f(U.iTime, t * 0.001);
     gl.uniform1f(U.opacity, P.opacity * gridOp);
     gl.uniform2f(U.mousePosition, mx, my); gl.uniform1f(U.mouseInfluence, infl);
@@ -5831,7 +5835,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     // one of the big costs Safari/M1 chokes on. DPR capped 1.5 (was 2) for the same reason.
     renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: false});
   } catch (e) { return; }                                       // no WebGL — silently skip
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));   // integrated GPUs (M1) choke on 3 stacked full-screen canvases here
   renderer.setClearColor(0x000000, 0);                          // transparent — let the CSS section blue show through
   // Filmic tone mapping rolls off highlights softly — no clipped/washed-out brights
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -5874,7 +5878,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   const defs = [];
   for (let i = 0; i < 10; i++) {
     const rad = 0.28 + Math.random() * 0.34;   // ≤ 0.62 — never more than 50% of the hero (r 1.26)
-    defs.push({geo: new THREE.SphereGeometry(rad, 48, 48), r: rad});
+    defs.push({geo: new THREE.SphereGeometry(rad, 28, 20), r: rad});   // matte spheres — 28×20 is visually identical to 48×48 at ~4× fewer triangles
   }
 
   let halfW = 8, halfH = 5;                                     // world-space bounds, set on resize
@@ -5901,7 +5905,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   //    spheres feel each pulse and are held off by a keep-out field: they keep
   //    approaching but can never quite touch it.
   const heroR = 1.26, heroSpin = 0.0016;
-  const hero = new THREE.Mesh(new THREE.SphereGeometry(heroR, 64, 64), matte);
+  const hero = new THREE.Mesh(new THREE.SphereGeometry(heroR, 44, 32), matte);   // large on screen but 44×32 is smooth; 64×64 was ~8k tris for one ball
   scene.add(hero);
   // Very light ground shadow under the hero — fades in as it shrinks into place,
   // out as it grows/rises. A flattened dark sprite behind the ball.
@@ -6119,10 +6123,22 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   }, { passive: true });
 
   const tmp = new THREE.Vector3();
+  // Adaptive quality: if this scene can't hold ~48fps (integrated GPU / Safari),
+  // drop its DPR once. Smoothness is the constant; crispness floats. One-way switch.
+  let aLow = false, aFrame = 0, aPrevT = 0, aSlow = 0, aSampled = 0;
+  function aGovern(now) {
+    aFrame++;
+    if (aLow || aFrame < 30) { aPrevT = now; return; }   // warm-up (shader compiles)
+    if (aPrevT) { const d = now - aPrevT;
+      if (d > 2 && d < 250) { aSampled++; if (d > 21) aSlow++; }   // ignore off-screen/tab gaps
+      if (aSampled >= 90 && aSlow / aSampled > 0.3) { aLow = true; renderer.setPixelRatio(1); resize(); } }
+    aPrevT = now;
+  }
   function tick() {
     requestAnimationFrame(tick);
     if (!visible) return;
     const now = performance.now(); const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    aGovern(now);
     placeHero();                            // hero locked onto the HTML slot (its settled home)
     speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm
     hero.rotation.y += heroSpin;
@@ -6443,7 +6459,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     geo.computeBoundingBox(); signBB=geo.boundingBox.clone();   // local-space collision box for the sign (axis-aligned in group space)
     for(let i=0;i<12;i++){
       const r=(0.45+Math.random()*0.4)*0.7;   // 30% smaller overall
-      const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,32), ballMat.clone());
+      const m=new THREE.Mesh(new THREE.SphereGeometry(r,24,16), ballMat.clone());   // small balls — 24×16 plenty
       const sh=new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:0}));
       sh.material.toneMapped=false; group.add(sh);
       const u={ r, shadow:sh, vel:new THREE.Vector3(),
@@ -6483,15 +6499,16 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   let gLow=false, gFrame=0, gPrevT=0, gSlow=0, gSampled=0;
   function engageLow(){
     gLow=true;
-    DPR=Math.min(window.devicePixelRatio||1,1.15); FBO_SCALE=1/3;
+    DPR=Math.min(window.devicePixelRatio||1,1.0); FBO_SCALE=1/3;
+    glass.chromaticAberration=0;   // drops 2 extra texture taps per sample × 6 — a big fill-rate saving, barely visible in motion
     renderer.setPixelRatio(DPR); resize();
   }
   function govern(now){
     gFrame++;
-    if(gLow || gFrame<30){ gPrevT=now; return; }          // warm-up: ignore first ~30 frames
+    if(gLow || gFrame<24){ gPrevT=now; return; }          // shorter warm-up so it drops sooner on weak GPUs
     if(gPrevT){ const dt=now-gPrevT;
-      if(dt>2 && dt<250){ gSampled++; if(dt>21) gSlow++; }   // ignore tab-switch gaps
-      if(gSampled>=120 && gSlow/gSampled>0.35) engageLow();  // >35% of frames over 21ms → LOW
+      if(dt>2 && dt<250){ gSampled++; if(dt>20) gSlow++; }   // ignore tab-switch gaps
+      if(gSampled>=80 && gSlow/gSampled>0.3) engageLow();    // >30% of frames over 20ms → LOW (trips ~1.3s in)
     }
     gPrevT=now;
   }
