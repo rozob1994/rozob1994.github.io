@@ -128,12 +128,21 @@
     #scrollRail{position:fixed;right:16px;top:24vh;height:52vh;width:8px;z-index:470;pointer-events:none;color:#fff;opacity:0;transition:color .45s var(--ease),opacity .5s var(--ease)}
     #scrollRail.on{opacity:1}
     #scrollRail::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1.5px;transform:translateX(-50%);background:currentColor;opacity:.2;border-radius:1px}
-    #scrollDot{position:absolute;left:50%;top:0;width:6px;height:6px;border-radius:50%;background:currentColor;transform:translate(-50%,-50%);box-shadow:0 0 8px 1px currentColor}
-    #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(245,217,78,0.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .4s var(--ease),height .4s,border-color .3s}
+    #scrollDot{position:absolute;left:50%;top:0;width:6px;height:6px;border-radius:50%;background:currentColor;
+      transform:translate(-50%,-50%) scale(var(--sd,1));box-shadow:0 0 8px 1px currentColor;
+      transition:transform .55s var(--ease)}
+    #scrollRail.sr-active #scrollDot{--sd:1.5}   /* +50% while scrolling; shrinks back after a delay */
+    /* difference blend = always legible: yellow inverts against dark, light and brand
+       blue alike, so the ring never sinks into a dark surface. Stroke thickens while
+       the cursor moves and eases back to hairline once it settles. */
+    #cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid var(--yellow);border-radius:50%;pointer-events:none;z-index:9998;
+      transform:translate(-50%,-50%);mix-blend-mode:difference;
+      transition:width .4s var(--ease),height .4s,border-color .3s,border-width .38s var(--ease)}
+    body.cursor-moving #cursor-ring{border-width:3.5px}
     body.hovering #cursor-ring{width:60px;height:60px;border-color:var(--yellow)}
     /* over bright surfaces (e.g. the light work section) the ring goes dark so it stays visible */
-    body.cursor-light #cursor-ring{border-color:rgba(21,22,29,0.4)}
-    body.cursor-light.hovering #cursor-ring{border-color:#15161d}
+    /* (cursor-light border overrides removed — mix-blend-mode:difference already
+       guarantees contrast on light surfaces, and a dark border would fight it.) */
 
     body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");background-size:180px;pointer-events:none;z-index:9000;opacity:.4}
 
@@ -369,8 +378,10 @@
       padding:9px 18px 9px 60px;margin:-7px 0 -7px -60px;cursor:none;text-align:left;
       color:color-mix(in srgb, var(--w2f-accent) calc(var(--effect,0)*100%), var(--w2f-rest));
       transform:translateX(calc(var(--effect,0) * 22px))}
-    .w2f-btn::before{content:'';position:absolute;top:50%;left:0;height:1px;width:32px;transform-origin:left center;
-      transform:translateY(-50%) scaleX(calc(0.5 + var(--effect,0) * 0.55));
+    /* Marker is a DOT: same cursor-proximity drive (--effect), different form —
+       it swells and takes the accent colour as the cursor nears. */
+    .w2f-btn::before{content:'';position:absolute;top:50%;left:16px;width:7px;height:7px;border-radius:50%;
+      transform:translate(-50%,-50%) scale(calc(0.55 + var(--effect,0) * 0.7));
       background:color-mix(in srgb, var(--w2f-accent) calc(var(--effect,0)*100%), var(--w2f-marker))}
     .w2f-btn.active{color:var(--w2f-accent)}
     .w2f-btn.active::before{background:var(--w2f-accent)}
@@ -1546,7 +1557,15 @@
     .ecar-half{position:relative;width:50%;height:100%;overflow:hidden}
     .ecar.mirror .ecar-pin{flex-direction:row-reverse}   /* carousel 2 mirrors the sides */
     /* image side — a hard stack; each new image swipes up over the previous */
-    .ecar-media{background:#0b0b0e}
+    .ecar-media{background:#0b0b0e;position:relative;cursor:none}
+    /* Hovering an editorial image swaps the cursor for a pill naming the project. */
+    .es-pill{position:absolute;z-index:20;pointer-events:none;white-space:nowrap;
+      background:var(--yellow);color:#15161d;font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;
+      padding:9px 18px;border-radius:100px;box-shadow:0 10px 30px -8px rgba(0,0,0,0.45);
+      transform:translate(-50%,-50%) scale(.8);opacity:0;
+      transition:opacity .22s var(--ease),transform .28s var(--ease)}
+    .ecar-media.pill-on .es-pill{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    body.pill-cursor #cursor-dot,body.pill-cursor #cursor-ring{opacity:0}   /* the pill IS the cursor */
     .ecar-media .es-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
     /* tagline side — dark grey, with the wavy-dots canvas behind the type */
     .ecar-panel{background:#0d1fd4;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(40px,7vh,90px) clamp(28px,3.5vw,64px)}
@@ -1998,7 +2017,11 @@
   // CURSOR
   const dot=document.getElementById('cursor-dot'), ring=document.getElementById('cursor-ring');
   let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+  let _mvT=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';
+    document.body.classList.add('cursor-moving');
+    clearTimeout(_mvT); _mvT=setTimeout(()=>document.body.classList.remove('cursor-moving'),160);   // settled → stroke eases back
+  });
   const _workSec=document.getElementById('work');
   function _darkOverlayOpen(){return document.querySelector('#projectOverlay.po-open,#mofidOverlay.mofid-open,.mofid-expand-panel.open')!=null;}
   (function ar(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=rx+'px';ring.style.top=ry+'px';
@@ -2821,9 +2844,15 @@
       var el = document.elementFromPoint(window.innerWidth - 46, y);
       rail.style.color = el ? railColor(el) : WHITE;
     }
-    function onScroll() { if (!pending) { pending = true; requestAnimationFrame(update); } }
+    var srT = 0;
+    function onScroll() {
+      if (!pending) { pending = true; requestAnimationFrame(update); }
+      rail.classList.add('sr-active');                       // dot swells +50% (CSS-eased)
+      clearTimeout(srT);
+      srT = setTimeout(function () { rail.classList.remove('sr-active'); }, 260);   // delay, then eases back down
+    }
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    window.addEventListener('resize', function () { if (!pending) { pending = true; requestAnimationFrame(update); } });
     if (window.__lenis && window.__lenis.on) window.__lenis.on('scroll', onScroll);
     update();
   })();
@@ -3380,6 +3409,26 @@
 
   // Build carousels 1 & 2 (editorial split) and 3 (void gallery).
   const EC_STEP_VH = window.matchMedia('(pointer:coarse)').matches ? 28 : 40;   // vh of scroll per image swipe — tighter on phones (page is many screens tall there)
+  // Readable project name for an editorial image. An explicit `titles` array on the
+  // config wins; otherwise it's derived from the folder the image lives in.
+  const EC_TITLE_MAP = {
+    '3d-designs': 'Mofid · 3D Design',
+    'annual-jahat-festival': 'Jahat Festival',
+    'mofid-ident-r-d': 'Mofid · Identity R&D',
+    'mofid-card-concept-motion': 'Mofid Card',
+    'aix-exhibitions': 'AIX Event',
+    'pre-rolls': 'Mofid · Pre-roll',
+    'logomotions': 'Logo Motion',
+    'exhibition-explainer-motion': 'Exhibition Explainer'
+  };
+  function ecTitleFor(src, explicit, i) {
+    if (explicit && explicit[i]) return explicit[i];
+    const parts = String(src).split('/');
+    for (let k = parts.length - 2; k >= 0; k--) {
+      if (EC_TITLE_MAP[parts[k]]) return EC_TITLE_MAP[parts[k]];
+    }
+    return 'Selected Work';
+  }
   function buildEditorialCarousels(host, configs) {
     if (!host) return;
     host.innerHTML = '';
@@ -3413,13 +3462,15 @@
       txt.appendChild(sub); txt.appendChild(title);
       panel.appendChild(wave); panel.appendChild(txt);
       const media = document.createElement('div'); media.className = 'ecar-half ecar-media';
-      const imgEls = [];
+      const imgEls = [], imgTitles = [];
       cfg.imgs.forEach(function (src, i) {
         const im = document.createElement('img'); im.className = 'es-img'; im.src = src; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
         im.style.zIndex = String(i);
         if (i > 0) im.style.transform = 'translateY(100%)';
         media.appendChild(im); imgEls.push(im);
+        imgTitles.push(ecTitleFor(src, cfg.titles, i));
       });
+      const pill = document.createElement('div'); pill.className = 'es-pill'; media.appendChild(pill);
       pin.appendChild(panel); pin.appendChild(media);
       section.appendChild(pin); host.appendChild(section);
       // The wavy panel background is a live WebGL fragment shader — the main cause of
@@ -3429,7 +3480,22 @@
         ecInitWave(wave, { frequency: 2, speed: 1, cellSize: 10, gamma: 8, paletteBias: -4, colors: ['#f5d94e'] });   // yellow waves
       }
       ecInitWeight(letters, section);
-      editorials.push({ el: section, imgEls: imgEls, N: N, panel: panel, txt: txt });
+      const rec = { el: section, imgEls: imgEls, N: N, panel: panel, txt: txt,
+                    pill: pill, titles: imgTitles, cur: 0 };
+      // Pill follows the cursor and names whichever image is currently on top.
+      if (!window.matchMedia('(pointer:coarse)').matches) {
+        media.addEventListener('pointermove', function (e) {
+          const r = media.getBoundingClientRect();
+          pill.style.left = (e.clientX - r.left) + 'px';
+          pill.style.top  = (e.clientY - r.top)  + 'px';
+          pill.textContent = rec.titles[rec.cur] || '';
+          media.classList.add('pill-on'); document.body.classList.add('pill-cursor');
+        }, { passive: true });
+        media.addEventListener('pointerleave', function () {
+          media.classList.remove('pill-on'); document.body.classList.remove('pill-cursor');
+        });
+      }
+      editorials.push(rec);
     });
 
     // Scroll-scrub the swipe-stacks. Image i>0 rises from below over its segment;
@@ -3447,6 +3513,10 @@
           const e = frac * frac * (3 - 2 * frac);
           sec.imgEls[i].style.transform = 'translateY(' + ((1 - e) * 100).toFixed(2) + '%)';
         }
+        // Which image is on top right now → the hover pill names that project.
+        // (an image counts as "arrived" once it's more than halfway in)
+        sec.cur = Math.max(0, Math.min(sec.N - 1, Math.round(p)));
+        if (sec.pill && sec.el.querySelector('.ecar-media.pill-on')) sec.pill.textContent = sec.titles[sec.cur] || '';
         // Tagline block enters from the top and glides down to rest at the bottom
         // over the first ~1.1 screens of scroll into the section.
         const padV = parseFloat(getComputedStyle(sec.panel).paddingTop) || 0;
