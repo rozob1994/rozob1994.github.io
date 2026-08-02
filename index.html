@@ -601,7 +601,7 @@
     .svc2-box img,.svc2-box video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease)}
     .svc2-box img.on,.svc2-box video.on{opacity:1}
     /* the two overlaid lists (base = coloured, mask = dark, clipped to the box) */
-    .svc2-list,.svc2-mask{position:absolute;left:28%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
+    .svc2-list,.svc2-mask{position:absolute;left:50%;top:50%;transform:translateY(-50%);margin:0;padding:0;list-style:none}
     .svc2-list{z-index:1}   /* every title sits BEHIND the image box */
     .svc2-mask{z-index:3;pointer-events:none}   /* only the hovered title, in white, ABOVE the box */
     .svc2-mask .svc2-item{opacity:0;transition:opacity .28s var(--ease)}
@@ -621,7 +621,7 @@
     @media (min-width:1800px){
       .svc2-lead{left:clamp(48px,4vw,110px);max-width:min(19vw,340px)}
       .svc2-note{left:clamp(48px,4vw,110px);max-width:min(19vw,340px)}
-      .svc2-list,.svc2-mask{left:25%}
+      .svc2-list,.svc2-mask{left:50%}
       .svc2-name{font-size:min(5vw,104px)}
       .svc2-box{width:min(34vw,620px)}   /* larger box; it now follows the cursor */
     }
@@ -5609,8 +5609,6 @@
   }
   function kick() { if (!raf) raf = requestAnimationFrame(loop); }
   // The image box centres on the cursor (behind the titles) while it's over the list.
-  wrap.addEventListener('pointerenter', function () { document.body.classList.add('svc-cursor'); });
-  wrap.addEventListener('pointerleave', function () { document.body.classList.remove('svc-cursor'); });
   wrap.addEventListener('pointermove', function (e) {
     var r = wrap.getBoundingClientRect();
     tx = e.clientX - r.left; ty = e.clientY - r.top;
@@ -5696,8 +5694,13 @@
       if (marqueeWrapB) { marqueeWrapB.style.top = 'auto'; marqueeWrapB.style.bottom = gap + 'px'; }
     }
   }
-  items.forEach(function (it) { it.addEventListener('mouseenter', function () { hover(it); }); });
-  listEl.addEventListener('mouseleave', leave);
+  // Cursor hides over the TITLES only — there the image box IS the pointer. Elsewhere
+  // in the section (empty space, the marquee) the normal cursor stays.
+  items.forEach(function (it) {
+    it.addEventListener('mouseenter', function () { hover(it); document.body.classList.add('svc-cursor'); });
+    it.addEventListener('mouseleave', function () { document.body.classList.remove('svc-cursor'); });
+  });
+  listEl.addEventListener('mouseleave', function () { leave(); document.body.classList.remove('svc-cursor'); });   // safety: a fast exit can skip an item's own mouseleave
   alignLead();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignLead);
   // Default box position (until the cursor first enters) = centre of the first title.
