@@ -11,10 +11,94 @@
   <meta property="og:description" content="3D product visualization, motion design, and logo animation. Good design echoes."/>
   <meta name="twitter:card" content="summary"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230d1fd4'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23f5d94e'/%3E%3C/svg%3E"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400..800&family=DM+Sans:opsz,wght@9..40,300;9..40,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <!-- Fonts are SELF-HOSTED. The Google Fonts stylesheet was render-blocking: nothing
+       else on the page (scripts, assets) could download until it resolved, and where
+       Google is throttled/blocked it hung for ~13s before the site even started loading.
+       Same families/weights, served locally as woff2 (~208 KB), no third-party request. -->
+  <link rel="preload" as="font" type="font/woff2" href="./vendor/fonts/Syne-400_800-latin.woff2" crossorigin/>
+  <link rel="preload" as="font" type="font/woff2" href="./vendor/fonts/DMSans-300-latin.woff2" crossorigin/>
   <style>
+    @font-face {
+      font-family: 'DM Mono';
+      font-style: normal;
+      font-weight: 300;
+      font-display: swap;
+      src: url(./vendor/fonts/DMMono-300-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'DM Mono';
+      font-style: normal;
+      font-weight: 300;
+      font-display: swap;
+      src: url(./vendor/fonts/DMMono-300-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'DM Mono';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(./vendor/fonts/DMMono-400-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'DM Mono';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(./vendor/fonts/DMMono-400-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      font-style: normal;
+      font-weight: 300;
+      font-display: swap;
+      src: url(./vendor/fonts/DMSans-300-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      font-style: normal;
+      font-weight: 300;
+      font-display: swap;
+      src: url(./vendor/fonts/DMSans-300-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(./vendor/fonts/DMSans-300-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(./vendor/fonts/DMSans-300-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Syne';
+      font-style: normal;
+      font-weight: 400 800;
+      font-display: swap;
+      src: url(./vendor/fonts/Syne-400_800-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'Syne';
+      font-style: normal;
+      font-weight: 400 800;
+      font-display: swap;
+      src: url(./vendor/fonts/Syne-400_800-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     /* Lenis smooth scroll */
     html.lenis,html.lenis body{height:auto}
@@ -1640,9 +1724,9 @@
   <div id="reelPin">
     <div id="reelBackdrop"></div>
     <div id="reelFrame">
-      <video id="heroReel" src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+      <video id="heroReel" data-src="media/showreel.mp4" poster="media/showreel-poster.jpg" autoplay muted loop playsinline preload="none" aria-hidden="true"></video>
       <script>/* phones get the 720p encode — half the bytes; swapped inline so the 1080p fetch never starts */
-      (function(){ if (window.matchMedia('(pointer:coarse)').matches) { var v=document.getElementById('heroReel'); if (v) v.src='media/showreel-720.mp4'; } })();</script>
+      (function(){ if (window.matchMedia('(pointer:coarse)').matches) { var v=document.getElementById('heroReel'); if (v) v.dataset.src='media/showreel-720.mp4'; } })();</script>
       <div id="heroReelTint"></div>
       <div id="reelCover"><div class="reel-stack" aria-hidden="true">
         <div class="reel-row"><span class="reel-word" id="rwA1">you</span><span class="reel-word" id="rwB1">we</span></div>
@@ -1776,7 +1860,7 @@
 
 <div id="contact-wrapper">
   <div class="contact-sticky">
-    <img class="contact-bg" src="media/contact-bg.jpg" alt="" aria-hidden="true"/>
+    <img class="contact-bg" src="media/contact-bg.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async"/>
     <div class="contact-scrim" aria-hidden="true"></div>
     <div class="contact-center">
       <h2 class="contact-lead">bring your vision<br>to life</h2>
@@ -1959,11 +2043,23 @@
   let framesReady = false;
   let animDone = false;
 
-  const fImgs = SKIP_INTRO ? [] : Array.from({length: FRAME_COUNT}, (_, i) => {
-    const img = new Image();
-    img.src = 'frames/Motion 1_' + String(i).padStart(4, '0') + '.jpg';
-    return img;
-  });
+  // On capable desktops the LIVE GLASS intro is what actually plays — the 91-frame
+  // sequence (2.7 MB / 91 requests) is only a fallback. Downloading it upfront made
+  // every visitor pay for something they'd never see, competing with the assets the
+  // glass intro actually needs. So: create the images now, but only attach srcs when
+  // we know we need them (non-glass devices immediately; glass devices only if the
+  // glass fails to ready by its deadline).
+  const GLASS_LIKELY = !SKIP_INTRO
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    && !window.matchMedia('(pointer:coarse)').matches
+    && (function(){ try { return !!document.createElement('canvas').getContext('webgl2'); } catch(e){ return false; } })();
+  const fImgs = SKIP_INTRO ? [] : Array.from({length: FRAME_COUNT}, () => new Image());
+  let framesRequested = false;
+  function startFrameLoad() {
+    if (framesRequested || SKIP_INTRO) return;
+    framesRequested = true;
+    fImgs.forEach((img, i) => { img.src = 'frames/Motion 1_' + String(i).padStart(4, '0') + '.jpg'; });
+  }
 
   const loadScreenEl = document.getElementById('loadScreen');
   const loadDotEl    = document.getElementById('loadDot');
@@ -2073,10 +2169,8 @@
   // Prefer the live glass intro on capable desktops: even if the fallback frames
   // finish first, wait (up to a deadline) for the glass rather than let frames win.
   function glassReady() { return !!(window.__heroGlass && window.__heroGlass.ok); }
-  const GLASS_LIKELY = !SKIP_INTRO
-    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    && !window.matchMedia('(pointer:coarse)').matches
-    && (function(){ try { return !!document.createElement('canvas').getContext('webgl2'); } catch(e){ return false; } })();
+  // (GLASS_LIKELY is defined earlier — it also decides whether the frame sequence
+  //  is fetched at all.)
   let glassDeadline = false;
   function tryBurst() {
     if (burstFired || !minTimePassed) return;
@@ -2084,7 +2178,13 @@
     if (allFramesLoaded && (!GLASS_LIKELY || glassDeadline)) triggerBurst();
   }
   window.__onHeroGlassReady = tryBurst;
-  if (GLASS_LIKELY) setTimeout(function(){ glassDeadline = true; tryBurst(); }, 3200);   // frames fallback if glass never readies
+  // Glass deadline: if the live glass hasn't readied by now it probably won't, so
+  // NOW start pulling the fallback frames (they were never fetched on this path).
+  if (GLASS_LIKELY) setTimeout(function(){
+    glassDeadline = true;
+    if (!glassReady()) startFrameLoad();
+    tryBurst();
+  }, 3200);
   setTimeout(() => { minTimePassed = true; tryBurst(); }, 900);
 
   function triggerBurst() {
@@ -2176,6 +2276,9 @@
     img.onload = () => onFrameResult(i);
     img.onerror = () => { console.warn('[frames] failed:', fImgs[i].src); onFrameResult(i); };
   });
+  // No glass path (no WebGL2 / reduced-motion) → the frames ARE the intro, fetch now.
+  // Handlers are attached first so no load can be missed.
+  if (!GLASS_LIKELY) startFrameLoad();
 
   function sizeCanvas() {
     fCanvas.width = window.innerWidth;
@@ -2236,6 +2339,18 @@
   function revealContent() {
     if (animDone) return;
     animDone = true;
+    // The intro is over — the critical path is clear. NOW let the heavy deferred media
+    // start: the showreel (24 MB, preload="none" so it couldn't hog the pipe during
+    // load) and anything else gated on __introDone (e.g. the services hover loops).
+    window.__introDone = true;
+    (function () {
+      var v = document.getElementById('heroReel');
+      if (!v || v.src) return;
+      v.preload = 'auto';
+      v.src = v.dataset.src || 'media/showreel.mp4';   // attaching src now starts the fetch; autoplay plays it
+      try { v.load(); } catch (e) {}
+      var pl = v.play(); if (pl && pl.catch) pl.catch(function () {});
+    })();
 
     // ── PHASE 1: Position everything BEFORE any transition fires ─────────────
     // Hero: full-height, overflow:hidden so off-screen content stays hidden
@@ -5372,7 +5487,7 @@
       var v = document.createElement('video');
       v.className = 'svc2-mvideo';
       v.src = VID[k]; v.muted = true; v.loop = true; v.playsInline = true;
-      v.setAttribute('playsinline', ''); v.preload = 'metadata';
+      v.setAttribute('playsinline', ''); v.preload = 'none';
       var note = document.createElement('p');
       note.className = 'svc2-mnote'; note.textContent = NOTE[k] || '';
       it.appendChild(v); it.appendChild(note);
@@ -5392,19 +5507,32 @@
   items.forEach(function (it) {
     var k = it.dataset.svc, v = document.createElement('video');
     v.src = VID[k]; v.muted = true; v.loop = true; v.playsInline = true;
-    v.setAttribute('playsinline', ''); v.preload = 'metadata';
+    v.setAttribute('playsinline', ''); v.preload = 'none';   // 'metadata' still fetched during the intro
     boxEl.appendChild(v); layers[k] = v;
   });
   // Warm the loops just before the section scrolls into reach, so the first
   // hover starts instantly instead of waiting on a network fetch.
+  // NOTE: during the intro the page is still collapsed (sections are laid out but the
+  // hero hasn't expanded yet), so #services sat inside this 900px margin and fired
+  // immediately — pulling 14 MB of hover loops while the loading screen was up.
+  // Only start observing once the intro is done and the real layout exists.
   if (typeof IntersectionObserver !== 'undefined') {
-    var warm = new IntersectionObserver(function (es) {
-      if (es[0].isIntersecting) {
-        for (var key in layers) { layers[key].preload = 'auto'; layers[key].load(); }
-        warm.disconnect();
-      }
-    }, { rootMargin: '900px' });
-    warm.observe(section);
+    var warmStart = function () {
+      var warm = new IntersectionObserver(function (es) {
+        if (es[0].isIntersecting) {
+          for (var key in layers) { layers[key].preload = 'auto'; layers[key].load(); }
+          warm.disconnect();
+        }
+      }, { rootMargin: '900px' });
+      warm.observe(section);
+    };
+    if (window.__introDone) warmStart();
+    else {
+      var wt = setInterval(function () {
+        if (window.__introDone) { clearInterval(wt); warmStart(); }
+      }, 400);
+      setTimeout(function () { clearInterval(wt); warmStart(); }, 15000);   // safety net
+    }
   }
 
   var curKey = null, tx = 0, ty = 0, cx = 0, cy = 0, shown = false, raf = 0, haveCursor = false;
@@ -6126,12 +6254,25 @@ import {RGBELoader} from './vendor/RGBELoader.js';
   // Adaptive quality: if this scene can't hold ~48fps (integrated GPU / Safari),
   // drop its DPR once. Smoothness is the constant; crispness floats. One-way switch.
   let aLow = false, aFrame = 0, aPrevT = 0, aSlow = 0, aSampled = 0;
+  // Absolute pixel budget (see the glass hero for the reasoning): on a big display a
+  // DPR cap alone still leaves a huge buffer. Applied ONLY once this scene has proven
+  // it can't hold frame rate — capable machines are never touched.
+  const A_MAX_PIXELS = 2.0e6;
+  function aLowDPR() {
+    const w = section.clientWidth || innerWidth || 1, h = section.clientHeight || innerHeight || 1;
+    return Math.max(0.7, Math.min(window.devicePixelRatio || 1, 1.0, Math.sqrt(A_MAX_PIXELS / (w * h))));
+  }
+  function aEngageLow() { aLow = true; renderer.setPixelRatio(aLowDPR()); resize(); }
+  addEventListener('resize', function () { if (aLow) { renderer.setPixelRatio(aLowDPR()); resize(); } }, { passive: true });
   function aGovern(now) {
     aFrame++;
     if (aLow || aFrame < 30) { aPrevT = now; return; }   // warm-up (shader compiles)
     if (aPrevT) { const d = now - aPrevT;
       if (d > 2 && d < 250) { aSampled++; if (d > 21) aSlow++; }   // ignore off-screen/tab gaps
-      if (aSampled >= 90 && aSlow / aSampled > 0.3) { aLow = true; renderer.setPixelRatio(1); resize(); } }
+      if (aSampled >= 90) {
+        if (aSlow / aSampled > 0.3) aEngageLow();
+        else { aSampled = 0; aSlow = 0; }                 // healthy window → keep watching (rolling)
+      } }
     aPrevT = now;
   }
   function tick() {
@@ -6497,18 +6638,36 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
   // and update the transmission buffer only every other frame. One-way switch —
   // fast machines never trip it and see zero change.
   let gLow=false, gFrame=0, gPrevT=0, gSlow=0, gSampled=0;
+  // Absolute pixel budget. Capping DPR alone doesn't help on a large display: a 24"/27"
+  // iMac has a huge WINDOW, so even DPR 1.4 yields a ~5.5 MP buffer — and the glass
+  // renders the scene TWICE per frame. Capping total pixels is what actually bounds the
+  // cost. Only ever applied once the governor has decided this GPU can't keep up, so
+  // capable machines keep full resolution.
+  const LOW_MAX_PIXELS = 2.2e6;
+  function lowDPR(){
+    const w = innerWidth || 1, h = innerHeight || 1;
+    const fit = Math.sqrt(LOW_MAX_PIXELS / (w * h));
+    return Math.max(0.7, Math.min(window.devicePixelRatio || 1, 1.0, fit));
+  }
   function engageLow(){
     gLow=true;
-    DPR=Math.min(window.devicePixelRatio||1,1.0); FBO_SCALE=1/3;
+    DPR=lowDPR(); FBO_SCALE=1/3;
     glass.chromaticAberration=0;   // drops 2 extra texture taps per sample × 6 — a big fill-rate saving, barely visible in motion
     renderer.setPixelRatio(DPR); resize();
   }
+  addEventListener('resize', function(){ if(gLow){ DPR=lowDPR(); renderer.setPixelRatio(DPR); resize(); } }, {passive:true});
+  // Rolling monitor: evaluates in windows and keeps watching, so a machine that only
+  // starts struggling later (bigger window, hotter GPU, heavier scene) still gets helped.
+  // One-way — once LOW it never climbs back, so quality can't oscillate.
   function govern(now){
     gFrame++;
     if(gLow || gFrame<24){ gPrevT=now; return; }          // shorter warm-up so it drops sooner on weak GPUs
     if(gPrevT){ const dt=now-gPrevT;
       if(dt>2 && dt<250){ gSampled++; if(dt>20) gSlow++; }   // ignore tab-switch gaps
-      if(gSampled>=80 && gSlow/gSampled>0.3) engageLow();    // >30% of frames over 20ms → LOW (trips ~1.3s in)
+      if(gSampled>=80){
+        if(gSlow/gSampled>0.3) engageLow();                  // >30% of frames over 20ms → LOW
+        else { gSampled=0; gSlow=0; }                        // healthy window → reset and keep watching
+      }
     }
     gPrevT=now;
   }
