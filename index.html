@@ -6279,6 +6279,7 @@ import {RGBELoader} from './vendor/RGBELoader.js';
     requestAnimationFrame(tick);
     if (!visible) return;
     const now = performance.now(); const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+    const fs = Math.max(0.2, Math.min(3, dt * 60));   // frames vs 60fps baseline (clamped against stalls)
     aGovern(now);
     placeHero();                            // hero locked onto the HTML slot (its settled home)
     speedCap += (0.02 - speedCap) * 0.012;  // entrance/click energy eases slowly back to calm
@@ -6386,8 +6387,10 @@ import {RGBELoader} from './vendor/RGBELoader.js';
       }
       // drift + spin (capped slow speed)
       b.vel.clampLength(0, speedCap);
-      b.mesh.position.add(b.vel);
-      b.mesh.rotation.x += b.spin.x; b.mesh.rotation.y += b.spin.y; b.mesh.rotation.z += b.spin.z;
+      // `fs` = frames elapsed vs a 60fps baseline, so drift speed is identical on any
+      // machine/refresh rate (this motion used to scale directly with frame rate).
+      b.mesh.position.addScaledVector(b.vel, fs);
+      b.mesh.rotation.x += b.spin.x*fs; b.mesh.rotation.y += b.spin.y*fs; b.mesh.rotation.z += b.spin.z*fs;
       // soft invisible walls: drift partly off the left/right edge, then get
       // gently steered back (no teleporting). Vertically they must stay fully
       // inside the section — bounds are computed at each object's own depth
@@ -6672,9 +6675,15 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     gPrevT=now;
   }
 
+  let lastFrameT = 0;
   function loop(now){
     if(!running) return;
     govern(now);
+    // frames elapsed since the last render, relative to 60fps. Clamped so a tab-switch
+    // or a stall can't teleport the physics.
+    let fs = lastFrameT ? (now - lastFrameT) / 16.667 : 1;
+    if (!(fs > 0.2)) fs = 0.2; else if (fs > 3) fs = 3;
+    lastFrameT = now;
     const t=(now-flyStart)*0.001;
     if(text){
       ray.setFromCamera(ptr,camera);
@@ -6695,9 +6704,13 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
     group.rotation.z = rzCur;
     balls.forEach(m=>{
       const u=m.userData, p=m.position, r=u.r;
-      // continuous flight: constant horizontal drift, light gravity on the vertical axis
-      u.vel.z -= GRAV;
-      p.add(u.vel);
+      // continuous flight: constant horizontal drift, light gravity on the vertical axis.
+      // Scaled by `fs` (frames elapsed vs a 60fps baseline) so the balls travel at the
+      // SAME real-world speed regardless of frame rate. Without this, ball speed was
+      // literally proportional to fps — a machine running 30fps showed half-speed balls,
+      // a 120Hz display double-speed.
+      u.vel.z -= GRAV*fs;
+      p.addScaledVector(u.vel, fs);
       if(p.z<r){ p.z=r;                                     // hits the ground → bounces off (same x/y trajectory), loses energy each touch
         const s=Math.abs(u.vel.z); u.vel.z = s<REST ? 0 : s*0.55; }   // ...and once the rebound is tiny it just rests + keeps sliding out — no perpetual micro-bounce
       // solid sign: sphere vs the word's local-space box. Done in group-local space so it's
@@ -6735,7 +6748,7 @@ import {OutputPass} from './vendor/pp/postprocessing/OutputPass.js';
       // actually been seen inside the frame — otherwise it'd recycle the instant it spawns
       if(!u.entered){ if(Math.abs(_n.x)<EXIT && Math.abs(_n.y)<EXIT) u.entered=true; }
       else if(Math.abs(_n.x)>EXIT || Math.abs(_n.y)>EXIT) p.copy(spawnBall(u,r,false));
-      m.rotation.x+=u.spin.x; m.rotation.y+=u.spin.y;
+      m.rotation.x+=u.spin.x*fs; m.rotation.y+=u.spin.y*fs;
       // shadow grows/darkens as the ball nears the ground
       const sh=u.shadow, h=Math.max(0,p.z-r);
       sh.position.set(p.x,p.y,0.03); sh.material.opacity=Math.max(0,0.6*(1-h/6));
